@@ -87,7 +87,7 @@ const loadMore = () => {
 onMounted(() => {
   observer = new IntersectionObserver(
     (entries) => {
-      if (entries[0].isIntersecting) {
+      if (entries[0]?.isIntersecting) {
         loadMore()
       }
     },
