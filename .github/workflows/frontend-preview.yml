@@ -1,0 +1,45 @@
+name: Frontend Preview CI/CD
+
+on:
+  pull_request:
+    branches: ['develop'] # develop 기준 PR에만 프리뷰 배포
+
+jobs:
+  preview:
+    name: Build & Deploy Preview
+    runs-on: ubuntu-latest
+    environment: Preview # GitHub Environment 이름 (여기에 Vercel secrets 있음)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      # 여기서 네 package.json 기준:
+      # "build": "npm run type-check && npm run lint && npm run build-only"
+      # 라고 되어 있으니까, 이 한 줄로 타입체크 + 린트 + 빌드 다 됨
+      - name: Build (type-check + lint + bundle)
+        run: npm run build
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Deploy Preview to Vercel
+        run: |
+          vercel deploy \
+            --scope $VERCEL_ORG_ID \
+            --token $VERCEL_TOKEN \
+            -p $VERCEL_PROJECT_ID \
+            --yes
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
