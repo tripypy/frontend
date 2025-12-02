@@ -6,7 +6,7 @@
       <div class="flex gap-8 items-start justify-center">
         <div class="flex-1 max-w-[680px]">
           <div class="space-y-5">
-            <template v-for="(diary, index) in diaryEntries" :key="diary.id">
+            <template v-for="diary in diaryEntries" :key="diary.id">
               <DiaryFeedItem v-bind="diary" />
             </template>
           </div>
