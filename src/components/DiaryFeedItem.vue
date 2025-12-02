@@ -1,174 +1,185 @@
 <template>
-  <div
-    class="bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-[3px_3px_0px_0px_rgba(44,44,44,0.1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all p-5 mb-8"
-  >
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity">
-        <div
-          class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
-        >
-          <img :src="authorAvatar" :alt="author" class="w-full h-full object-cover" />
-        </div>
-        <div class="flex-1 min-w-0">
-          <h4 class="font-black font-sans">{{ author }}</h4>
-          <div class="flex items-center gap-2 text-xs font-bold text-gray-600">
-            <MapPin class="w-3 h-3 flex-shrink-0" stroke-width="2" />
-            <span class="truncate">{{ location }}</span>
-            <span>•</span>
-            <Calendar class="w-3 h-3 flex-shrink-0" stroke-width="2" />
-            <span>{{ date }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <button
-          class="p-2 border-[2px] border-[#2C2C2C] rounded-lg bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all"
-        >
-          <Share2 class="w-3.5 h-3.5 text-gray-600" stroke-width="2.5" />
-        </button>
-        <button
-          @click="isBookmarked = !isBookmarked"
-          :class="[
-            'p-2 border-[2px] border-[#2C2C2C] rounded-lg transition-all',
-            isBookmarked
-              ? 'bg-[#D4A520] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-              : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
-          ]"
-        >
-          <Bookmark
-            :class="['w-3.5 h-3.5', isBookmarked ? 'text-white fill-white' : 'text-gray-600']"
-            stroke-width="2.5"
-          />
-        </button>
-      </div>
-    </div>
-
-    <h3 class="text-lg font-black mb-2.5 tracking-tight leading-tight font-sans">{{ title }}</h3>
-
-    <div v-if="course && course.length > 0" class="mb-4 flex items-center flex-wrap gap-1.5">
-      <div v-for="(place, index) in course" :key="index" class="flex items-center gap-1.5">
-        <button
-          class="course-badge flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] cursor-pointer hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all"
-          :style="{ '--hover-color': getBadgeColor(index) }"
-        >
-          <span class="text-xs font-black text-[#2C2C2C]">{{ place.number }}</span>
-          <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{ place.name }}</span>
-        </button>
-        <ChevronRight
-          v-if="index < course.length - 1"
-          class="w-3 h-3 text-gray-400 flex-shrink-0"
-          stroke-width="3"
-        />
-      </div>
-    </div>
-
-    <div v-if="allImages.length > 0" class="mb-4 select-none">
-      <div v-if="allImages.length === 1" class="flex justify-center">
-        <div class="w-[320px] border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden">
-          <img :src="allImages[0]" class="w-full h-[380px] object-cover" />
-        </div>
-      </div>
-
-      <div v-else-if="allImages.length === 2" class="grid grid-cols-2 gap-2.5">
-        <div
-          v-for="(img, idx) in allImages"
-          :key="idx"
-          class="border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
-        >
-          <img
-            :src="img"
-            class="w-full h-[300px] object-cover hover:scale-105 transition-transform duration-500"
-          />
-        </div>
-      </div>
-
-      <div v-else class="relative group">
-        <div class="overflow-hidden">
+  <div class="mb-8 block">
+    <div
+      class="bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-[3px_3px_0px_0px_rgba(44,44,44,0.1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all p-5"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity">
           <div
-            class="flex gap-2.5 transition-transform duration-500 ease-in-out will-change-transform"
-            :style="{
-              transform: `translateX(calc(-${currentImageIndex * 50}% - ${currentImageIndex * 0.3125}rem))`,
-            }"
+            class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
           >
-            <div
-              v-for="(img, idx) in allImages"
-              :key="idx"
-              class="w-[calc(50%-0.3125rem)] flex-shrink-0 h-[300px] border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden bg-gray-100"
-            >
-              <img :src="img" class="w-full h-full object-cover" />
+            <img :src="authorAvatar" :alt="author" class="w-full h-full object-cover" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-black font-sans">{{ author }}</h4>
+            <div class="flex items-center gap-2 text-xs font-bold text-gray-600">
+              <MapPin class="w-3 h-3 flex-shrink-0" stroke-width="2" />
+              <span class="truncate">{{ location }}</span>
+              <span>•</span>
+              <Calendar class="w-3 h-3 flex-shrink-0" stroke-width="2" />
+              <span>{{ date }}</span>
             </div>
           </div>
         </div>
 
-        <button
-          v-if="currentImageIndex > 0"
-          @click="prevImage"
-          class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] z-10"
-        >
-          <ChevronLeft class="w-5 h-5 text-[#2C2C2C]" stroke-width="2.5" />
-        </button>
-        <button
-          v-if="currentImageIndex + 2 < allImages.length"
-          @click="nextImage"
-          class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] z-10"
-        >
-          <ChevronRight class="w-5 h-5 text-[#2C2C2C]" stroke-width="2.5" />
-        </button>
-
-        <div class="flex justify-center gap-1.5 mt-3">
-          <div
-            v-for="(_, index) in Math.ceil(allImages.length / 2)"
-            :key="index"
+        <div class="flex items-center gap-2">
+          <button
+            class="p-2 border-[2px] border-[#2C2C2C] rounded-lg bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all focus:outline-none"
+          >
+            <Share2 class="w-3.5 h-3.5 text-gray-600" stroke-width="2.5" />
+          </button>
+          <button
+            @click="isBookmarked = !isBookmarked"
             :class="[
-              'w-1.5 h-1.5 rounded-full border-[1.5px] border-[#2C2C2C] transition-colors duration-300',
-              index === Math.floor(currentImageIndex / 2) ? 'bg-[#2C2C2C]' : 'bg-white',
+              'p-2 border-[2px] border-[#2C2C2C] rounded-lg transition-all focus:outline-none',
+              isBookmarked
+                ? 'bg-[#D4A520] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
+                : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
             ]"
+          >
+            <Bookmark
+              :class="['w-3.5 h-3.5', isBookmarked ? 'text-white fill-white' : 'text-gray-600']"
+              stroke-width="2.5"
+            />
+          </button>
+        </div>
+      </div>
+
+      <h3 class="text-lg font-black mb-2.5 tracking-tight leading-tight font-sans">{{ title }}</h3>
+
+      <div v-if="course && course.length > 0" class="mb-4 flex items-center flex-wrap gap-1.5">
+        <div v-for="(place, index) in course" :key="index" class="flex items-center gap-1.5">
+          <button
+            class="course-badge flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] cursor-pointer hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all focus:outline-none"
+            :style="{ '--hover-color': getBadgeColor(index) }"
+            @click="selectedPlace = place"
+          >
+            <span class="text-xs font-black text-[#2C2C2C]">{{ place.number }}</span>
+            <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
+              place.name
+            }}</span>
+          </button>
+          <ChevronRight
+            v-if="index < course.length - 1"
+            class="w-3 h-3 text-gray-400 flex-shrink-0"
+            stroke-width="3"
           />
         </div>
       </div>
-    </div>
 
-    <div class="relative mb-4">
-      <div class="text-sm leading-relaxed font-medium text-gray-800 whitespace-pre-line">
-        {{ displayedContent }}
+      <div
+        v-if="allImages.length > 0"
+        class="mb-4 select-none cursor-pointer"
+        @click="showCommentModal = true"
+      >
+        <div v-if="allImages.length === 1" class="flex justify-center">
+          <div class="w-[320px] border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden">
+            <img :src="allImages[0]" class="w-full h-[380px] object-cover" />
+          </div>
+        </div>
+        <div v-else-if="allImages.length === 2" class="grid grid-cols-2 gap-2.5">
+          <div
+            v-for="(img, idx) in allImages"
+            :key="idx"
+            class="border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
+          >
+            <img
+              :src="img"
+              class="w-full h-[300px] object-cover hover:scale-105 transition-transform duration-500"
+            />
+          </div>
+        </div>
+        <div v-else class="relative group">
+          <div class="overflow-hidden">
+            <div
+              class="flex gap-2.5 transition-transform duration-500 ease-in-out will-change-transform"
+              :style="{
+                transform: `translateX(calc(-${currentImageIndex * 50}% - ${currentImageIndex * 0.3125}rem))`,
+              }"
+            >
+              <div
+                v-for="(img, idx) in allImages"
+                :key="idx"
+                class="w-[calc(50%-0.3125rem)] flex-shrink-0 h-[300px] border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden bg-gray-100"
+              >
+                <img :src="img" class="w-full h-full object-cover" />
+              </div>
+            </div>
+          </div>
+          <button
+            v-if="currentImageIndex > 0"
+            @click.stop="prevImage"
+            class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] z-10 focus:outline-none"
+          >
+            <ChevronLeft class="w-5 h-5 text-[#2C2C2C]" stroke-width="2.5" />
+          </button>
+          <button
+            v-if="currentImageIndex + 2 < allImages.length"
+            @click.stop="nextImage"
+            class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] z-10 focus:outline-none"
+          >
+            <ChevronRight class="w-5 h-5 text-[#2C2C2C]" stroke-width="2.5" />
+          </button>
+        </div>
       </div>
-      <button
-        v-if="isContentTruncated"
-        @click="isExpanded = !isExpanded"
-        class="text-xs font-black text-[#E88555] hover:text-[#2C2C2C] mt-2 block"
-      >
-        {{ isExpanded ? '접기 ▲' : '더보기 ▼' }}
-      </button>
+
+      <div class="relative mb-4">
+        <p
+          class="text-sm leading-relaxed font-medium text-gray-800 whitespace-pre-line cursor-pointer hover:opacity-80 transition-opacity"
+          :class="{ 'line-clamp-3': !isExpanded }"
+          @click="isExpanded = !isExpanded"
+        >
+          {{ content }}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 pt-4 border-t-[2px] border-gray-200">
+        <button
+          @click="toggleLike"
+          :class="[
+            'flex items-center gap-1.5 px-3.5 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase focus:outline-none',
+            isLiked
+              ? 'bg-[#FF6B9D] text-white shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
+              : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
+          ]"
+        >
+          <Heart :class="['w-3.5 h-3.5', isLiked ? 'fill-current' : '']" stroke-width="2.5" />
+          <span>{{ currentLikes }}</span>
+        </button>
+
+        <button
+          @click="showCommentModal = true"
+          class="flex items-center gap-1.5 px-3.5 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px] focus:outline-none"
+        >
+          <MessageCircle class="w-3.5 h-3.5" stroke-width="2.5" />
+          <span>{{ comments }}</span>
+        </button>
+
+        <button
+          class="ml-auto px-4 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs bg-[#E88555] text-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase focus:outline-none"
+        >
+          내 계획에 추가
+        </button>
+      </div>
     </div>
+    <Teleport to="body">
+      <DiaryCommentModal
+        v-if="showCommentModal"
+        :author="author"
+        :author-avatar="authorAvatar"
+        :location="location"
+        :date="date"
+        :title="title"
+        :content="content"
+        :images="allImages"
+        :likes="likes"
+        :comments="comments"
+        :course="course"
+        @close="showCommentModal = false"
+      />
 
-    <div class="flex items-center gap-2 pt-4 border-t-[2px] border-gray-200">
-      <button
-        @click="toggleLike"
-        :class="[
-          'flex items-center gap-1.5 px-3.5 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase',
-          isLiked
-            ? 'bg-[#FF6B9D] text-white shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-            : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
-        ]"
-      >
-        <Heart :class="['w-3.5 h-3.5', isLiked ? 'fill-current' : '']" stroke-width="2.5" />
-        <span>{{ currentLikes }}</span>
-      </button>
-
-      <button
-        class="flex items-center gap-1.5 px-3.5 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]"
-      >
-        <MessageCircle class="w-3.5 h-3.5" stroke-width="2.5" />
-        <span>{{ comments }}</span>
-      </button>
-
-      <button
-        class="ml-auto px-4 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs bg-[#E88555] text-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
-      >
-        내 계획에 추가
-      </button>
-    </div>
+      <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
+    </Teleport>
   </div>
 </template>
 
@@ -184,6 +195,8 @@ import {
   ChevronRight,
   ChevronLeft,
 } from 'lucide-vue-next'
+import DiaryCommentModal from './DiaryCommentModal.vue'
+import PlaceDetailModal from './PlaceDetailModal.vue'
 
 interface CourseItem {
   number: number
@@ -212,23 +225,18 @@ const currentLikes = ref(props.likes)
 const isExpanded = ref(false)
 const currentImageIndex = ref(0)
 
+// Modal States
+const showCommentModal = ref(false)
+const selectedPlace = ref<CourseItem | null>(null)
+
 // Images Logic
 const allImages = computed(() => props.images || (props.imageUrl ? [props.imageUrl] : []))
-
 const prevImage = () => {
   currentImageIndex.value = Math.max(0, currentImageIndex.value - 2)
 }
 const nextImage = () => {
   currentImageIndex.value = Math.min(allImages.value.length - 2, currentImageIndex.value + 2)
 }
-
-// Content Logic
-const MAX_LENGTH = 100
-const isContentTruncated = computed(() => props.content.length > MAX_LENGTH)
-const displayedContent = computed(() => {
-  if (!isContentTruncated.value || isExpanded.value) return props.content
-  return props.content.slice(0, MAX_LENGTH) + '...'
-})
 
 // Like Action
 const toggleLike = () => {
