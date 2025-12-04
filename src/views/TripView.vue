@@ -68,6 +68,14 @@
         />
       </div>
     </div>
+
+    <!-- Trip Detail Modal -->
+    <TripDetailModal
+      v-if="selectedTrip"
+      :trip="selectedTrip"
+      @close="selectedTrip = null"
+      @edit="handleTripEdit"
+    />
   </div>
 </template>
 
@@ -76,10 +84,12 @@ import { ref, computed } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
+import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import { initialTrips } from '@/data/trips'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const selectedTrip = ref<any>(null)
 
 const handleNavigate = (page: string) => {
   if (page === 'main') {
@@ -169,7 +179,21 @@ const formatMonth = (monthStr: string) => {
 }
 
 const handleOpenModal = (tripId: number) => {
-  console.log(`Open modal for trip: ${tripId}`)
+  const trip = tripsList.value.find((t) => t.id === tripId)
+  if (trip) {
+    selectedTrip.value = {
+      ...trip,
+      duration: '반나절', // 기본값, 실제로는 trip 데이터에서 가져와야 함
+      description: trip.spotPreviews.map((s) => s.name).join(' → '),
+      views: 0,
+      imageUrl: '',
+    }
+  }
+}
+
+const handleTripEdit = (trip: any) => {
+  router.push(`/create-trip?id=${trip.id}`)
+  selectedTrip.value = null
 }
 </script>
 
