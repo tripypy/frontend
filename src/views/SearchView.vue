@@ -57,7 +57,8 @@
         <!-- Search Query Display -->
         <div class="mb-6">
           <h3 class="text-2xl font-black mb-2">
-            '<span class="text-[#9BCCC4]">{{ currentSearchQuery }}</span>' 검색 결과
+            '<span class="text-[#9BCCC4]">{{ currentSearchQuery }}</span
+            >' 검색 결과
           </h3>
           <p class="text-sm font-bold text-gray-600">
             총 {{ totalResultsCount }}개의 결과를 찾았습니다
@@ -94,8 +95,9 @@
               </h4>
               <div class="space-y-3">
                 <div
-                  v-for="place in filteredPlaces"
+                  v-for="(place, index) in filteredPlaces"
                   :key="place.id"
+                  @click="handlePlaceClick(place, index)"
                   class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
                 >
                   <div class="flex items-center gap-4">
@@ -113,9 +115,7 @@
                     <!-- Content -->
                     <div class="flex-1 min-w-0">
                       <div class="flex items-start justify-between mb-1">
-                        <h5
-                          class="text-xl font-black group-hover:text-[#9BCCC4] transition-colors"
-                        >
+                        <h5 class="text-xl font-black group-hover:text-[#9BCCC4] transition-colors">
                           {{ place.name }}
                         </h5>
                         <div
@@ -183,7 +183,9 @@
                     </div>
                     <!-- Content -->
                     <div class="flex-1 min-w-0">
-                      <h5 class="text-xl font-black mb-1 group-hover:text-[#E88555] transition-colors">
+                      <h5
+                        class="text-xl font-black mb-1 group-hover:text-[#E88555] transition-colors"
+                      >
                         {{ course.title }}
                       </h5>
                       <div class="flex items-center gap-2 text-xs font-bold mb-2 text-gray-600">
@@ -264,11 +266,15 @@
                     <!-- Content -->
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 mb-2">
-                        <div class="w-6 h-6 rounded-full bg-[#9BCCC4] border-[2px] border-[#2C2C2C]"></div>
+                        <div
+                          class="w-6 h-6 rounded-full bg-[#9BCCC4] border-[2px] border-[#2C2C2C]"
+                        ></div>
                         <span class="text-sm font-black">{{ diary.author }}</span>
                         <span class="text-xs font-bold text-gray-500">{{ diary.date }}</span>
                       </div>
-                      <h5 class="text-lg font-black mb-1 group-hover:text-[#9BCCC4] transition-colors">
+                      <h5
+                        class="text-lg font-black mb-1 group-hover:text-[#9BCCC4] transition-colors"
+                      >
                         {{ diary.title }}
                       </h5>
                       <div class="flex items-center gap-2 text-xs font-bold mb-2 text-gray-600">
@@ -329,6 +335,7 @@
           <div
             v-for="(place, index) in hotPlaces"
             :key="place.id"
+            @click="handlePlaceClick(place, index)"
             class="bg-white border-[2px] border-[#2C2C2C] rounded-2xl p-5 shadow-[3px_3px_0px_0px_rgba(44,44,44,0.1)] hover:shadow-[6px_6px_0px_0px_rgba(44,44,44,0.15)] group cursor-pointer"
           >
             <div class="flex items-center gap-5">
@@ -425,6 +432,9 @@
       @close="selectedCourse = null"
       @edit="handleCourseEdit"
     />
+
+    <!-- Place Detail Modal -->
+    <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
   </div>
 </template>
 
@@ -436,6 +446,7 @@ import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { Search, MapPin, Star, Heart, MessageCircle } from 'lucide-vue-next'
 import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
+import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -444,6 +455,7 @@ const hasSearched = ref(false)
 const activeTab = ref<'all' | 'places' | 'courses' | 'diaries'>('all')
 const selectedDiary = ref<any>(null)
 const selectedCourse = ref<any>(null)
+const selectedPlace = ref<any>(null)
 
 const handleNavigate = (page: string) => {
   if (page === 'main') {
@@ -487,6 +499,13 @@ const handleCourseEdit = (course: any) => {
   // 편집 모드로 이동
   router.push(`/create-trip?id=${course.id}`)
   selectedCourse.value = null
+}
+
+const handlePlaceClick = (place: any, index?: number) => {
+  selectedPlace.value = {
+    number: index !== undefined ? index + 1 : 1,
+    name: place.name,
+  }
 }
 
 // Mock Data
@@ -659,7 +678,8 @@ const allDiaries = [
   {
     id: 1,
     author: '여행러버',
-    authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+    authorAvatar:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
     date: '2024.11.28',
     title: '성수동 카페 투어 다녀왔어요!',
     location: '서울 성동구',
@@ -683,7 +703,8 @@ const allDiaries = [
   {
     id: 2,
     author: '서울탐방',
-    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+    authorAvatar:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
     date: '2024.11.25',
     title: '북촌한옥마을 야경이 정말 예뻐요',
     location: '서울 종로구',
@@ -704,7 +725,8 @@ const allDiaries = [
   {
     id: 3,
     author: '맛집헌터',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+    authorAvatar:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
     date: '2024.11.22',
     title: '을지로 숨은 맛집 대공개',
     location: '서울 중구',
@@ -722,7 +744,8 @@ const allDiaries = [
   {
     id: 4,
     author: '자전거매니아',
-    authorAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
+    authorAvatar:
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
     date: '2024.11.20',
     title: '한강 자전거 라이딩 완주!',
     location: '서울 한강',
@@ -745,7 +768,8 @@ const allDiaries = [
   {
     id: 5,
     author: '카페투어',
-    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop',
+    authorAvatar:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop',
     date: '2024.11.18',
     title: '연남동 숨은 카페 추천',
     location: '서울 마포구 연남동',
@@ -766,7 +790,8 @@ const allDiaries = [
   {
     id: 6,
     author: '강남러버',
-    authorAvatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=100&h=100&fit=crop',
+    authorAvatar:
+      'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=100&h=100&fit=crop',
     date: '2024.11.15',
     title: '청담동 럭셔리 거리 산책',
     location: '서울 강남구 청담동',
