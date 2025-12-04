@@ -27,24 +27,54 @@
           <h2 class="text-4xl font-black mb-2 tracking-tight font-sans">{{ placeData.name }}</h2>
           <p class="text-sm font-bold text-gray-600 uppercase mb-4">{{ placeData.category }}</p>
 
-          <div class="flex items-center gap-2 mb-6">
-            <div class="flex items-center gap-1">
-              <Star
-                v-for="star in 5"
-                :key="star"
-                :class="[
-                  'w-5 h-5',
-                  star <= Math.floor(placeData.rating)
-                    ? 'fill-[#FFD60A] text-[#FFD60A]'
-                    : 'text-gray-300',
-                ]"
-                stroke-width="2"
-              />
+          <div class="mb-6">
+            <!-- 평균 평점 표시 -->
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-sm font-black text-gray-600 uppercase">평균 평점</span>
+              <span class="font-black text-lg">{{ placeData.rating }}</span>
+              <span class="text-sm font-bold text-gray-600"
+                >({{ placeData.reviews.toLocaleString() }} 평가)</span
+              >
             </div>
-            <span class="font-black text-lg">{{ placeData.rating }}</span>
-            <span class="text-sm font-bold text-gray-600"
-              >({{ placeData.reviews.toLocaleString() }} 리뷰)</span
-            >
+
+            <!-- 내 평가 -->
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-black text-gray-600 uppercase">내 평가</span>
+              <div
+                class="flex items-center gap-1 cursor-pointer"
+                @mouseleave="handleStarLeave"
+              >
+                <div
+                  v-for="star in 5"
+                  :key="star"
+                  class="relative w-6 h-6"
+                  @mousemove="(e) => handleStarHover(star - 1, e)"
+                  @click="(e) => handleStarClick(star - 1, e)"
+                >
+                  <!-- 배경 별 (회색) -->
+                  <Star class="absolute inset-0 w-6 h-6 fill-none text-gray-300" stroke-width="2" />
+                  <!-- 채워진 별 (노란색 hover 또는 마젠타 user rating) -->
+                  <div
+                    class="absolute inset-0 overflow-hidden"
+                    :style="{ width: `${getStarFillPercent(star - 1)}%` }"
+                  >
+                    <Star
+                      :class="[
+                        'absolute left-0 w-6 h-6',
+                        (hoverRating > 0 || userRating === 0) ? 'fill-[#FFD60A] text-[#FFD60A]' : 'fill-[#FF1493] text-[#FF1493]',
+                      ]"
+                      stroke-width="2"
+                    />
+                  </div>
+                </div>
+              </div>
+              <span v-if="userRating > 0" class="font-black text-lg text-[#FF1493]">
+                {{ userRating.toFixed(1) }}
+              </span>
+              <span v-else class="text-sm font-bold text-gray-400">
+                별을 클릭하여 평가하세요
+              </span>
+            </div>
           </div>
 
           <p class="text-base leading-relaxed font-medium text-gray-800 mb-6">
@@ -106,6 +136,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { X, MapPin, Clock, Phone, Globe, Star } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -113,6 +144,65 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['close'])
+
+// 사용자 평가 state
+const userRating = ref<number>(0) // 0이면 평가 안함, 0.5~5.0 사이 값
+const hoverRating = ref<number>(0) // 마우스 hover 시 임시 표시
+
+// 평균 평점을 0.5 단위로 반내림
+const getAverageRatingRounded = () => {
+  return Math.floor(placeData.rating * 2) / 2
+}
+
+// 별점 hover 핸들러
+const handleStarHover = (starIndex: number, event: MouseEvent) => {
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const width = rect.width
+
+  // 왼쪽 절반이면 0.5, 오른쪽 절반이면 1.0
+  const rating = x < width / 2 ? starIndex + 0.5 : starIndex + 1
+  hoverRating.value = rating
+}
+
+// 별점 클릭 핸들러
+const handleStarClick = (starIndex: number, event: MouseEvent) => {
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const width = rect.width
+
+  const rating = x < width / 2 ? starIndex + 0.5 : starIndex + 1
+
+  // 같은 평점을 다시 클릭하면 취소
+  if (userRating.value === rating) {
+    userRating.value = 0
+  } else {
+    userRating.value = rating
+  }
+}
+
+// 마우스가 별점 영역을 벗어날 때
+const handleStarLeave = () => {
+  hoverRating.value = 0
+}
+
+// 별이 몇 % 채워져야 하는지 계산 (반개 별 구현)
+const getStarFillPercent = (starIndex: number) => {
+  // hover 중이면 hover 기준, 아니면 사용자 평가 또는 평균 평점 기준
+  const displayRating = hoverRating.value || userRating.value || getAverageRatingRounded()
+  const starPosition = starIndex + 1
+
+  if (displayRating >= starPosition) {
+    return 100 // 완전히 채움
+  } else if (displayRating > starIndex) {
+    // 부분적으로 채움 (0.5 = 50%, 0.3 = 30% 등)
+    return (displayRating - starIndex) * 100
+  } else {
+    return 0 // 안 채움
+  }
+}
 
 // Mock Data
 const placeData = {
@@ -130,3 +220,7 @@ const placeData = {
   tags: ['카페', '디저트', '감성', '인스타그램', '데이트'],
 }
 </script>
+
+<style scoped>
+/* No hover animation */
+</style>

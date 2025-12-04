@@ -94,8 +94,9 @@
               </h4>
               <div class="space-y-3">
                 <div
-                  v-for="place in filteredPlaces"
+                  v-for="(place, index) in filteredPlaces"
                   :key="place.id"
+                  @click="handlePlaceClick(place, index)"
                   class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
                 >
                   <div class="flex items-center gap-4">
@@ -329,6 +330,7 @@
           <div
             v-for="(place, index) in hotPlaces"
             :key="place.id"
+            @click="handlePlaceClick(place, index)"
             class="bg-white border-[2px] border-[#2C2C2C] rounded-2xl p-5 shadow-[3px_3px_0px_0px_rgba(44,44,44,0.1)] hover:shadow-[6px_6px_0px_0px_rgba(44,44,44,0.15)] group cursor-pointer"
           >
             <div class="flex items-center gap-5">
@@ -425,6 +427,13 @@
       @close="selectedCourse = null"
       @edit="handleCourseEdit"
     />
+
+    <!-- Place Detail Modal -->
+    <PlaceDetailModal
+      v-if="selectedPlace"
+      :place="selectedPlace"
+      @close="selectedPlace = null"
+    />
   </div>
 </template>
 
@@ -436,6 +445,7 @@ import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { Search, MapPin, Star, Heart, MessageCircle } from 'lucide-vue-next'
 import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
+import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -444,6 +454,7 @@ const hasSearched = ref(false)
 const activeTab = ref<'all' | 'places' | 'courses' | 'diaries'>('all')
 const selectedDiary = ref<any>(null)
 const selectedCourse = ref<any>(null)
+const selectedPlace = ref<any>(null)
 
 const handleNavigate = (page: string) => {
   if (page === 'main') {
@@ -487,6 +498,13 @@ const handleCourseEdit = (course: any) => {
   // 편집 모드로 이동
   router.push(`/create-trip?id=${course.id}`)
   selectedCourse.value = null
+}
+
+const handlePlaceClick = (place: any, index?: number) => {
+  selectedPlace.value = {
+    number: index !== undefined ? index + 1 : 1,
+    name: place.name,
+  }
 }
 
 // Mock Data
