@@ -82,12 +82,6 @@
             </div>
           </div>
 
-          <button
-            class="w-11 h-11 bg-white border-[2px] rounded-full border-[#2C2C2C] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none"
-          >
-            <Settings class="w-5 h-5" stroke-width="2.5" />
-          </button>
-
           <div class="relative" ref="userMenuRef">
             <button
               @click="showUserMenu = !showUserMenu"
@@ -123,20 +117,8 @@
                 <button
                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#FFF8ED] transition-colors text-left border-[2px] border-transparent hover:border-[#2C2C2C] font-bold"
                 >
-                  <User class="w-5 h-5" stroke-width="2" />
-                  <span class="text-sm">내 프로필</span>
-                </button>
-                <button
-                  class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#FFF8ED] transition-colors text-left border-[2px] border-transparent hover:border-[#2C2C2C] font-bold"
-                >
-                  <MapPin class="w-5 h-5" stroke-width="2" />
-                  <span class="text-sm">내 여행</span>
-                </button>
-                <button
-                  class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#FFF8ED] transition-colors text-left border-[2px] border-transparent hover:border-[#2C2C2C] font-bold"
-                >
                   <Settings class="w-5 h-5" stroke-width="2" />
-                  <span class="text-sm">설정</span>
+                  <span class="text-sm">마이 페이지</span>
                 </button>
               </div>
               <div class="p-2 border-t-[2px] border-gray-200">
