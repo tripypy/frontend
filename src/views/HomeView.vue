@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-[#F5F5F5]">
-    <TravelNavbar :current-page="currentPage" @navigate="handleNavigate" />
+    <TravelNavbar current-page="main" @navigate="handleNavigate" />
 
     <div class="pt-28 max-w-[1280px] mx-auto px-4 md:px-8 pb-12">
       <div class="flex gap-8 items-start justify-center">
@@ -28,35 +28,46 @@
         </div>
       </div>
     </div>
+
+    <ScrollToTop />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import TravelNavbar from '@/components/TravelNavbar.vue'
-import DiaryFeedItem from '@/components/DiaryFeedItem.vue'
-import FollowingPanel from '@/components/FollowingPanel.vue'
+import { useRouter } from 'vue-router' // 👈 1. 라우터 import
+import TravelNavbar from '@/components/common/TravelNavbar.vue'
+import ScrollToTop from '@/components/common/ScrollToTop.vue' // 👈 2. 스크롤 버튼 import
+import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
+import FollowingPanel from '@/components/home/FollowingPanel.vue'
 import { initialDiaries, initialFollowers } from '@/data/dummy'
 
-// 1. 상태 관리
-const currentPage = ref<'main' | 'search'>('main')
+const router = useRouter() // 👈 3. 라우터 인스턴스 생성
+
+// 상태 관리
+// currentPage는 라우팅에 따라 결정되므로 여기서 ref로 관리할 필요가 줄어들지만,
+// Navbar의 active 상태 표시를 위해 prop으로 전달합니다.
 const diaryEntries = ref([...initialDiaries])
 const followers = ref([...initialFollowers])
 const isLoading = ref(false)
 const observerTarget = ref<HTMLElement | null>(null)
 
-// 2. 네비게이션 핸들러 (TypeScript 에러 해결)
+// 4. 네비게이션 핸들러 (실제 페이지 이동 로직 추가)
 const handleNavigate = (page: string) => {
-  // page가 'main'이나 'search'가 아닌 경우도 있을 수 있으므로 타입 단언 혹은 로직 처리
-  if (page === 'main' || page === 'search') {
-    currentPage.value = page as 'main' | 'search'
-  } else {
-    console.log(`Navigating to ${page}...`)
-    // 'write' 등 다른 페이지 이동 로직 추가 가능
+  if (page === 'main') {
+    router.push('/') // 홈으로 이동
+  } else if (page === 'trips') {
+    router.push('/trips') // 여행 계획 페이지로 이동
+  } else if (page === 'search') {
+    console.log('Search page not implemented yet')
+    // router.push('/search')
+  } else if (page === 'write') {
+    console.log('Write page not implemented yet')
+    // router.push('/write')
   }
 }
 
-// 3. 팔로우 토글 로직
+// 팔로우 토글 로직
 const toggleFollow = (id: number) => {
   const target = followers.value.find((f) => f.id === id)
   if (target) {
@@ -64,16 +75,14 @@ const toggleFollow = (id: number) => {
   }
 }
 
-// 4. 무한 스크롤 로직 (Intersection Observer)
+// 무한 스크롤 로직
 let observer: IntersectionObserver | null = null
 
 const loadMore = () => {
   if (isLoading.value) return
   isLoading.value = true
 
-  // API 호출 시뮬레이션 (1초 딜레이)
   setTimeout(() => {
-    // 기존 데이터를 복사해서 id만 바꿔서 추가 (더미 데이터 뻥튀기)
     const newItems = initialDiaries.map((item, idx) => ({
       ...item,
       id: diaryEntries.value.length + idx + 1,

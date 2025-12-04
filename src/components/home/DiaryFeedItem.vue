@@ -195,8 +195,8 @@ import {
   ChevronRight,
   ChevronLeft,
 } from 'lucide-vue-next'
-import DiaryCommentModal from './DiaryCommentModal.vue'
-import PlaceDetailModal from './PlaceDetailModal.vue'
+import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
+import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 
 interface CourseItem {
   number: number
