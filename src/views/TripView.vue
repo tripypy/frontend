@@ -79,6 +79,20 @@ import TripCard from '@/components/trip/TripCard.vue'
 import { initialTrips } from '@/data/trips'
 import { useRouter } from 'vue-router'
 
+const router = useRouter()
+
+const handleNavigate = (page: string) => {
+  if (page === 'main') {
+    router.push('/')
+  } else if (page === 'trips') {
+    // 현재 페이지
+  } else if (page === 'create-trip') {
+    router.push('/create-trip') // 👈 여기! 경로 이동 확인
+  } else if (page === 'search') {
+    console.log('Search page not implemented')
+  }
+}
+
 // 1. 타입 정의 (명시적으로 선언하여 오류 방지)
 interface Trip {
   id: number
@@ -152,18 +166,6 @@ const groupedCompletedTrips = computed(() => {
 const formatMonth = (monthStr: string) => {
   const [year, month] = monthStr.split('.')
   return { year, month }
-}
-
-// 핸들러
-const router = useRouter()
-const handleNavigate = (page: string) => {
-  if (page === 'main') {
-    router.push('/')
-  } else if (page === 'trips') {
-    router.push('/trips')
-  } else if (page === 'search') {
-    console.log('Search page not implemented')
-  }
 }
 
 const handleOpenModal = (tripId: number) => {
