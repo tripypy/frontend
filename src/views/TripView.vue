@@ -87,9 +87,9 @@ const handleNavigate = (page: string) => {
   } else if (page === 'trips') {
     // 현재 페이지
   } else if (page === 'create-trip') {
-    router.push('/create-trip') // 👈 여기! 경로 이동 확인
+    router.push('/create-trip')
   } else if (page === 'search') {
-    console.log('Search page not implemented')
+    router.push('/search')
   }
 }
 

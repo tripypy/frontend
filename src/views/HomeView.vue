@@ -59,8 +59,7 @@ const handleNavigate = (page: string) => {
   } else if (page === 'trips') {
     router.push('/trips') // 여행 계획 페이지로 이동
   } else if (page === 'search') {
-    console.log('Search page not implemented yet')
-    // router.push('/search')
+    router.push('/search') // 검색 페이지로 이동
   } else if (page === 'write') {
     console.log('Write page not implemented yet')
     // router.push('/write')

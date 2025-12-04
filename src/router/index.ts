@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import TripView from '../views/TripView.vue'
 import CreateTripView from '../views/CreateTripView.vue' // 👈 추가됨
+import SearchView from '../views/SearchView.vue' // 👈 추가됨
 // import TripDetailView from '../views/TripDetailView.vue' // 👈 추가됨
 
 const router = createRouter({
@@ -24,7 +25,13 @@ const router = createRouter({
       name: 'create-trip',
       component: CreateTripView,
     },
-    // 👇 3. 여행 상세 페이지 라우트 추가 (:id 파라미터)
+    // 👇 3. 검색 페이지 라우트 추가
+    {
+      path: '/search',
+      name: 'search',
+      component: SearchView,
+    },
+    // 👇 4. 여행 상세 페이지 라우트 추가 (:id 파라미터)
     // {
     //   path: '/trip/:id',
     //   name: 'trip-detail',
