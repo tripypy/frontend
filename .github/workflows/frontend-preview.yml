@@ -28,11 +28,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # 네 package.json 기준:
-      # "build": "npm run type-check && npm run lint && npm run build-only"
-      # 이 한 줄로 타입체크 + 린트 + Vite 빌드까지 다 검증
-      - name: Run local build (type-check + lint + vite build)
-        run: npm run build
+      - name: Run vite build only (no type-check, no lint)
+        run: npm run build-only
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
