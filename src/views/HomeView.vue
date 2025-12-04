@@ -35,36 +35,20 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router' // 👈 1. 라우터 import
+import { useNavigate } from '@/composables/navigation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
-import ScrollToTop from '@/components/common/ScrollToTop.vue' // 👈 2. 스크롤 버튼 import
+import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
 import FollowingPanel from '@/components/home/FollowingPanel.vue'
 import { initialDiaries, initialFollowers } from '@/data/dummy'
 
-const router = useRouter() // 👈 3. 라우터 인스턴스 생성
+const { handleNavigate } = useNavigate()
 
 // 상태 관리
-// currentPage는 라우팅에 따라 결정되므로 여기서 ref로 관리할 필요가 줄어들지만,
-// Navbar의 active 상태 표시를 위해 prop으로 전달합니다.
 const diaryEntries = ref([...initialDiaries])
 const followers = ref([...initialFollowers])
 const isLoading = ref(false)
 const observerTarget = ref<HTMLElement | null>(null)
-
-// 4. 네비게이션 핸들러 (실제 페이지 이동 로직 추가)
-const handleNavigate = (page: string) => {
-  if (page === 'main') {
-    router.push('/') // 홈으로 이동
-  } else if (page === 'trips') {
-    router.push('/trips') // 여행 계획 페이지로 이동
-  } else if (page === 'search') {
-    router.push('/search') // 검색 페이지로 이동
-  } else if (page === 'write') {
-    console.log('Write page not implemented yet')
-    // router.push('/write')
-  }
-}
 
 // 팔로우 토글 로직
 const toggleFollow = (id: number) => {

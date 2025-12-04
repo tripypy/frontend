@@ -138,23 +138,22 @@
 </template>
 
 <script setup lang="ts">
-// ... (기존 script 코드와 동일)
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Home, Search, Map, PenTool, Bell, Settings, User, LogOut, MapPin } from 'lucide-vue-next'
+import { Home, Search, Map, Bell, Settings, LogOut, BookOpen } from 'lucide-vue-next'
 
 defineProps<{
-  currentPage: 'main' | 'search' | 'trips' | 'write'
+  currentPage: 'main' | 'search' | 'trips' | 'log'
 }>()
 
 const emit = defineEmits<{
-  (e: 'navigate', page: 'main' | 'search' | 'trips' | 'write'): void
+  (e: 'navigate', page: 'main' | 'search' | 'trips' | 'log'): void
 }>()
 
 const menus = [
   { id: 'main', label: 'Home', icon: Home },
   { id: 'search', label: 'Search', icon: Search },
   { id: 'trips', label: 'Trips', icon: Map },
-  { id: 'write', label: 'Write', icon: PenTool },
+  { id: 'log', label: 'Log', icon: BookOpen },
 ]
 
 const showUserMenu = ref(false)
