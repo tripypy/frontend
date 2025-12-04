@@ -82,6 +82,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Plus } from 'lucide-vue-next'
+import { useNavigate } from '@/composables/navigation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
@@ -89,19 +90,8 @@ import { initialTrips } from '@/data/trips'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const { handleNavigate } = useNavigate()
 const selectedTrip = ref<any>(null)
-
-const handleNavigate = (page: string) => {
-  if (page === 'main') {
-    router.push('/')
-  } else if (page === 'trips') {
-    // 현재 페이지
-  } else if (page === 'create-trip') {
-    router.push('/create-trip')
-  } else if (page === 'search') {
-    router.push('/search')
-  }
-}
 
 // 1. 타입 정의 (명시적으로 선언하여 오류 방지)
 interface Trip {
