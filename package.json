@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "npm run type-check && npm run lint && npm run build-only",
+    "build": "vite build",
+    "build:strict": "npm run type-check && npm run lint && npm run build-only",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
