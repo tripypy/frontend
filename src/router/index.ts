@@ -33,6 +33,12 @@ const router = createRouter({
       name: 'log',
       component: () => import('@/views/LogView.vue'),
     },
+    {
+      // 이 라우트를 추가합니다.
+      path: '/login',
+      name: 'login',
+      component: import('@/views/LoginView.vue'),
+    },
   ],
 })
 
