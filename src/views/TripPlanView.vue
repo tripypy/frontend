@@ -20,14 +20,21 @@
         :active-day="activeDay"
         :is-edit-mode="isEditMode"
         :search-query="searchQuery"
-        :search-results="searchResults"
         @update:search-query="searchQuery = $event"
         @update:active-day="activeDay = $event"
-        @add-place="handleAddPlace"
+        @search="handleSearchPlaces"
         @remove-place="handleRemovePlace"
         @add-day="handleAddDay"
         @remove-day="handleRemoveDay"
         @update-places="handleUpdatePlaces"
+      />
+
+      <TripSearchPanel
+        v-if="isSearchPanelOpen"
+        :results="searchResults"
+        :is-loading="isSearching"
+        @close="closeSearchPanel"
+        @add-place="handleAddPlace"
       />
 
       <div class="flex-1 bg-gray-100 relative z-0">
@@ -51,13 +58,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Plus } from 'lucide-vue-next'
 
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
+import TripSearchPanel from '@/components/trip/TripSearchPanel.vue' // 신규 패널 import
 
 // Interfaces
 interface Place {
@@ -75,20 +83,21 @@ interface DayPlan {
 
 const route = useRoute()
 const router = useRouter()
-
-// 현재 페이지 모드 판단
 const isCreating = route.name === 'create-trip'
 
 // State
-const isEditMode = ref(isCreating) // 생성 모드면 true, 아니면 false로 시작
+const isEditMode = ref(isCreating)
 const backupData = ref<string>('')
-
 const tripTitle = ref('')
 const tripDate = ref('')
 const activeDay = ref(1)
 const days = ref<DayPlan[]>([])
+
+// Search State (추가됨)
 const searchQuery = ref('')
 const searchResults = ref<Place[]>([])
+const isSearching = ref(false)
+const isSearchPanelOpen = ref(false)
 
 // Computed
 const formattedDate = computed(() =>
@@ -99,20 +108,14 @@ const markerPositions = computed(() =>
   allSelectedPlaces.value.map((p) => ({ lat: p.lat, lng: p.lng, id: p.id })),
 )
 
-// --- 초기화 로직 ---
 const initData = async () => {
   if (isCreating) {
-    // [CASE 1] 새 여행 만들기 (/create-trip)
     tripTitle.value = ''
     tripDate.value = new Date().toISOString().split('T')[0]
     days.value = [{ dayNumber: 1, places: [] }]
-    // 생성 모드는 시작부터 편집 가능
     isEditMode.value = true
   } else {
-    // [CASE 2] 기존 여행 보기 (/trips/:id)
-    // TODO: const id = route.params.id; await fetchTrip(id);
-
-    // Mock Data 로드
+    // Mock Data
     tripTitle.value = '성수동 핫플 투어 🔥'
     tripDate.value = '2024-12-25'
     days.value = [
@@ -127,19 +130,9 @@ const initData = async () => {
             lat: 37.5443,
             lng: 127.0557,
           },
-          {
-            id: 2,
-            name: '소문난감자탕',
-            address: '서울시 성동구 연무장길 45',
-            category: '음식점',
-            lat: 37.5445,
-            lng: 127.0559,
-          },
         ],
       },
     ]
-
-    // URL 쿼리에 ?edit=true가 있으면 바로 편집 모드 실행
     if (route.query.edit === 'true') {
       enterEditMode()
     } else {
@@ -150,35 +143,53 @@ const initData = async () => {
 
 // --- 액션 핸들러 ---
 
-// 검색 (Mock)
+// 검색 로직 수정
 const handleSearchPlaces = async () => {
-  if (!searchQuery.value.trim()) {
-    searchResults.value = []
-    return
-  }
-  // 짧은 딜레이로 자연스럽게
-  await new Promise((resolve) => setTimeout(resolve, 100))
+  if (!searchQuery.value.trim()) return
+
+  // 패널 열기 및 초기화
+  isSearchPanelOpen.value = true
+  isSearching.value = true
+  searchResults.value = []
+
+  // Mock API Call
+  await new Promise((resolve) => setTimeout(resolve, 600))
+
   searchResults.value = [
     {
-      id: 101,
-      name: `${searchQuery.value} 카페`,
-      address: '서울시 성동구 아차산로',
+      id: Date.now() + 1,
+      name: `${searchQuery.value} 감성 카페`,
+      address: '서울시 성동구 아차산로 1길',
       category: '카페',
       lat: 37.544,
       lng: 127.056,
     },
     {
-      id: 102,
-      name: `${searchQuery.value} 공원`,
-      address: '서울시 성동구 서울숲',
-      category: '공원',
+      id: Date.now() + 2,
+      name: `${searchQuery.value} 파스타`,
+      address: '서울시 성동구 서울숲길 15',
+      category: '음식점',
       lat: 37.543,
       lng: 127.04,
     },
+    {
+      id: Date.now() + 3,
+      name: `${searchQuery.value} 소품샵`,
+      address: '서울시 성동구 연무장길 33',
+      category: '쇼핑',
+      lat: 37.542,
+      lng: 127.05,
+    },
   ]
+  isSearching.value = false
 }
 
-// 편집 모드 진입 (백업 수행)
+const closeSearchPanel = () => {
+  isSearchPanelOpen.value = false
+  searchQuery.value = ''
+  searchResults.value = []
+}
+
 const enterEditMode = () => {
   backupData.value = JSON.stringify({
     title: tripTitle.value,
@@ -188,74 +199,71 @@ const enterEditMode = () => {
   isEditMode.value = true
 }
 
-// 저장 (상태만 변경, 페이지 이동 X)
 const handleSave = async () => {
   if (!tripTitle.value.trim()) return alert('제목을 입력해주세요.')
-
   await new Promise((resolve) => setTimeout(resolve, 200))
   alert('저장되었습니다!')
   isEditMode.value = false
-
-  // 생성 모드였다면 저장 후에는 상세 보기 모드로 전환된 것처럼 URL 변경 (선택사항)
-  if (isCreating) {
-    // router.replace(`/trips/999`)
-  }
+  closeSearchPanel() // 저장 시 검색 패널도 닫기
 }
 
-// 뒤로가기 / 취소
 const handleBack = () => {
   if (isEditMode.value) {
     if (confirm('작성/수정 중인 내용이 사라집니다. 취소하시겠습니까?')) {
       if (isCreating) {
-        // 생성 중 취소 -> 목록으로
         router.push('/trips')
       } else {
-        // 수정 중 취소 -> 데이터 원복 후 조회 모드
         const restored = JSON.parse(backupData.value)
         tripTitle.value = restored.title
         tripDate.value = restored.date
         days.value = restored.days
         isEditMode.value = false
+        closeSearchPanel()
       }
     }
   } else {
-    // 조회 중 뒤로가기 -> 목록으로
     router.push('/trips')
   }
 }
 
-// 삭제
 const handleDelete = () => {
   if (confirm('정말 삭제하시겠습니까?')) {
-    // await deleteTripAPI(...)
     alert('삭제되었습니다.')
     router.push('/trips')
   }
 }
 
-// --- 일정 관리 로직 ---
 const handleAddPlace = (place: Place) => {
   const dayIndex = days.value.findIndex((d) => d.dayNumber === activeDay.value)
-  if (dayIndex !== -1 && !days.value[dayIndex].places.find((p) => p.id === place.id)) {
-    days.value[dayIndex].places.push(place)
+  if (dayIndex !== -1) {
+    // 중복 체크 (간단히 이름으로)
+    const exists = days.value[dayIndex].places.find((p) => p.name === place.name)
+    if (!exists) {
+      days.value[dayIndex].places.push({ ...place })
+    } else {
+      alert('이미 추가된 장소입니다.')
+    }
   }
-  searchQuery.value = ''
-  searchResults.value = []
+  // 추가 후 패널을 닫지 않고 연속 추가 가능하도록 유지
 }
+
 const handleRemovePlace = (placeId: number) => {
   const dayIndex = days.value.findIndex((d) => d.dayNumber === activeDay.value)
   if (dayIndex !== -1)
     days.value[dayIndex].places = days.value[dayIndex].places.filter((p) => p.id !== placeId)
 }
+
 const handleUpdatePlaces = (newPlaces: Place[]) => {
   const dayIndex = days.value.findIndex((d) => d.dayNumber === activeDay.value)
   if (dayIndex !== -1) days.value[dayIndex].places = newPlaces
 }
+
 const handleAddDay = () => {
   const newDay = days.value.length + 1
   days.value.push({ dayNumber: newDay, places: [] })
   activeDay.value = newDay
 }
+
 const handleRemoveDay = (dayNum: number) => {
   if (days.value.length <= 1) return
   if (confirm(`${dayNum}일차를 삭제하시겠습니까?`)) {
@@ -266,13 +274,8 @@ const handleRemoveDay = (dayNum: number) => {
   }
 }
 
-// Lifecycle
 onMounted(() => {
   initData()
-})
-
-watch(searchQuery, (newVal) => {
-  if (newVal) handleSearchPlaces()
 })
 </script>
 
