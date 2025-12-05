@@ -27,6 +27,11 @@
           <div
             @click="$emit('click-item', place)"
             class="p-3 border-[2px] border-[#2C2C2C] rounded-xl hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)] transition-all bg-white group cursor-pointer"
+            :class="[
+              place.id === selectedId
+                ? 'border-[#9BCCC4] bg-[#F0FAF9] shadow-[4px_4px_0px_0px_rgba(155,204,196,0.6)]'
+                : 'border-[#2C2C2C] bg-white hover:border-[#9BCCC4] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)]',
+            ]"
           >
             <div class="flex items-start gap-2 mb-2">
               <div
@@ -100,6 +105,7 @@ import { getCategoryIcon } from '@/utils/placeCategory'
 defineProps<{
   results: Place[]
   isLoading: boolean
+  selectedId?: number | string | null
 }>()
 
 defineEmits<{

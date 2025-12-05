@@ -45,6 +45,7 @@
         v-if="isSearchPanelOpen"
         :results="searchResults"
         :is-loading="isSearching"
+        :selected-id="selectedMarkerId"
         @close="closeSearchPanel"
         @add-place="trip.addPlace"
         @click-item="handlePlaceClick"
@@ -58,6 +59,7 @@
           :level="5"
           :markers="markerPositions"
           :selected-marker-id="selectedMarkerId"
+          @marker-click="handleMarkerClick"
         />
 
         <div class="absolute top-6 right-6 flex flex-col gap-3 z-20">
@@ -84,6 +86,7 @@ import TripSearchListPanel from '@/components/trip/TripSearchListPanel.vue'
 import { useResizablePanel } from '@/composables/common/useResizablePanel'
 import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 import { useTripPlan } from '@/composables/trip/useTripPlan'
+import type { Place } from '@/types/trip'
 
 // 1. 지도 참조 (Ref)
 const kakaoMapRef = ref<any>(null)
@@ -99,6 +102,19 @@ const handlePlaceClick = (place: Place) => {
   // 2. 지도 이동 (KakaoMap 컴포넌트의 panTo 함수 호출)
   if (kakaoMapRef.value && kakaoMapRef.value.panTo) {
     kakaoMapRef.value.panTo(place.lat, place.lng)
+  }
+}
+
+const handleMarkerClick = (id: number | string) => {
+  // 1. 선택된 ID 업데이트 (이걸로 마커 색상 변경 & 리스트 스크롤 이동됨)
+  selectedMarkerId.value = id
+
+  // 2. [추가됨] 클릭한 마커의 좌표를 찾아서 지도를 이동시킴
+  // markerPositions에는 현재 지도에 표시된 모든 마커(일정+검색결과) 정보가 들어있습니다.
+  const targetMarker = markerPositions.value.find((m) => String(m.id) === String(id))
+
+  if (targetMarker && kakaoMapRef.value && kakaoMapRef.value.panTo) {
+    kakaoMapRef.value.panTo(targetMarker.lat, targetMarker.lng)
   }
 }
 

@@ -1,15 +1,5 @@
+import type { Place } from '@/types/trip'
 import { ref } from 'vue'
-
-export interface Place {
-  id: number
-  name: string
-  address: string
-  category: string
-  lat: number
-  lng: number
-  phone?: string
-  url?: string
-}
 
 export function usePlaceSearch() {
   const searchQuery = ref('')
