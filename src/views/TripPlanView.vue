@@ -1,33 +1,33 @@
 <template>
   <div class="min-h-screen bg-[#F5F5F5] h-screen flex flex-col font-sans">
     <TripPlanHeader
-      :trip-title="tripTitle"
-      :trip-date="tripDate"
-      :formatted-date="formattedDate"
-      :is-edit-mode="isEditMode"
-      :total-places-count="allSelectedPlaces.length"
-      @update:trip-title="tripTitle = $event"
-      @update:trip-date="tripDate = $event"
+      :trip-title="trip.tripTitle.value"
+      :trip-date="trip.tripDate.value"
+      :formatted-date="trip.formattedDate.value"
+      :is-edit-mode="trip.isEditMode.value"
+      :total-places-count="trip.allSelectedPlaces.value.length"
+      @update:trip-title="trip.tripTitle.value = $event"
+      @update:trip-date="trip.tripDate.value = $event"
       @back="handleBack"
       @save="handleSave"
-      @delete="handleDelete"
-      @edit="enterEditMode"
+      @delete="trip.deleteTrip"
+      @edit="trip.enterEditMode"
     />
 
     <div class="flex-1 flex overflow-hidden relative z-10">
       <TripPlanPanel
         :style="{ width: `${panelWidth}px` }"
-        :days="days"
-        :active-day="activeDay"
-        :is-edit-mode="isEditMode"
+        :days="trip.days.value"
+        :active-day="trip.activeDay.value"
+        :is-edit-mode="trip.isEditMode.value"
         :search-query="searchQuery"
         @update:search-query="searchQuery = $event"
-        @update:active-day="activeDay = $event"
-        @search="handleSearchPlaces"
-        @remove-place="handleRemovePlace"
-        @add-day="handleAddDay"
-        @remove-day="handleRemoveDay"
-        @update-places="handleUpdatePlaces"
+        @update:active-day="trip.activeDay.value = $event"
+        @search="handleSearch"
+        @remove-place="trip.removePlace"
+        @add-day="trip.addDay"
+        @remove-day="trip.removeDay"
+        @update-places="trip.updatePlaces"
       />
 
       <div
@@ -46,7 +46,7 @@
         :results="searchResults"
         :is-loading="isSearching"
         @close="closeSearchPanel"
-        @add-place="handleAddPlace"
+        @add-place="trip.addPlace"
       />
 
       <div class="flex-1 bg-gray-100 relative z-0">
@@ -71,260 +71,64 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
 import { Plus } from 'lucide-vue-next'
-
 import KakaoMap from '@/components/common/KakaoMap.vue'
-import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
+import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
 import TripSearchPanel from '@/components/trip/TripSearchPanel.vue'
-import { useResizablePanel } from '@/composables/useResizablePanel'
 
-// Interfaces
-interface Place {
-  id: number
-  name: string
-  address: string
-  category: string
-  lat: number
-  lng: number
-}
-interface DayPlan {
-  dayNumber: number
-  places: Place[]
-}
+// 로직 파일 Import
+import { useResizablePanel } from '@/composables/common/useResizablePanel'
+import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
+import { useTripPlan } from '@/composables/trip/useTripPlan'
 
-const route = useRoute()
-const router = useRouter()
-const isCreating = route.name === 'create-trip'
-
-// State
-const isEditMode = ref(isCreating)
-const backupData = ref<string>('')
-const tripTitle = ref('')
-const tripDate = ref('')
-const activeDay = ref(1)
-const days = ref<DayPlan[]>([])
-
-// Search State
-const searchQuery = ref('')
-const searchResults = ref<Place[]>([])
-const isSearching = ref(false)
-const isSearchPanelOpen = ref(false)
-
-// [2. 추가] KakaoMap 컴포넌트에 접근하기 위한 ref
+// 1. 지도 참조 (Ref)
 const kakaoMapRef = ref<any>(null)
 
-// Computed
-const formattedDate = computed(() =>
-  tripDate.value ? new Date(tripDate.value).toLocaleDateString() : '날짜 미정',
-)
-
-const allSelectedPlaces = computed(() => days.value.flatMap((d) => d.places))
-
-const markerPositions = computed(() => {
-  const selectedMarkers = allSelectedPlaces.value.map((p) => ({
-    lat: p.lat,
-    lng: p.lng,
-    id: p.id,
-  }))
-
-  let searchMarkers: any[] = []
-  if (isSearchPanelOpen.value && searchResults.value.length > 0) {
-    searchMarkers = searchResults.value.map((p) => ({
-      lat: p.lat,
-      lng: p.lng,
-      id: p.id,
-    }))
-  }
-
-  return [...selectedMarkers, ...searchMarkers]
-})
-
+// 2. 패널 리사이징 로직
 const { width: panelWidth, startResize } = useResizablePanel({
   initialWidth: 380,
   minWidth: 280,
   maxWidth: 600,
 })
 
-const initData = async () => {
-  if (isCreating) {
-    tripTitle.value = ''
-    tripDate.value = new Date().toISOString().split('T')[0]
-    days.value = [{ dayNumber: 1, places: [] }]
-    isEditMode.value = true
-  } else {
-    // Mock Data
-    tripTitle.value = '성수동 핫플 투어 🔥'
-    tripDate.value = '2024-12-25'
-    days.value = [
-      {
-        dayNumber: 1,
-        places: [
-          {
-            id: 1,
-            name: '대림창고',
-            address: '서울시 성동구 성수동1가 656-1',
-            category: '카페',
-            lat: 37.5443,
-            lng: 127.0557,
-          },
-        ],
-      },
-    ]
-    if (route.query.edit === 'true') {
-      enterEditMode()
-    } else {
-      isEditMode.value = false
-    }
+// 3. 검색 로직 (지도 Ref를 통해 검색 시 bounds 전달)
+const {
+  searchQuery,
+  searchResults,
+  isSearching,
+  isSearchPanelOpen,
+  searchPlaces,
+  closeSearchPanel,
+} = usePlaceSearch()
+
+const handleSearch = () => {
+  // kakaoMapRef에 있는 map 객체를 꺼내서 전달
+  const mapInstance = kakaoMapRef.value?.map
+  searchPlaces(mapInstance)
+}
+
+// 4. 여행 데이터 로직
+const trip = useTripPlan()
+
+// 저장/뒤로가기 시 검색패널 닫기 연결
+const handleSave = () => trip.saveTrip(closeSearchPanel)
+const handleBack = () => trip.goBack(closeSearchPanel)
+
+// 5. 마커 표시 (일정 마커 + 검색 마커)
+const markerPositions = computed(() => {
+  const tripMarkers = trip.allSelectedPlaces.value.map((p) => ({
+    lat: p.lat,
+    lng: p.lng,
+    id: p.id,
+  }))
+
+  let searchMarkers: any[] = []
+  if (isSearchPanelOpen.value) {
+    searchMarkers = searchResults.value.map((p) => ({ lat: p.lat, lng: p.lng, id: p.id }))
   }
-}
-
-// --- 액션 핸들러 ---
-
-// [3. 수정] 지도 범위를 포함한 검색 로직
-const handleSearchPlaces = () => {
-  if (!searchQuery.value.trim()) return
-
-  if (!(window as any).kakao || !(window as any).kakao.maps) {
-    alert('카카오맵 SDK가 로드되지 않았습니다.')
-    return
-  }
-
-  isSearchPanelOpen.value = true
-  isSearching.value = true
-  searchResults.value = []
-
-  const ps = new (window as any).kakao.maps.services.Places()
-
-  // [핵심] 현재 지도의 범위(Bounds)를 가져와서 검색 옵션에 추가
-  let searchOption = {}
-
-  // KakaoMap 컴포넌트가 expose한 map 객체가 있는지 확인
-  if (kakaoMapRef.value && kakaoMapRef.value.map) {
-    const mapInstance = kakaoMapRef.value.map
-    const bounds = mapInstance.getBounds() // 현재 지도 화면의 남서, 북동 좌표 범위
-    searchOption = {
-      bounds: bounds,
-    }
-  }
-
-  // 검색 실행 (3번째 인자로 옵션 전달)
-  ps.keywordSearch(
-    searchQuery.value,
-    (data: any[], status: any) => {
-      isSearching.value = false
-
-      if (status === (window as any).kakao.maps.services.Status.OK) {
-        searchResults.value = data.map((item: any) => ({
-          id: Number(item.id),
-          name: item.place_name,
-          address: item.road_address_name || item.address_name,
-          category: item.category_group_name || '기타',
-          lat: Number(item.y),
-          lng: Number(item.x),
-        }))
-      } else if (status === (window as any).kakao.maps.services.Status.ZERO_RESULT) {
-        searchResults.value = []
-      } else if (status === (window as any).kakao.maps.services.Status.ERROR) {
-        alert('검색 중 오류가 발생했습니다.')
-      }
-    },
-    searchOption,
-  ) // <--- 옵션 추가됨
-}
-
-const closeSearchPanel = () => {
-  isSearchPanelOpen.value = false
-  searchQuery.value = ''
-  searchResults.value = []
-}
-
-const enterEditMode = () => {
-  backupData.value = JSON.stringify({
-    title: tripTitle.value,
-    date: tripDate.value,
-    days: days.value,
-  })
-  isEditMode.value = true
-}
-
-const handleSave = async () => {
-  if (!tripTitle.value.trim()) return alert('제목을 입력해주세요.')
-  await new Promise((resolve) => setTimeout(resolve, 200))
-  alert('저장되었습니다!')
-  isEditMode.value = false
-  closeSearchPanel()
-}
-
-const handleBack = () => {
-  if (isEditMode.value) {
-    if (confirm('작성/수정 중인 내용이 사라집니다. 취소하시겠습니까?')) {
-      if (isCreating) {
-        router.push('/trips')
-      } else {
-        const restored = JSON.parse(backupData.value)
-        tripTitle.value = restored.title
-        tripDate.value = restored.date
-        days.value = restored.days
-        isEditMode.value = false
-        closeSearchPanel()
-      }
-    }
-  } else {
-    router.push('/trips')
-  }
-}
-
-const handleDelete = () => {
-  if (confirm('정말 삭제하시겠습니까?')) {
-    alert('삭제되었습니다.')
-    router.push('/trips')
-  }
-}
-
-const handleAddPlace = (place: Place) => {
-  const dayIndex = days.value.findIndex((d) => d.dayNumber === activeDay.value)
-  if (dayIndex !== -1) {
-    const exists = days.value[dayIndex].places.find((p) => p.name === place.name)
-    if (!exists) {
-      days.value[dayIndex].places.push({ ...place })
-    } else {
-      alert('이미 추가된 장소입니다.')
-    }
-  }
-}
-
-const handleRemovePlace = (placeId: number) => {
-  const dayIndex = days.value.findIndex((d) => d.dayNumber === activeDay.value)
-  if (dayIndex !== -1)
-    days.value[dayIndex].places = days.value[dayIndex].places.filter((p) => p.id !== placeId)
-}
-
-const handleUpdatePlaces = (newPlaces: Place[]) => {
-  const dayIndex = days.value.findIndex((d) => d.dayNumber === activeDay.value)
-  if (dayIndex !== -1) days.value[dayIndex].places = newPlaces
-}
-
-const handleAddDay = () => {
-  const newDay = days.value.length + 1
-  days.value.push({ dayNumber: newDay, places: [] })
-  activeDay.value = newDay
-}
-
-const handleRemoveDay = (dayNum: number) => {
-  if (days.value.length <= 1) return
-  if (confirm(`${dayNum}일차를 삭제하시겠습니까?`)) {
-    days.value = days.value
-      .filter((d) => d.dayNumber !== dayNum)
-      .map((d, i) => ({ ...d, dayNumber: i + 1 }))
-    if (activeDay.value > 1) activeDay.value--
-  }
-}
-
-onMounted(() => {
-  initData()
+  return [...tripMarkers, ...searchMarkers]
 })
 </script>
 

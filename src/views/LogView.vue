@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Settings } from 'lucide-vue-next'
-import { useNavigate } from '@/composables/navigation'
+import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import LogCard from '@/components/log/LogCard.vue'

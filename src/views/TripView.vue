@@ -83,7 +83,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Plus } from 'lucide-vue-next'
-import { useNavigate } from '@/composables/navigation'
+import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
