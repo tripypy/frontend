@@ -16,6 +16,7 @@
 
     <div class="flex-1 flex overflow-hidden relative z-10">
       <TripPlanPanel
+        :style="{ width: `${planPanelWidth}px` }"
         :days="days"
         :active-day="activeDay"
         :is-edit-mode="isEditMode"
@@ -28,6 +29,17 @@
         @remove-day="handleRemoveDay"
         @update-places="handleUpdatePlaces"
       />
+
+      <div
+        class="w-[6px] -ml-[3px] z-30 cursor-col-resize flex items-center justify-center hover:bg-[#9BCCC4] transition-colors opacity-0 hover:opacity-100 active:opacity-100 active:bg-[#9BCCC4]"
+        @mousedown="startResize"
+      >
+        <div class="flex flex-col gap-[2px]">
+          <div class="w-[3px] h-[3px] rounded-full bg-[#2C2C2C]"></div>
+          <div class="w-[3px] h-[3px] rounded-full bg-[#2C2C2C]"></div>
+          <div class="w-[3px] h-[3px] rounded-full bg-[#2C2C2C]"></div>
+        </div>
+      </div>
 
       <TripSearchPanel
         v-if="isSearchPanelOpen"
@@ -85,6 +97,10 @@ const route = useRoute()
 const router = useRouter()
 const isCreating = route.name === 'create-trip'
 
+// Layout State (Resize)
+const planPanelWidth = ref(380) // 초기 너비
+const isDragging = ref(false)
+
 // State
 const isEditMode = ref(isCreating)
 const backupData = ref<string>('')
@@ -103,10 +119,40 @@ const isSearchPanelOpen = ref(false)
 const formattedDate = computed(() =>
   tripDate.value ? new Date(tripDate.value).toLocaleDateString() : '날짜 미정',
 )
+
 const allSelectedPlaces = computed(() => days.value.flatMap((d) => d.places))
+
 const markerPositions = computed(() =>
   allSelectedPlaces.value.map((p) => ({ lat: p.lat, lng: p.lng, id: p.id })),
 )
+
+const startResize = (e: MouseEvent) => {
+  isDragging.value = true
+  document.body.style.cursor = 'col-resize' // 드래그 중 커서 고정
+  document.body.style.userSelect = 'none' // 텍스트 선택 방지
+
+  window.addEventListener('mousemove', handleResize)
+  window.addEventListener('mouseup', stopResize)
+}
+
+const handleResize = (e: MouseEvent) => {
+  if (!isDragging.value) return
+
+  // 최소 280px, 최대 600px 제한
+  const newWidth = e.clientX
+  if (newWidth >= 280 && newWidth <= 600) {
+    planPanelWidth.value = newWidth
+  }
+}
+
+const stopResize = () => {
+  isDragging.value = false
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+
+  window.removeEventListener('mousemove', handleResize)
+  window.removeEventListener('mouseup', stopResize)
+}
 
 const initData = async () => {
   if (isCreating) {

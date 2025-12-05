@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-[380px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col h-full relative flex-shrink-0 z-20"
+    class="bg-white border-r-[3px] border-[#2C2C2C] flex flex-col h-full relative flex-shrink-0 z-20"
   >
     <div v-if="isEditMode" class="p-3 border-b-[2px] border-gray-200 relative">
       <div class="relative">
