@@ -70,20 +70,20 @@
           <template #item="{ element: place, index }">
             <div
               @click="$emit('click-place', place)"
-              class="p-1.5 bg-white border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] transition-all group flex items-center gap-1.5"
+              class="p-4 bg-white border-[2px] border-[#2C2C2C] rounded-xl hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] transition-all group flex items-center gap-3 cursor-pointer"
               :class="{ 'cursor-move': isEditMode }"
             >
               <div v-if="isEditMode" class="drag-handle flex-shrink-0 cursor-grab">
                 <GripVertical class="w-3 h-3 text-gray-400" stroke-width="2.5" />
               </div>
               <div
-                class="w-5 h-5 rounded border-[2px] border-[#2C2C2C] flex items-center justify-center font-black text-[10px] flex-shrink-0 bg-[#9BCCC4]"
+                class="w-7 h-7 rounded border-[2px] border-[#2C2C2C] flex items-center justify-center font-black text-[11px] flex-shrink-0 bg-[#9BCCC4]"
               >
                 {{ index + 1 }}
               </div>
               <div class="flex-1 min-w-0">
-                <h4 class="font-black text-[11px] truncate leading-tight">{{ place.name }}</h4>
-                <p class="text-[9px] font-bold text-gray-600 truncate">{{ place.category }}</p>
+                <h4 class="font-black text-[12.5px] truncate leading-tight">{{ place.name }}</h4>
+                <p class="text-[10px] font-bold text-gray-600 truncate">{{ place.category }}</p>
               </div>
 
               <button
