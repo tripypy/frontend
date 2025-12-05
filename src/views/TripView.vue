@@ -75,6 +75,8 @@
       @close="selectedTrip = null"
       @edit="handleEditFromModal"
     />
+
+    <ScrollToTop />
   </div>
 </template>
 
@@ -85,6 +87,7 @@ import { useNavigate } from '@/composables/navigation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
+import ScrollToTop from '@/components/common/ScrollToTop.vue' // Import 추가
 import { initialTrips } from '@/data/trips'
 
 interface Trip {
@@ -157,7 +160,7 @@ const formatMonth = (monthStr: string) => {
 
 // --- 핸들러 함수들 ---
 
-// 1. 모달 열기 로직 (카드 클릭 시)
+// 1. 모달 열기 로직
 const handleOpenModal = (tripId: number) => {
   const trip = tripsList.value.find((t) => t.id === tripId)
   if (trip) {
@@ -173,9 +176,7 @@ const handleOpenModal = (tripId: number) => {
 
 // 2. 모달 안에서 [수정] 버튼 클릭 시 -> TripPlanView로 이동 + 수정 모드 ON
 const handleEditFromModal = (trip: any) => {
-  // 모달 닫기
   selectedTrip.value = null
-  // ★ 수정됨: useNavigate 사용 (trip-edit 페이지로 이동하며 id 전달)
   handleNavigate('trip-edit', { id: trip.id })
 }
 </script>
