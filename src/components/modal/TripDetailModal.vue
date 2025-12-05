@@ -131,6 +131,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Calendar, MapPin, Edit } from 'lucide-vue-next'
 import PlaceDetailModal from './PlaceDetailModal.vue'
+import { useKakaoMap } from '@/composables/useKakaoMap'
 
 interface Place {
   id: number
@@ -165,8 +166,6 @@ const emit = defineEmits(['close', 'edit'])
 
 const activeDay = ref(1)
 const selectedPlace = ref<Place | null>(null)
-const mapLoaded = ref(false)
-let map: any = null
 
 // Mock data - 실제로는 API에서 가져와야 함
 const days = ref<DayPlan[]>([
@@ -231,23 +230,10 @@ const handleEditClick = () => {
   emit('edit', props.trip)
 }
 
-// 카카오맵 초기화
-const initKakaoMap = () => {
-  const container = document.getElementById('kakao-map')
-  if (!container) {
-    console.error('Map container not found')
-    return
-  }
-
-  const options = {
-    center: new (window as any).kakao.maps.LatLng(37.5665, 126.9780), // 서울 시청 좌표
-    level: 5, // 확대 레벨
-  }
-
-  map = new (window as any).kakao.maps.Map(container, options)
-  mapLoaded.value = true
-  console.log('Map initialized successfully')
-}
+const { map, mapLoaded } = useKakaoMap('kakao-map', {
+  center: { lat: 37.5665, lng: 126.978 },
+  level: 5,
+})
 
 // ESC 키로 닫기
 const handleKeydown = (e: KeyboardEvent) => {
@@ -258,15 +244,6 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
-
-  // 카카오맵 로드 및 초기화 (twalk SimpleMap.vue 방식)
-  if ((window as any).kakao && (window as any).kakao.maps) {
-    ;(window as any).kakao.maps.load(() => {
-      initKakaoMap()
-    })
-  } else {
-    console.error('Kakao Maps API not loaded')
-  }
 })
 
 onUnmounted(() => {
