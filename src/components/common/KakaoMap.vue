@@ -1,9 +1,7 @@
 <template>
   <div class="relative w-full h-full">
-    <!-- 실제 카카오맵이 들어가는 곳 -->
     <div ref="mapContainer" class="w-full h-full"></div>
 
-    <!-- 로딩 오버레이 -->
     <div
       v-if="!mapLoaded"
       class="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80"
@@ -19,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, markRaw, toRaw } from 'vue' // markRaw, toRaw 추가
 
 interface LatLng {
   lat: number
@@ -40,7 +38,7 @@ const mapContainer = ref<HTMLElement | null>(null)
 const map = ref<any | null>(null)
 const mapLoaded = ref(false)
 
-// 내부에서만 쓰는 마커 배열
+// 내부에서만 쓰는 마커 배열 (반응형일 필요 없음)
 let kakaoMarkers: any[] = []
 
 const clearMarkers = () => {
@@ -49,7 +47,9 @@ const clearMarkers = () => {
 }
 
 const renderMarkers = (markers: MarkerOption[]) => {
-  if (!map.value) return
+  // map.value가 Proxy일 수 있으므로 toRaw로 원본 객체를 가져와서 안전하게 접근
+  const rawMap = toRaw(map.value)
+  if (!rawMap) return
 
   const kakao = (window as any).kakao
 
@@ -61,16 +61,18 @@ const renderMarkers = (markers: MarkerOption[]) => {
 
   markers.forEach((m) => {
     const pos = new kakao.maps.LatLng(m.lat, m.lng)
+
+    // 마커 생성 시에도 map 속성에 원본 맵 객체(rawMap)를 할당
     const marker = new kakao.maps.Marker({
       position: pos,
-      map: map.value,
+      map: rawMap,
     })
     kakaoMarkers.push(marker)
     bounds.extend(pos)
   })
 
   // 모든 마커가 보이도록 범위 조정
-  map.value.setBounds(bounds)
+  rawMap.setBounds(bounds)
 }
 
 const initMap = () => {
@@ -88,10 +90,14 @@ const initMap = () => {
   const center = props.center ?? { lat: 37.5665, lng: 126.978 } // 서울 시청
   const level = props.level ?? 5
 
-  map.value = new kakao.maps.Map(mapContainer.value, {
+  // ★ 핵심 수정: 생성된 맵 인스턴스를 markRaw로 감싸서 반응형 시스템에서 제외시킴
+  const mapInstance = new kakao.maps.Map(mapContainer.value, {
     center: new kakao.maps.LatLng(center.lat, center.lng),
     level,
   })
+
+  // Vue가 이 객체를 Proxy로 만들지 못하게 막음 -> 'reading b' 에러 해결
+  map.value = markRaw(mapInstance)
 
   mapLoaded.value = true
 
