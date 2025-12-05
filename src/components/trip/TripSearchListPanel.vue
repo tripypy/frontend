@@ -23,12 +23,21 @@
       </div>
 
       <template v-else-if="results.length > 0">
-        <div v-for="place in results" :key="place.id" class="mb-3 last:mb-0">
+        <div
+          v-for="place in results"
+          :key="place.id"
+          :ref="
+            (el) => {
+              if (el) itemRefs[place.id] = el as HTMLElement
+            }
+          "
+          class="mb-3 last:mb-0"
+        >
           <div
             @click="$emit('click-item', place)"
             class="p-3 border-[2px] border-[#2C2C2C] rounded-xl hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)] transition-all bg-white group cursor-pointer"
             :class="[
-              place.id === selectedId
+              String(place.id) === String(selectedId)
                 ? 'border-[#9BCCC4] bg-[#F0FAF9] shadow-[4px_4px_0px_0px_rgba(155,204,196,0.6)]'
                 : 'border-[#2C2C2C] bg-white hover:border-[#9BCCC4] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)]',
             ]"
@@ -74,9 +83,10 @@
 
             <p
               class="text-[10px] font-bold text-gray-400 mb-3 truncate px-1 flex items-center gap-1"
+              :class="{ 'invisible select-none': !place.phone }"
             >
               <Phone class="w-3 h-3" />
-              {{ place.phone ? place.phone : '-' }}
+              {{ place.phone || '00-0000-0000' }}
             </p>
 
             <button
@@ -98,11 +108,12 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, nextTick } from 'vue' // [2] watch, nextTick 추가
 import { X, Plus, ExternalLink, Phone } from 'lucide-vue-next'
 import type { Place } from '@/types/trip'
 import { getCategoryIcon } from '@/utils/placeCategory'
 
-defineProps<{
+const props = defineProps<{
   results: Place[]
   isLoading: boolean
   selectedId?: number | string | null
@@ -113,4 +124,31 @@ defineEmits<{
   (e: 'add-place', place: Place): void
   (e: 'click-item', place: Place): void
 }>()
+
+// [3] 스크롤 이동 로직 추가
+const itemRefs = ref<Record<string | number, HTMLElement>>({})
+
+// results가 바뀌면 refs 초기화 (새로운 검색 시)
+watch(
+  () => props.results,
+  () => {
+    itemRefs.value = {}
+  },
+)
+
+// selectedId가 바뀌면 해당 요소로 스크롤
+watch(
+  () => props.selectedId,
+  async (newId) => {
+    if (newId) {
+      await nextTick() // DOM 렌더링 완료 대기
+      const targetElement = itemRefs.value[newId]
+
+      if (targetElement) {
+        // 부드럽게 스크롤 이동 & 가운데 정렬
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  },
+)
 </script>
