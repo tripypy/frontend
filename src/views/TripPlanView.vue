@@ -106,7 +106,7 @@ const tripDate = ref('')
 const activeDay = ref(1)
 const days = ref<DayPlan[]>([])
 
-// Search State (추가됨)
+// Search State
 const searchQuery = ref('')
 const searchResults = ref<Place[]>([])
 const isSearching = ref(false)
@@ -119,9 +119,28 @@ const formattedDate = computed(() =>
 
 const allSelectedPlaces = computed(() => days.value.flatMap((d) => d.places))
 
-const markerPositions = computed(() =>
-  allSelectedPlaces.value.map((p) => ({ lat: p.lat, lng: p.lng, id: p.id })),
-)
+// [수정됨] 마커 표시 로직: 선택된 장소 + 검색 결과 장소 모두 표시
+const markerPositions = computed(() => {
+  // 1. 이미 일정에 추가된 장소들
+  const selectedMarkers = allSelectedPlaces.value.map((p) => ({
+    lat: p.lat,
+    lng: p.lng,
+    id: p.id,
+  }))
+
+  // 2. 현재 검색된 결과 장소들 (검색 패널이 열려있을 때만)
+  let searchMarkers: any[] = []
+  if (isSearchPanelOpen.value && searchResults.value.length > 0) {
+    searchMarkers = searchResults.value.map((p) => ({
+      lat: p.lat,
+      lng: p.lng,
+      id: p.id,
+    }))
+  }
+
+  // 두 배열 합치기
+  return [...selectedMarkers, ...searchMarkers]
+})
 
 const { width: panelWidth, startResize } = useResizablePanel({
   initialWidth: 380,
@@ -164,45 +183,46 @@ const initData = async () => {
 
 // --- 액션 핸들러 ---
 
-// 검색 로직 수정
-const handleSearchPlaces = async () => {
+// [수정됨] 실제 카카오 키워드 검색 API 호출
+const handleSearchPlaces = () => {
+  // 1. 검색어 유효성 체크
   if (!searchQuery.value.trim()) return
 
-  // 패널 열기 및 초기화
+  // 2. 카카오 객체 확인 (안전장치)
+  if (!(window as any).kakao || !(window as any).kakao.maps) {
+    alert('카카오맵 SDK가 로드되지 않았습니다.')
+    return
+  }
+
+  // 3. 상태 초기화
   isSearchPanelOpen.value = true
   isSearching.value = true
   searchResults.value = []
 
-  // Mock API Call
-  await new Promise((resolve) => setTimeout(resolve, 600))
+  // 4. 장소 검색 객체 생성
+  const ps = new (window as any).kakao.maps.services.Places()
 
-  searchResults.value = [
-    {
-      id: Date.now() + 1,
-      name: `${searchQuery.value} 감성 카페`,
-      address: '서울시 성동구 아차산로 1길',
-      category: '카페',
-      lat: 37.544,
-      lng: 127.056,
-    },
-    {
-      id: Date.now() + 2,
-      name: `${searchQuery.value} 파스타`,
-      address: '서울시 성동구 서울숲길 15',
-      category: '음식점',
-      lat: 37.543,
-      lng: 127.04,
-    },
-    {
-      id: Date.now() + 3,
-      name: `${searchQuery.value} 소품샵`,
-      address: '서울시 성동구 연무장길 33',
-      category: '쇼핑',
-      lat: 37.542,
-      lng: 127.05,
-    },
-  ]
-  isSearching.value = false
+  // 5. 검색 실행
+  ps.keywordSearch(searchQuery.value, (data: any[], status: any) => {
+    isSearching.value = false
+
+    if (status === (window as any).kakao.maps.services.Status.OK) {
+      // 6. API 결과를 내 앱의 Place 인터페이스에 맞게 변환
+      searchResults.value = data.map((item: any) => ({
+        id: Number(item.id),
+        name: item.place_name,
+        address: item.road_address_name || item.address_name,
+        category: item.category_group_name || '기타',
+        lat: Number(item.y), // API는 y가 위도(latitude)
+        lng: Number(item.x), // API는 x가 경도(longitude)
+      }))
+    } else if (status === (window as any).kakao.maps.services.Status.ZERO_RESULT) {
+      // 검색 결과 없음
+      searchResults.value = []
+    } else if (status === (window as any).kakao.maps.services.Status.ERROR) {
+      alert('검색 중 오류가 발생했습니다.')
+    }
+  })
 }
 
 const closeSearchPanel = () => {
@@ -225,7 +245,7 @@ const handleSave = async () => {
   await new Promise((resolve) => setTimeout(resolve, 200))
   alert('저장되었습니다!')
   isEditMode.value = false
-  closeSearchPanel() // 저장 시 검색 패널도 닫기
+  closeSearchPanel()
 }
 
 const handleBack = () => {
@@ -257,7 +277,6 @@ const handleDelete = () => {
 const handleAddPlace = (place: Place) => {
   const dayIndex = days.value.findIndex((d) => d.dayNumber === activeDay.value)
   if (dayIndex !== -1) {
-    // 중복 체크 (간단히 이름으로)
     const exists = days.value[dayIndex].places.find((p) => p.name === place.name)
     if (!exists) {
       days.value[dayIndex].places.push({ ...place })
@@ -265,7 +284,6 @@ const handleAddPlace = (place: Place) => {
       alert('이미 추가된 장소입니다.')
     }
   }
-  // 추가 후 패널을 닫지 않고 연속 추가 가능하도록 유지
 }
 
 const handleRemovePlace = (placeId: number) => {
