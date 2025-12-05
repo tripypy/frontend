@@ -12,7 +12,7 @@
         </div>
 
         <button
-          @click="handleCreate"
+          @click="handleNavigate('create-trip')"
           class="flex items-center justify-center gap-3 px-6 py-4 bg-[#F9CA6B] border-[3px] border-black rounded-2xl font-black text-sm tracking-tight shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all uppercase w-full md:w-auto focus:outline-none"
         >
           <Plus class="w-5 h-5" stroke-width="3" />
@@ -51,7 +51,7 @@
               v-for="trip in group"
               :key="trip.id"
               :trip="trip"
-              @click="handleCardClick(trip.id)"
+              @click="handleOpenModal(trip.id)"
               @open-modal="handleOpenModal"
             />
           </div>
@@ -63,7 +63,7 @@
           v-for="trip in displayTrips"
           :key="trip.id"
           :trip="trip"
-          @click="handleCardClick(trip.id)"
+          @click="handleOpenModal(trip.id)"
           @open-modal="handleOpenModal"
         />
       </div>
@@ -80,8 +80,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { Plus } from 'lucide-vue-next'
+import { useNavigate } from '@/composables/navigation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
@@ -97,7 +97,8 @@ interface Trip {
   completedDate?: string
 }
 
-const router = useRouter()
+const { handleNavigate } = useNavigate()
+
 const activeTab = ref<'all' | 'planning' | 'completed' | 'saved'>('all')
 const tripsList = ref<Trip[]>(initialTrips)
 const selectedTrip = ref<any>(null)
@@ -156,17 +157,7 @@ const formatMonth = (monthStr: string) => {
 
 // --- 핸들러 함수들 ---
 
-// 1. 새 여행 만들기 -> TripPlanView로 이동 (/create-trip)
-const handleCreate = () => {
-  router.push('/create-trip')
-}
-
-// 2. ★ 수정됨: 카드 클릭 시 -> 모달 열기 (페이지 이동 X)
-const handleCardClick = (id: number) => {
-  handleOpenModal(id)
-}
-
-// 3. 모달 열기 로직
+// 1. 모달 열기 로직 (카드 클릭 시)
 const handleOpenModal = (tripId: number) => {
   const trip = tripsList.value.find((t) => t.id === tripId)
   if (trip) {
@@ -180,18 +171,12 @@ const handleOpenModal = (tripId: number) => {
   }
 }
 
-// 4. ★ 모달 안에서 [수정] 버튼 클릭 시 -> TripPlanView로 이동 + 수정 모드 ON
+// 2. 모달 안에서 [수정] 버튼 클릭 시 -> TripPlanView로 이동 + 수정 모드 ON
 const handleEditFromModal = (trip: any) => {
   // 모달 닫기
   selectedTrip.value = null
-  // 상세/수정 페이지로 이동 (쿼리에 edit=true 포함)
-  router.push(`/trips/${trip.id}?edit=true`)
-}
-
-// 5. 네비게이션
-const handleNavigate = (page: string) => {
-  if (page === 'create-trip') handleCreate()
-  else if (page === 'trips') router.push('/trips')
+  // ★ 수정됨: useNavigate 사용 (trip-edit 페이지로 이동하며 id 전달)
+  handleNavigate('trip-edit', { id: trip.id })
 }
 </script>
 
