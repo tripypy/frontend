@@ -60,6 +60,7 @@ const PIN_MARKER_SRC = pinImg
 const NORMAL_SIZE = { width: 40, height: 40 }
 const BIG_SIZE = { width: 45, height: 45 }
 const PIN_SIZE = { width: 35, height: 35 }
+const PIN_BIG_SIZE = { width: 45, height: 45 }
 
 const clearMarkers = () => {
   kakaoMarkers.forEach((m) => m.setMap(null))
@@ -91,10 +92,13 @@ const renderMarkers = (markers: MarkerOption[]) => {
     SELECTED_MARKER_SRC,
     new kakao.maps.Size(BIG_SIZE.width, BIG_SIZE.height),
   )
-  // [NEW] 핀 이미지 객체 생성
   const pinImage = new kakao.maps.MarkerImage(
     PIN_MARKER_SRC,
     new kakao.maps.Size(PIN_SIZE.width, PIN_SIZE.height),
+  )
+  const selectedPinImage = new kakao.maps.MarkerImage(
+    PIN_MARKER_SRC,
+    new kakao.maps.Size(PIN_BIG_SIZE.width, PIN_BIG_SIZE.height),
   )
 
   markers.forEach((m) => {
@@ -102,15 +106,17 @@ const renderMarkers = (markers: MarkerOption[]) => {
     const isSelected = props.selectedMarkerId && String(m.id) === String(props.selectedMarkerId)
 
     // [핵심] 이미지 결정 로직
-    let targetImage = normalImage // 기본: 파란 마커
-    let zIndex = 1
+    let targetImage
+    let zIndex
 
-    if (isSelected) {
-      targetImage = selectedImage // 선택됨: 노란 마커 (최우선)
-      zIndex = 999
-    } else if (m.type === 'plan') {
-      targetImage = pinImage // 계획됨: 핀 마커
-      zIndex = 50 // 검색 결과보단 위에, 선택된 것보단 아래
+    if (m.type === 'plan') {
+      // 계획된 장소인 경우: 선택되면 '큰 핀', 아니면 '일반 핀'
+      targetImage = isSelected ? selectedPinImage : pinImage
+      zIndex = isSelected ? 999 : 50
+    } else {
+      // 검색된 장소인 경우: 선택되면 '노란 마커', 아니면 '파란 마커'
+      targetImage = isSelected ? selectedImage : normalImage
+      zIndex = isSelected ? 999 : 1
     }
 
     const marker = new kakao.maps.Marker({
@@ -179,7 +185,7 @@ watch(
     const kakao = (window as any).kakao
     if (!kakao) return
 
-    // 이미지 객체 재생성 (혹은 상수로 빼도 됨)
+    // 이미지 객체들 다시 생성 (위와 동일)
     const normalImage = new kakao.maps.MarkerImage(
       DEFAULT_MARKER_SRC,
       new kakao.maps.Size(NORMAL_SIZE.width, NORMAL_SIZE.height),
@@ -192,21 +198,22 @@ watch(
       PIN_MARKER_SRC,
       new kakao.maps.Size(PIN_SIZE.width, PIN_SIZE.height),
     )
+    const selectedPinImage = new kakao.maps.MarkerImage(
+      PIN_MARKER_SRC,
+      new kakao.maps.Size(PIN_BIG_SIZE.width, PIN_BIG_SIZE.height),
+    )
 
     kakaoMarkers.forEach((marker) => {
-      // 선택된 놈
-      if (String(marker.customId) === String(newId)) {
-        marker.setImage(selectedImage)
-        marker.setZIndex(999)
+      const isTarget = String(marker.customId) === String(newId)
+
+      if (marker.customType === 'plan') {
+        // Plan 마커 로직: 선택되면 큰 핀, 아니면 일반 핀
+        marker.setImage(isTarget ? selectedPinImage : pinImage)
+        marker.setZIndex(isTarget ? 999 : 50)
       } else {
-        // 선택 해제된 놈들은 원래 자신의 타입(plan vs search)으로 복구
-        if (marker.customType === 'plan') {
-          marker.setImage(pinImage)
-          marker.setZIndex(50)
-        } else {
-          marker.setImage(normalImage)
-          marker.setZIndex(1)
-        }
+        // Search 마커 로직: 선택되면 노란 마커, 아니면 파란 마커
+        marker.setImage(isTarget ? selectedImage : normalImage)
+        marker.setZIndex(isTarget ? 999 : 1)
       }
     })
   },

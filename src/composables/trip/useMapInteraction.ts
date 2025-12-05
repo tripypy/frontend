@@ -33,15 +33,19 @@ export function useMapInteraction({
       type: 'plan',
     }))
 
+    const planIds = new Set(allSelectedPlaces.value.map((p) => p.id))
+
     // 2. 검색 결과 마커 (패널 열려있을 때만)
     let searchMarkers: any[] = []
     if (isSearchPanelOpen.value) {
-      searchMarkers = searchResults.value.map((p) => ({
-        lat: p.lat,
-        lng: p.lng,
-        id: p.id,
-        type: 'search',
-      }))
+      searchMarkers = searchResults.value
+        .filter((p) => !planIds.has(p.id)) // [핵심 수정] 이미 일정에 있는 건 검색 마커로 그리지 않음!
+        .map((p) => ({
+          lat: p.lat,
+          lng: p.lng,
+          id: p.id,
+          type: 'search' as const,
+        }))
     }
     return [...tripMarkers, ...searchMarkers]
   })
