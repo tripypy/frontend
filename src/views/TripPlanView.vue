@@ -41,7 +41,7 @@
         </div>
       </div>
 
-      <TripSearchPanel
+      <TripSearchListPanel
         v-if="isSearchPanelOpen"
         :results="searchResults"
         :is-loading="isSearching"
@@ -76,7 +76,7 @@ import { Plus } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
-import TripSearchPanel from '@/components/trip/TripSearchPanel.vue'
+import TripSearchListPanel from '@/components/trip/TripSearchListPanel.vue'
 
 // 로직 파일 Import
 import { useResizablePanel } from '@/composables/common/useResizablePanel'
