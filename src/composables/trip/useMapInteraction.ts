@@ -30,6 +30,7 @@ export function useMapInteraction({
       lat: p.lat,
       lng: p.lng,
       id: p.id,
+      type: 'plan',
     }))
 
     // 2. 검색 결과 마커 (패널 열려있을 때만)
@@ -39,6 +40,7 @@ export function useMapInteraction({
         lat: p.lat,
         lng: p.lng,
         id: p.id,
+        type: 'search',
       }))
     }
     return [...tripMarkers, ...searchMarkers]

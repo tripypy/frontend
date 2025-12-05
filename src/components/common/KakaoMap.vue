@@ -20,6 +20,7 @@
 import { ref, onMounted, onUnmounted, watch, markRaw, toRaw } from 'vue'
 import markerImg from '@/assets/marker.png'
 import yellowMarkerImg from '@/assets/yellow-marker.png'
+import pinImg from '@/assets/pin.png'
 
 interface LatLng {
   lat: number
@@ -28,6 +29,7 @@ interface LatLng {
 
 interface MarkerOption extends LatLng {
   id?: number | string
+  type?: 'plan' | 'search'
 }
 
 const props = defineProps<{
@@ -45,23 +47,31 @@ const emits = defineEmits<{
 const mapContainer = ref<HTMLElement | null>(null)
 const map = ref<any>(null)
 const mapLoaded = ref(false)
+
 let kakaoMarkers: any[] = []
+let kakaoPolyline: any = null
 
 // 이미지 경로
 const DEFAULT_MARKER_SRC = markerImg
 const SELECTED_MARKER_SRC = yellowMarkerImg
+const PIN_MARKER_SRC = pinImg
 
 // 사이즈 설정
 const NORMAL_SIZE = { width: 40, height: 40 }
 const BIG_SIZE = { width: 45, height: 45 }
+const PIN_SIZE = { width: 35, height: 35 }
 
 const clearMarkers = () => {
   kakaoMarkers.forEach((m) => m.setMap(null))
   kakaoMarkers = []
+
+  if (kakaoPolyline) {
+    kakaoPolyline.setMap(null)
+    kakaoPolyline = null
+  }
 }
 
 const renderMarkers = (markers: MarkerOption[]) => {
-  // [중요] toRaw를 사용하여 Vue Proxy가 벗겨진 순수 지도 객체를 가져옵니다.
   const rawMap = toRaw(map.value)
   if (!rawMap) return
 
@@ -72,6 +82,7 @@ const renderMarkers = (markers: MarkerOption[]) => {
 
   const bounds = new kakao.maps.LatLngBounds()
 
+  // 이미지 객체 미리 생성
   const normalImage = new kakao.maps.MarkerImage(
     DEFAULT_MARKER_SRC,
     new kakao.maps.Size(NORMAL_SIZE.width, NORMAL_SIZE.height),
@@ -80,38 +91,77 @@ const renderMarkers = (markers: MarkerOption[]) => {
     SELECTED_MARKER_SRC,
     new kakao.maps.Size(BIG_SIZE.width, BIG_SIZE.height),
   )
+  // [NEW] 핀 이미지 객체 생성
+  const pinImage = new kakao.maps.MarkerImage(
+    PIN_MARKER_SRC,
+    new kakao.maps.Size(PIN_SIZE.width, PIN_SIZE.height),
+  )
 
   markers.forEach((m) => {
     const pos = new kakao.maps.LatLng(m.lat, m.lng)
-
-    // [중요] ID 비교 시 문자열로 변환하여 비교 (타입 불일치 방지)
     const isSelected = props.selectedMarkerId && String(m.id) === String(props.selectedMarkerId)
+
+    // [핵심] 이미지 결정 로직
+    let targetImage = normalImage // 기본: 파란 마커
+    let zIndex = 1
+
+    if (isSelected) {
+      targetImage = selectedImage // 선택됨: 노란 마커 (최우선)
+      zIndex = 999
+    } else if (m.type === 'plan') {
+      targetImage = pinImage // 계획됨: 핀 마커
+      zIndex = 50 // 검색 결과보단 위에, 선택된 것보단 아래
+    }
 
     const marker = new kakao.maps.Marker({
       position: pos,
       map: rawMap,
-      image: isSelected ? selectedImage : normalImage,
-      zIndex: isSelected ? 999 : 1,
-      clickable: true, // [필수] 이 옵션이 있어야 클릭 이벤트가 확실하게 동작합니다.
+      image: targetImage,
+      zIndex: zIndex,
+      clickable: true,
     })
 
-    // 마커 클릭 이벤트 리스너
+    // 속성 저장 (나중에 watch에서 씀)
+    marker.customId = m.id
+    marker.customType = m.type // type도 저장해둬야 watch에서 복구 가능
+
     kakao.maps.event.addListener(marker, 'click', () => {
-      console.log('📌 마커 클릭됨:', m.id) // [디버깅용 로그]
       if (m.id !== undefined && m.id !== null) {
         emits('marker-click', m.id)
       }
     })
 
-    // 나중에 찾기 위해 ID 저장
-    marker.customId = m.id
     kakaoMarkers.push(marker)
     bounds.extend(pos)
   })
 
-  // 선택된 마커가 없을 때만 전체 뷰 조정
+  // [NEW] 마커를 다 찍은 후, 선 연결하기
+  renderPolyline(markers)
+
   if (!props.selectedMarkerId) {
     rawMap.setBounds(bounds)
+  }
+}
+
+const renderPolyline = (markers: MarkerOption[]) => {
+  const rawMap = toRaw(map.value)
+  if (!rawMap) return
+  const kakao = (window as any).kakao
+
+  // 'plan' 타입인 마커들의 좌표만 추출
+  const linePath = markers
+    .filter((m) => m.type === 'plan')
+    .map((m) => new kakao.maps.LatLng(m.lat, m.lng))
+
+  if (linePath.length > 1) {
+    kakaoPolyline = new kakao.maps.Polyline({
+      path: linePath, // 선을 구성하는 좌표배열
+      strokeWeight: 3, // 선의 두께
+      strokeColor: '#2C2C2C', // 선의 색깔 (테두리색과 맞춤)
+      strokeOpacity: 0.8, // 선의 불투명도
+      strokeStyle: 'solid', // 선의 스타일
+    })
+    kakaoPolyline.setMap(rawMap)
   }
 }
 
@@ -126,11 +176,10 @@ const panTo = (lat: number, lng: number) => {
 watch(
   () => props.selectedMarkerId,
   (newId) => {
-    console.log('👀 선택된 ID 변경됨:', newId) // [디버깅용 로그]
-
     const kakao = (window as any).kakao
     if (!kakao) return
 
+    // 이미지 객체 재생성 (혹은 상수로 빼도 됨)
     const normalImage = new kakao.maps.MarkerImage(
       DEFAULT_MARKER_SRC,
       new kakao.maps.Size(NORMAL_SIZE.width, NORMAL_SIZE.height),
@@ -139,14 +188,25 @@ watch(
       SELECTED_MARKER_SRC,
       new kakao.maps.Size(BIG_SIZE.width, BIG_SIZE.height),
     )
+    const pinImage = new kakao.maps.MarkerImage(
+      PIN_MARKER_SRC,
+      new kakao.maps.Size(PIN_SIZE.width, PIN_SIZE.height),
+    )
 
     kakaoMarkers.forEach((marker) => {
-      if (marker.customId === newId) {
+      // 선택된 놈
+      if (String(marker.customId) === String(newId)) {
         marker.setImage(selectedImage)
         marker.setZIndex(999)
       } else {
-        marker.setImage(normalImage)
-        marker.setZIndex(1)
+        // 선택 해제된 놈들은 원래 자신의 타입(plan vs search)으로 복구
+        if (marker.customType === 'plan') {
+          marker.setImage(pinImage)
+          marker.setZIndex(50)
+        } else {
+          marker.setImage(normalImage)
+          marker.setZIndex(1)
+        }
       }
     })
   },
