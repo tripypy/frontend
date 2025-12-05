@@ -15,3 +15,13 @@ export interface DayPlan {
   dayNumber: number
   places: Place[]
 }
+
+export interface Trip {
+  id: number
+  title: string
+  spots: number
+  status: string
+  tags?: string[]
+  spotPreviews: { name: string }[]
+  completedDate?: string
+}

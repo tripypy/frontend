@@ -25,6 +25,7 @@
       <template v-else-if="results.length > 0">
         <div v-for="place in results" :key="place.id" class="mb-3 last:mb-0">
           <div
+            @click="$emit('click-item', place)"
             class="p-3 border-[2px] border-[#2C2C2C] rounded-xl hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)] transition-all bg-white group"
           >
             <div class="flex items-start gap-2 mb-2">
@@ -105,5 +106,6 @@ defineProps<{
 defineEmits<{
   (e: 'close'): void
   (e: 'add-place', place: Place): void
+  (e: 'click-item', place: Place): void
 }>()
 </script>

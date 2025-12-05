@@ -47,6 +47,7 @@
         :is-loading="isSearching"
         @close="closeSearchPanel"
         @add-place="trip.addPlace"
+        @click-item="handlePlaceClick"
       />
 
       <div class="flex-1 bg-gray-100 relative z-0">
@@ -56,6 +57,7 @@
           :center="{ lat: 37.5443, lng: 127.0557 }"
           :level="5"
           :markers="markerPositions"
+          :selected-marker-id="selectedMarkerId"
         />
 
         <div class="absolute top-6 right-6 flex flex-col gap-3 z-20">
@@ -85,6 +87,20 @@ import { useTripPlan } from '@/composables/trip/useTripPlan'
 
 // 1. 지도 참조 (Ref)
 const kakaoMapRef = ref<any>(null)
+
+// 1. 선택된 마커 ID 관리
+const selectedMarkerId = ref<number | string | null>(null)
+
+// [NEW] 장소 클릭 시 실행될 함수
+const handlePlaceClick = (place: Place) => {
+  // 1. 마커 강조 (ID 설정)
+  selectedMarkerId.value = place.id
+
+  // 2. 지도 이동 (KakaoMap 컴포넌트의 panTo 함수 호출)
+  if (kakaoMapRef.value && kakaoMapRef.value.panTo) {
+    kakaoMapRef.value.panTo(place.lat, place.lng)
+  }
+}
 
 // 2. 패널 리사이징 로직
 const { width: panelWidth, startResize } = useResizablePanel({
