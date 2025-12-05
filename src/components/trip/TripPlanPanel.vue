@@ -64,8 +64,8 @@
           item-key="id"
           class="space-y-1.5 mb-4"
           ghost-class="opacity-50"
-          handle=".drag-handle"
           :disabled="!isEditMode"
+          :animation="200"
         >
           <template #item="{ element: place, index }">
             <div
