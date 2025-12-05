@@ -8,8 +8,8 @@
       :total-places-count="trip.allSelectedPlaces.value.length"
       @update:trip-title="trip.tripTitle.value = $event"
       @update:trip-date="trip.tripDate.value = $event"
-      @back="handleBack"
-      @save="handleSave"
+      @back="tripBack"
+      @save="tripSave"
       @delete="trip.deleteTrip"
       @edit="trip.enterEditMode"
     />
@@ -23,7 +23,7 @@
         :search-query="searchQuery"
         @update:search-query="searchQuery = $event"
         @update:active-day="trip.activeDay.value = $event"
-        @search="handleSearch"
+        @search="mapInteraction.triggerSearch"
         @remove-place="trip.removePlace"
         @add-day="trip.addDay"
         @remove-day="trip.removeDay"
@@ -45,10 +45,10 @@
         v-if="isSearchPanelOpen"
         :results="searchResults"
         :is-loading="isSearching"
-        :selected-id="selectedMarkerId"
+        :selected-id="mapInteraction.selectedMarkerId.value"
         @close="closeSearchPanel"
         @add-place="trip.addPlace"
-        @click-item="handlePlaceClick"
+        @click-item="mapInteraction.handlePlaceClick"
       />
 
       <div class="flex-1 bg-gray-100 relative z-0">
@@ -57,30 +57,22 @@
           class="absolute inset-0"
           :center="{ lat: 37.5443, lng: 127.0557 }"
           :level="5"
-          :markers="markerPositions"
-          :selected-marker-id="selectedMarkerId"
-          @marker-click="handleMarkerClick"
-          @map-move="onMapMove"
+          :markers="mapInteraction.markerPositions.value"
+          :selected-marker-id="mapInteraction.selectedMarkerId.value"
+          @marker-click="mapInteraction.handleMarkerClick"
+          @map-move="mapInteraction.onMapMove"
         />
 
         <div
-          v-if="showReSearchButton"
+          v-if="mapInteraction.showReSearchButton.value"
           class="absolute top-6 left-1/2 -translate-x-1/2 z-20 animate-fade-in-up"
         >
           <button
-            @click="handleReSearch"
+            @click="mapInteraction.triggerSearch"
             class="flex items-center gap-2 px-4 py-2.5 bg-white border-[2px] border-[#2C2C2C] rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.15)] hover:bg-gray-50 active:scale-95 transition-all text-xs font-black text-[#2C2C2C]"
           >
             <RotateCw class="w-3.5 h-3.5" stroke-width="2.5" />
             현 지도에서 재검색
-          </button>
-        </div>
-
-        <div class="absolute top-6 right-6 flex flex-col gap-3 z-20">
-          <button
-            class="w-12 h-12 bg-white border-[3px] border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center transition-all"
-          >
-            <Plus class="w-6 h-6 text-black" stroke-width="3" />
           </button>
         </div>
       </div>
@@ -89,82 +81,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Plus, RotateCw } from 'lucide-vue-next'
+import { RotateCw } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
 import TripSearchListPanel from '@/components/trip/TripSearchListPanel.vue'
 
-// 로직 파일 Import
+// Import Composables
 import { useResizablePanel } from '@/composables/common/useResizablePanel'
 import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 import { useTripPlan } from '@/composables/trip/useTripPlan'
-import type { Place } from '@/types/trip'
+import { useMapInteraction } from '@/composables/trip/useMapInteraction' // [NEW]
 
-// 1. 지도 참조 (Ref)
-const kakaoMapRef = ref<any>(null)
-
-// 1. 선택된 마커 ID 관리
-const selectedMarkerId = ref<number | string | null>(null)
-
-const showReSearchButton = ref(false)
-
-// 1. 지도가 움직였을 때 실행됨
-const onMapMove = () => {
-  // 검색어가 있고, 검색 결과 패널이 열려있을 때만 재검색 버튼 노출
-  if (searchQuery.value && isSearchPanelOpen.value) {
-    showReSearchButton.value = true
-  }
-}
-
-// 2. 검색 실행 (기존 handleSearch 수정)
-const handleSearch = () => {
-  // 검색을 시작하면 버튼 숨김
-  showReSearchButton.value = false
-
-  // kakaoMapRef에 있는 map 객체를 꺼내서 전달 (Bounds 검색)
-  const mapInstance = kakaoMapRef.value?.map
-  searchPlaces(mapInstance)
-}
-
-// 3. 재검색 버튼 클릭 핸들러
-const handleReSearch = () => {
-  handleSearch() // 기존 검색 로직 재사용 (현재 지도 범위로 검색됨)
-}
-
-// [NEW] 장소 클릭 시 실행될 함수
-const handlePlaceClick = (place: Place) => {
-  // 1. 마커 강조 (ID 설정)
-  selectedMarkerId.value = place.id
-
-  // 2. 지도 이동 (KakaoMap 컴포넌트의 panTo 함수 호출)
-  if (kakaoMapRef.value && kakaoMapRef.value.panTo) {
-    kakaoMapRef.value.panTo(place.lat, place.lng)
-  }
-}
-
-const handleMarkerClick = (id: number | string) => {
-  // 1. 선택된 ID 업데이트 (이걸로 마커 색상 변경 & 리스트 스크롤 이동됨)
-  selectedMarkerId.value = id
-
-  // 2. [추가됨] 클릭한 마커의 좌표를 찾아서 지도를 이동시킴
-  // markerPositions에는 현재 지도에 표시된 모든 마커(일정+검색결과) 정보가 들어있습니다.
-  const targetMarker = markerPositions.value.find((m) => String(m.id) === String(id))
-
-  if (targetMarker && kakaoMapRef.value && kakaoMapRef.value.panTo) {
-    kakaoMapRef.value.panTo(targetMarker.lat, targetMarker.lng)
-  }
-}
-
-// 2. 패널 리사이징 로직
+// 1. UI Resizer
 const { width: panelWidth, startResize } = useResizablePanel({
   initialWidth: 380,
   minWidth: 280,
   maxWidth: 600,
 })
 
-// 3. 검색 로직 (지도 Ref를 통해 검색 시 bounds 전달)
+// 2. 검색 로직
 const {
   searchQuery,
   searchResults,
@@ -174,32 +110,45 @@ const {
   closeSearchPanel,
 } = usePlaceSearch()
 
-// 4. 여행 데이터 로직
+// 3. 여행 데이터 로직
 const trip = useTripPlan()
 
-// 저장/뒤로가기 시 검색패널 닫기 연결
-const handleSave = () => trip.saveTrip(closeSearchPanel)
-const handleBack = () => trip.goBack(closeSearchPanel)
-
-// 5. 마커 표시 (일정 마커 + 검색 마커)
-const markerPositions = computed(() => {
-  const tripMarkers = trip.allSelectedPlaces.value.map((p) => ({
-    lat: p.lat,
-    lng: p.lng,
-    id: p.id,
-  }))
-
-  let searchMarkers: any[] = []
-  if (isSearchPanelOpen.value) {
-    searchMarkers = searchResults.value.map((p) => ({ lat: p.lat, lng: p.lng, id: p.id }))
-  }
-  return [...tripMarkers, ...searchMarkers]
+// 4. [NEW] 지도 인터랙션 로직 (위의 상태들을 주입해서 연결)
+const mapInteraction = useMapInteraction({
+  searchResults,
+  allSelectedPlaces: trip.allSelectedPlaces,
+  searchQuery,
+  isSearchPanelOpen,
+  searchPlaces,
 })
+
+// 템플릿에서 ref를 쓰기 위해 꺼내줌 (구조분해 해도 되지만, mapInteraction.xxx로 쓰는 게 출처가 명확함)
+// 단, ref="kakaoMapRef" 연결을 위해 이것만 별도로 꺼내줍니다.
+const { kakaoMapRef } = mapInteraction
+
+// 저장/뒤로가기 연결
+const tripSave = () => trip.saveTrip(closeSearchPanel)
+const tripBack = () => trip.goBack(closeSearchPanel)
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
 .font-sans {
   font-family: 'Outfit', sans-serif;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out forwards;
 }
 </style>

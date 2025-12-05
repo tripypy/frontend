@@ -40,10 +40,7 @@
             <!-- 내 평가 -->
             <div class="flex items-center gap-3">
               <span class="text-sm font-black text-gray-600 uppercase">내 평가</span>
-              <div
-                class="flex items-center gap-1 cursor-pointer"
-                @mouseleave="handleStarLeave"
-              >
+              <div class="flex items-center gap-1 cursor-pointer" @mouseleave="handleStarLeave">
                 <div
                   v-for="star in 5"
                   :key="star"
@@ -61,7 +58,9 @@
                     <Star
                       :class="[
                         'absolute left-0 w-6 h-6',
-                        (hoverRating > 0 || userRating === 0) ? 'fill-[#FFD60A] text-[#FFD60A]' : 'fill-[#FF1493] text-[#FF1493]',
+                        hoverRating > 0 || userRating === 0
+                          ? 'fill-[#FFD60A] text-[#FFD60A]'
+                          : 'fill-[#FF1493] text-[#FF1493]',
                       ]"
                       stroke-width="2"
                     />
@@ -71,9 +70,7 @@
               <span v-if="userRating > 0" class="font-black text-lg text-[#FF1493]">
                 {{ userRating.toFixed(1) }}
               </span>
-              <span v-else class="text-sm font-bold text-gray-400">
-                별을 클릭하여 평가하세요
-              </span>
+              <span v-else class="text-sm font-bold text-gray-400"> 별을 클릭하여 평가하세요 </span>
             </div>
           </div>
 
