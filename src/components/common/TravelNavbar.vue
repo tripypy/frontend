@@ -29,7 +29,8 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <!-- Logged In State -->
+        <div v-if="authStore.isLoggedIn" class="flex items-center gap-3">
           <div class="relative" ref="notificationRef">
             <button
               @click="showNotifications = !showNotifications"
@@ -108,8 +109,8 @@
                     />
                   </div>
                   <div>
-                    <p class="font-black text-base">여행자님</p>
-                    <p class="text-xs font-bold text-gray-600">@traveler</p>
+                    <p class="font-black text-base">{{ authStore.user?.nickname || '여행자님' }}</p>
+                    <p class="text-xs font-bold text-gray-600">@{{ authStore.user?.email || 'traveler' }}</p>
                   </div>
                 </div>
               </div>
@@ -123,6 +124,7 @@
               </div>
               <div class="p-2 border-t-[2px] border-gray-200">
                 <button
+                  @click="handleLogout"
                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-colors text-left border-[2px] border-transparent hover:border-red-300 font-bold"
                 >
                   <LogOut class="w-5 h-5 text-red-600" stroke-width="2" />
@@ -132,6 +134,14 @@
             </div>
           </div>
         </div>
+        
+        <!-- Logged Out State -->
+        <div v-else>
+            <router-link to="/login" class="flex items-center gap-2 px-5 py-2 bg-[#6A88E3] text-white border-2 border-[#2C2C2C] rounded-full font-black text-sm tracking-tight transition-all hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px]">
+                로그인
+            </router-link>
+        </div>
+
       </div>
     </div>
   </nav>
@@ -139,7 +149,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter, RouterLink } from 'vue-router'
 import { Home, Search, Map, Bell, Settings, LogOut, BookOpen } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const router = useRouter()
 
 defineProps<{
   currentPage: 'main' | 'search' | 'trips' | 'log'
@@ -177,6 +192,12 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('mousedown', handleClickOutside)
 })
+
+const handleLogout = async () => {
+  await authStore.logout()
+  showUserMenu.value = false
+  router.push('/')
+}
 
 const notifications = [
   {

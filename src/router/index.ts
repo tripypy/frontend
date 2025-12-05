@@ -5,6 +5,7 @@ import CreateTripView from '@/views/CreateTripView.vue'
 import SearchView from '@/views/SearchView.vue'
 import LogView from '@/views/LogView.vue'
 import TripDetailView from '@/views/TripDetailView.vue'
+import LoginView from '@/views/LoginView.vue' // 이 import를 추가합니다.
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,7 +41,13 @@ const router = createRouter({
       name: 'log',
       component: LogView,
     },
+    { // 이 라우트를 추가합니다.
+      path: '/login',
+      name: 'login',
+      component: LoginView
+    },
   ],
 })
 
 export default router
+
