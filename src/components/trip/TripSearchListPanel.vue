@@ -26,7 +26,7 @@
         <div v-for="place in results" :key="place.id" class="mb-3 last:mb-0">
           <div
             @click="$emit('click-item', place)"
-            class="p-3 border-[2px] border-[#2C2C2C] rounded-xl hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)] transition-all bg-white group"
+            class="p-3 border-[2px] border-[#2C2C2C] rounded-xl hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)] transition-all bg-white group cursor-pointer"
           >
             <div class="flex items-start gap-2 mb-2">
               <div
@@ -68,15 +68,14 @@
             </p>
 
             <p
-              v-if="place.phone"
               class="text-[10px] font-bold text-gray-400 mb-3 truncate px-1 flex items-center gap-1"
             >
-              <Phone class="w-3 h-3" /> {{ place.phone }}
+              <Phone class="w-3 h-3" />
+              {{ place.phone ? place.phone : '-' }}
             </p>
-            <div v-else class="mb-3"></div>
 
             <button
-              @click="$emit('add-place', place)"
+              @click.stop="$emit('add-place', place)"
               class="w-full py-2 flex items-center justify-center gap-1 bg-[#2C2C2C] text-white rounded-lg hover:bg-black transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
             >
               <Plus class="w-3 h-3" stroke-width="3" />
