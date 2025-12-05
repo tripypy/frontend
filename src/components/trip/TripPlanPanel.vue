@@ -69,6 +69,7 @@
         >
           <template #item="{ element: place, index }">
             <div
+              @click="$emit('click-place', place)"
               class="p-1.5 bg-white border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] transition-all group flex items-center gap-1.5"
               :class="{ 'cursor-move': isEditMode }"
             >
@@ -84,6 +85,7 @@
                 <h4 class="font-black text-[11px] truncate leading-tight">{{ place.name }}</h4>
                 <p class="text-[9px] font-bold text-gray-600 truncate">{{ place.category }}</p>
               </div>
+
               <button
                 v-if="isEditMode"
                 @click="$emit('remove-place', place.id)"
@@ -112,15 +114,8 @@
 import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import { Search, MapPin, Plus, GripVertical, X } from 'lucide-vue-next'
+import type { Place } from '@/types/trip'
 
-interface Place {
-  id: number
-  name: string
-  address: string
-  category: string
-  lat: number
-  lng: number
-}
 interface DayPlan {
   dayNumber: number
   places: Place[]
@@ -141,6 +136,7 @@ defineEmits<{
   (e: 'add-day'): void
   (e: 'remove-day', dayNum: number): void
   (e: 'update-places', newPlaces: Place[]): void
+  (e: 'click-place', place: Place): void
 }>()
 
 const currentDayPlaces = computed(() => {

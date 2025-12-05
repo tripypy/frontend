@@ -28,6 +28,7 @@
         @add-day="trip.addDay"
         @remove-day="trip.removeDay"
         @update-places="trip.updatePlaces"
+        @click-place="mapInteraction.handlePlaceClick"
       />
 
       <div
