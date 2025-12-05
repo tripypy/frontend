@@ -51,6 +51,7 @@
 
       <div class="flex-1 bg-gray-100 relative z-0">
         <KakaoMap
+          ref="kakaoMapRef"
           class="absolute inset-0"
           :center="{ lat: 37.5443, lng: 127.0557 }"
           :level="5"
@@ -112,6 +113,9 @@ const searchResults = ref<Place[]>([])
 const isSearching = ref(false)
 const isSearchPanelOpen = ref(false)
 
+// [2. 추가] KakaoMap 컴포넌트에 접근하기 위한 ref
+const kakaoMapRef = ref<any>(null)
+
 // Computed
 const formattedDate = computed(() =>
   tripDate.value ? new Date(tripDate.value).toLocaleDateString() : '날짜 미정',
@@ -119,16 +123,13 @@ const formattedDate = computed(() =>
 
 const allSelectedPlaces = computed(() => days.value.flatMap((d) => d.places))
 
-// [수정됨] 마커 표시 로직: 선택된 장소 + 검색 결과 장소 모두 표시
 const markerPositions = computed(() => {
-  // 1. 이미 일정에 추가된 장소들
   const selectedMarkers = allSelectedPlaces.value.map((p) => ({
     lat: p.lat,
     lng: p.lng,
     id: p.id,
   }))
 
-  // 2. 현재 검색된 결과 장소들 (검색 패널이 열려있을 때만)
   let searchMarkers: any[] = []
   if (isSearchPanelOpen.value && searchResults.value.length > 0) {
     searchMarkers = searchResults.value.map((p) => ({
@@ -138,7 +139,6 @@ const markerPositions = computed(() => {
     }))
   }
 
-  // 두 배열 합치기
   return [...selectedMarkers, ...searchMarkers]
 })
 
@@ -183,46 +183,56 @@ const initData = async () => {
 
 // --- 액션 핸들러 ---
 
-// [수정됨] 실제 카카오 키워드 검색 API 호출
+// [3. 수정] 지도 범위를 포함한 검색 로직
 const handleSearchPlaces = () => {
-  // 1. 검색어 유효성 체크
   if (!searchQuery.value.trim()) return
 
-  // 2. 카카오 객체 확인 (안전장치)
   if (!(window as any).kakao || !(window as any).kakao.maps) {
     alert('카카오맵 SDK가 로드되지 않았습니다.')
     return
   }
 
-  // 3. 상태 초기화
   isSearchPanelOpen.value = true
   isSearching.value = true
   searchResults.value = []
 
-  // 4. 장소 검색 객체 생성
   const ps = new (window as any).kakao.maps.services.Places()
 
-  // 5. 검색 실행
-  ps.keywordSearch(searchQuery.value, (data: any[], status: any) => {
-    isSearching.value = false
+  // [핵심] 현재 지도의 범위(Bounds)를 가져와서 검색 옵션에 추가
+  let searchOption = {}
 
-    if (status === (window as any).kakao.maps.services.Status.OK) {
-      // 6. API 결과를 내 앱의 Place 인터페이스에 맞게 변환
-      searchResults.value = data.map((item: any) => ({
-        id: Number(item.id),
-        name: item.place_name,
-        address: item.road_address_name || item.address_name,
-        category: item.category_group_name || '기타',
-        lat: Number(item.y), // API는 y가 위도(latitude)
-        lng: Number(item.x), // API는 x가 경도(longitude)
-      }))
-    } else if (status === (window as any).kakao.maps.services.Status.ZERO_RESULT) {
-      // 검색 결과 없음
-      searchResults.value = []
-    } else if (status === (window as any).kakao.maps.services.Status.ERROR) {
-      alert('검색 중 오류가 발생했습니다.')
+  // KakaoMap 컴포넌트가 expose한 map 객체가 있는지 확인
+  if (kakaoMapRef.value && kakaoMapRef.value.map) {
+    const mapInstance = kakaoMapRef.value.map
+    const bounds = mapInstance.getBounds() // 현재 지도 화면의 남서, 북동 좌표 범위
+    searchOption = {
+      bounds: bounds,
     }
-  })
+  }
+
+  // 검색 실행 (3번째 인자로 옵션 전달)
+  ps.keywordSearch(
+    searchQuery.value,
+    (data: any[], status: any) => {
+      isSearching.value = false
+
+      if (status === (window as any).kakao.maps.services.Status.OK) {
+        searchResults.value = data.map((item: any) => ({
+          id: Number(item.id),
+          name: item.place_name,
+          address: item.road_address_name || item.address_name,
+          category: item.category_group_name || '기타',
+          lat: Number(item.y),
+          lng: Number(item.x),
+        }))
+      } else if (status === (window as any).kakao.maps.services.Status.ZERO_RESULT) {
+        searchResults.value = []
+      } else if (status === (window as any).kakao.maps.services.Status.ERROR) {
+        alert('검색 중 오류가 발생했습니다.')
+      }
+    },
+    searchOption,
+  ) // <--- 옵션 추가됨
 }
 
 const closeSearchPanel = () => {

@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, markRaw, toRaw } from 'vue' // markRaw, toRaw 추가
+import { ref, onMounted, onUnmounted, watch, markRaw, toRaw } from 'vue'
 
 interface LatLng {
   lat: number
@@ -35,10 +35,10 @@ const props = defineProps<{
 }>()
 
 const mapContainer = ref<HTMLElement | null>(null)
-const map = ref<any | null>(null)
+const map = ref<any>(null)
 const mapLoaded = ref(false)
 
-// 내부에서만 쓰는 마커 배열 (반응형일 필요 없음)
+// 내부에서만 쓰는 마커 배열
 let kakaoMarkers: any[] = []
 
 const clearMarkers = () => {
@@ -47,7 +47,6 @@ const clearMarkers = () => {
 }
 
 const renderMarkers = (markers: MarkerOption[]) => {
-  // map.value가 Proxy일 수 있으므로 toRaw로 원본 객체를 가져와서 안전하게 접근
   const rawMap = toRaw(map.value)
   if (!rawMap) return
 
@@ -62,7 +61,6 @@ const renderMarkers = (markers: MarkerOption[]) => {
   markers.forEach((m) => {
     const pos = new kakao.maps.LatLng(m.lat, m.lng)
 
-    // 마커 생성 시에도 map 속성에 원본 맵 객체(rawMap)를 할당
     const marker = new kakao.maps.Marker({
       position: pos,
       map: rawMap,
@@ -71,7 +69,6 @@ const renderMarkers = (markers: MarkerOption[]) => {
     bounds.extend(pos)
   })
 
-  // 모든 마커가 보이도록 범위 조정
   rawMap.setBounds(bounds)
 }
 
@@ -90,18 +87,15 @@ const initMap = () => {
   const center = props.center ?? { lat: 37.5665, lng: 126.978 } // 서울 시청
   const level = props.level ?? 5
 
-  // ★ 핵심 수정: 생성된 맵 인스턴스를 markRaw로 감싸서 반응형 시스템에서 제외시킴
   const mapInstance = new kakao.maps.Map(mapContainer.value, {
     center: new kakao.maps.LatLng(center.lat, center.lng),
     level,
   })
 
-  // Vue가 이 객체를 Proxy로 만들지 못하게 막음 -> 'reading b' 에러 해결
+  // markRaw 처리 (잘 하셨습니다!)
   map.value = markRaw(mapInstance)
-
   mapLoaded.value = true
 
-  // 초기 markers 있으면 바로 렌더링
   if (props.markers && props.markers.length > 0) {
     renderMarkers(props.markers)
   }
@@ -114,13 +108,11 @@ onMounted(() => {
     return
   }
 
-  // autoload=false 기준
   if (typeof kakao.maps.load === 'function') {
     kakao.maps.load(() => {
       initMap()
     })
   } else {
-    // 혹시 autoload=false 안 쓴 경우 fallback
     initMap()
   }
 })
@@ -130,7 +122,6 @@ onUnmounted(() => {
   map.value = null
 })
 
-// markers prop 변경 시 마커 다시 그림
 watch(
   () => props.markers,
   (newVal) => {
@@ -140,8 +131,10 @@ watch(
   { deep: true },
 )
 
-// 부모가 필요하면 map 인스턴스를 직접 가져가 쓸 수 있도록
+// [수정된 부분]
+// getMap 함수 대신 map 객체 자체를 내보냅니다.
+// 그래야 부모에서 kakaoMapRef.value.map 형태로 접근 가능합니다.
 defineExpose({
-  getMap: () => map.value,
+  map,
 })
 </script>
