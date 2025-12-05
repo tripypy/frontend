@@ -16,7 +16,7 @@
 
     <div class="flex-1 flex overflow-hidden relative z-10">
       <TripPlanPanel
-        :style="{ width: `${planPanelWidth}px` }"
+        :style="{ width: `${panelWidth}px` }"
         :days="days"
         :active-day="activeDay"
         :is-edit-mode="isEditMode"
@@ -77,7 +77,8 @@ import { Plus } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
-import TripSearchPanel from '@/components/trip/TripSearchPanel.vue' // 신규 패널 import
+import TripSearchPanel from '@/components/trip/TripSearchPanel.vue'
+import { useResizablePanel } from '@/composables/useResizablePanel'
 
 // Interfaces
 interface Place {
@@ -96,10 +97,6 @@ interface DayPlan {
 const route = useRoute()
 const router = useRouter()
 const isCreating = route.name === 'create-trip'
-
-// Layout State (Resize)
-const planPanelWidth = ref(380) // 초기 너비
-const isDragging = ref(false)
 
 // State
 const isEditMode = ref(isCreating)
@@ -126,33 +123,11 @@ const markerPositions = computed(() =>
   allSelectedPlaces.value.map((p) => ({ lat: p.lat, lng: p.lng, id: p.id })),
 )
 
-const startResize = (e: MouseEvent) => {
-  isDragging.value = true
-  document.body.style.cursor = 'col-resize' // 드래그 중 커서 고정
-  document.body.style.userSelect = 'none' // 텍스트 선택 방지
-
-  window.addEventListener('mousemove', handleResize)
-  window.addEventListener('mouseup', stopResize)
-}
-
-const handleResize = (e: MouseEvent) => {
-  if (!isDragging.value) return
-
-  // 최소 280px, 최대 600px 제한
-  const newWidth = e.clientX
-  if (newWidth >= 280 && newWidth <= 600) {
-    planPanelWidth.value = newWidth
-  }
-}
-
-const stopResize = () => {
-  isDragging.value = false
-  document.body.style.cursor = ''
-  document.body.style.userSelect = ''
-
-  window.removeEventListener('mousemove', handleResize)
-  window.removeEventListener('mouseup', stopResize)
-}
+const { width: panelWidth, startResize } = useResizablePanel({
+  initialWidth: 380,
+  minWidth: 280,
+  maxWidth: 600,
+})
 
 const initData = async () => {
   if (isCreating) {
