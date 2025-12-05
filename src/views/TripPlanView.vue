@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-[#F5F5F5] h-screen flex flex-col font-sans">
-    <TripHeader
+    <TripPlanHeader
       :trip-title="tripTitle"
       :trip-date="tripDate"
       :formatted-date="formattedDate"
@@ -57,7 +57,7 @@ import { Plus } from 'lucide-vue-next'
 
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
-import TripHeader from '@/components/trip/TripHeader.vue'
+import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
 
 // Interfaces
 interface Place {
