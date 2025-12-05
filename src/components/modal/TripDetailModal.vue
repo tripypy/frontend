@@ -11,10 +11,9 @@
     </button>
 
     <div
-      class="relative w-full max-w-6xl max-h-[85vh] bg-white border-[4px] border-[#2C2C2C] rounded-3xl shadow-[12px_12px_0px_0px_rgba(44,44,44,1)] flex flex-col overflow-hidden"
+      class="relative w-full max-w-4xl h-[80vh] bg-white border-[4px] border-[#2C2C2C] rounded-3xl shadow-[12px_12px_0px_0px_rgba(44,44,44,1)] flex flex-col overflow-hidden"
       @click.stop
     >
-      <!-- Header -->
       <div class="bg-white border-b-[3px] border-[#2C2C2C] px-6 py-4 flex-shrink-0">
         <div class="flex items-center justify-between gap-6">
           <div class="flex-1">
@@ -34,18 +33,15 @@
             @click="handleEditClick"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
-            <Edit :size="16" :stroke-width="3" /> 편집하기
+            <Edit :size="16" :stroke-width="3" /> EDIT
           </button>
         </div>
       </div>
 
-      <!-- Content -->
       <div class="flex-1 flex overflow-hidden">
-        <!-- Left Panel - Course Details -->
         <div
-          class="w-[380px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0"
+          class="w-[320px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0"
         >
-          <!-- Days Tabs -->
           <div class="p-4 border-b-[2px] border-gray-200">
             <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
               <button
@@ -64,7 +60,6 @@
             </div>
           </div>
 
-          <!-- Places List -->
           <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
             <h3 class="font-black text-sm uppercase tracking-wide text-gray-700 mb-3">
               선택된 장소 ({{ currentDayPlaces.length }})
@@ -102,9 +97,7 @@
           </div>
         </div>
 
-        <!-- Right Panel - Map -->
         <div class="flex-1 bg-gray-100 relative">
-          <!-- 공용 KakaoMap 컴포넌트 -->
           <KakaoMap
             class="w-full h-full"
             :center="mapCenter"
@@ -112,7 +105,6 @@
             :markers="markerPositions"
           />
 
-          <!-- 선택된 장소가 없을 때 안내 오버레이 (원하면 제거 가능) -->
           <div
             v-if="markerPositions.length === 0"
             class="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -130,7 +122,6 @@
       </div>
     </div>
 
-    <!-- Place Detail Modal -->
     <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
   </div>
 </template>

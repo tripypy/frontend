@@ -85,8 +85,6 @@ import { Plus } from 'lucide-vue-next'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
-
-// ★ 목업 데이터 (실제로는 API 혹은 Pinia store에서 가져옴)
 import { initialTrips } from '@/data/trips'
 
 interface Trip {
@@ -131,7 +129,6 @@ const getCount = (tabId: string) => {
   return 0
 }
 
-// 완료된 여행 날짜 그룹핑
 const groupedCompletedTrips = computed(() => {
   const groups: Record<string, Trip[]> = {}
   completedTrips.value.forEach((trip) => {
@@ -159,24 +156,23 @@ const formatMonth = (monthStr: string) => {
 
 // --- 핸들러 함수들 ---
 
-// 1. 새 여행 만들기 -> /create-trip 이동
+// 1. 새 여행 만들기 -> TripPlanView로 이동 (/create-trip)
 const handleCreate = () => {
   router.push('/create-trip')
 }
 
-// 2. 카드 클릭 시 -> /trips/:id (상세 보기 모드) 이동
+// 2. ★ 수정됨: 카드 클릭 시 -> 모달 열기 (페이지 이동 X)
 const handleCardClick = (id: number) => {
-  router.push(`/trips/${id}`)
+  handleOpenModal(id)
 }
 
-// 3. 모달 열기 (TripCard에서 emit된 이벤트)
+// 3. 모달 열기 로직
 const handleOpenModal = (tripId: number) => {
   const trip = tripsList.value.find((t) => t.id === tripId)
   if (trip) {
-    // 모달용 데이터 매핑
     selectedTrip.value = {
       ...trip,
-      duration: '반나절', // Mock
+      duration: '반나절', // Mock Data
       description: trip.spotPreviews.map((s) => s.name).join(' → '),
       views: 1240,
       imageUrl: '',
@@ -184,13 +180,15 @@ const handleOpenModal = (tripId: number) => {
   }
 }
 
-// 4. 모달에서 수정 버튼 클릭 시 -> /trips/:id?edit=true (바로 수정 모드)
+// 4. ★ 모달 안에서 [수정] 버튼 클릭 시 -> TripPlanView로 이동 + 수정 모드 ON
 const handleEditFromModal = (trip: any) => {
-  router.push(`/trips/${trip.id}?edit=true`)
+  // 모달 닫기
   selectedTrip.value = null
+  // 상세/수정 페이지로 이동 (쿼리에 edit=true 포함)
+  router.push(`/trips/${trip.id}?edit=true`)
 }
 
-// 5. 네비게이션바 처리
+// 5. 네비게이션
 const handleNavigate = (page: string) => {
   if (page === 'create-trip') handleCreate()
   else if (page === 'trips') router.push('/trips')
