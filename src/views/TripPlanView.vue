@@ -60,7 +60,21 @@
           :markers="markerPositions"
           :selected-marker-id="selectedMarkerId"
           @marker-click="handleMarkerClick"
+          @map-move="onMapMove"
         />
+
+        <div
+          v-if="showReSearchButton"
+          class="absolute top-6 left-1/2 -translate-x-1/2 z-20 animate-fade-in-up"
+        >
+          <button
+            @click="handleReSearch"
+            class="flex items-center gap-2 px-4 py-2.5 bg-white border-[2px] border-[#2C2C2C] rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.15)] hover:bg-gray-50 active:scale-95 transition-all text-xs font-black text-[#2C2C2C]"
+          >
+            <RotateCw class="w-3.5 h-3.5" stroke-width="2.5" />
+            현 지도에서 재검색
+          </button>
+        </div>
 
         <div class="absolute top-6 right-6 flex flex-col gap-3 z-20">
           <button
@@ -76,7 +90,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Plus } from 'lucide-vue-next'
+import { Plus, RotateCw } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
@@ -93,6 +107,31 @@ const kakaoMapRef = ref<any>(null)
 
 // 1. 선택된 마커 ID 관리
 const selectedMarkerId = ref<number | string | null>(null)
+
+const showReSearchButton = ref(false)
+
+// 1. 지도가 움직였을 때 실행됨
+const onMapMove = () => {
+  // 검색어가 있고, 검색 결과 패널이 열려있을 때만 재검색 버튼 노출
+  if (searchQuery.value && isSearchPanelOpen.value) {
+    showReSearchButton.value = true
+  }
+}
+
+// 2. 검색 실행 (기존 handleSearch 수정)
+const handleSearch = () => {
+  // 검색을 시작하면 버튼 숨김
+  showReSearchButton.value = false
+
+  // kakaoMapRef에 있는 map 객체를 꺼내서 전달 (Bounds 검색)
+  const mapInstance = kakaoMapRef.value?.map
+  searchPlaces(mapInstance)
+}
+
+// 3. 재검색 버튼 클릭 핸들러
+const handleReSearch = () => {
+  handleSearch() // 기존 검색 로직 재사용 (현재 지도 범위로 검색됨)
+}
 
 // [NEW] 장소 클릭 시 실행될 함수
 const handlePlaceClick = (place: Place) => {
@@ -134,12 +173,6 @@ const {
   searchPlaces,
   closeSearchPanel,
 } = usePlaceSearch()
-
-const handleSearch = () => {
-  // kakaoMapRef에 있는 map 객체를 꺼내서 전달
-  const mapInstance = kakaoMapRef.value?.map
-  searchPlaces(mapInstance)
-}
 
 // 4. 여행 데이터 로직
 const trip = useTripPlan()

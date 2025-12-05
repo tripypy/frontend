@@ -39,6 +39,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'marker-click', id: number | string): void
+  (e: 'map-move'): void
 }>()
 
 const mapContainer = ref<HTMLElement | null>(null)
@@ -162,6 +163,13 @@ const initMap = () => {
   const mapInstance = new kakao.maps.Map(mapContainer.value, {
     center: new kakao.maps.LatLng(center.lat, center.lng),
     level,
+  })
+
+  kakao.maps.event.addListener(mapInstance, 'dragend', () => {
+    emits('map-move')
+  })
+  kakao.maps.event.addListener(mapInstance, 'zoom_changed', () => {
+    emits('map-move')
   })
 
   // [중요] markRaw로 감싸서 Vue 반응성 시스템이 지도 객체를 건드리지 않게 함
