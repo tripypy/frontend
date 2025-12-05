@@ -11,10 +11,9 @@
     </button>
 
     <div
-      class="relative w-full max-w-6xl max-h-[85vh] bg-white border-[4px] border-[#2C2C2C] rounded-3xl shadow-[12px_12px_0px_0px_rgba(44,44,44,1)] flex flex-col overflow-hidden"
+      class="relative w-full max-w-4xl h-[80vh] bg-white border-[4px] border-[#2C2C2C] rounded-3xl shadow-[12px_12px_0px_0px_rgba(44,44,44,1)] flex flex-col overflow-hidden"
       @click.stop
     >
-      <!-- Header -->
       <div class="bg-white border-b-[3px] border-[#2C2C2C] px-6 py-4 flex-shrink-0">
         <div class="flex items-center justify-between gap-6">
           <div class="flex-1">
@@ -34,18 +33,15 @@
             @click="handleEditClick"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
-            <Edit :size="16" :stroke-width="3" /> 편집하기
+            <Edit :size="16" :stroke-width="3" /> EDIT
           </button>
         </div>
       </div>
 
-      <!-- Content -->
       <div class="flex-1 flex overflow-hidden">
-        <!-- Left Panel - Course Details -->
         <div
-          class="w-[380px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0"
+          class="w-[320px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0"
         >
-          <!-- Days Tabs -->
           <div class="p-4 border-b-[2px] border-gray-200">
             <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
               <button
@@ -64,7 +60,6 @@
             </div>
           </div>
 
-          <!-- Places List -->
           <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
             <h3 class="font-black text-sm uppercase tracking-wide text-gray-700 mb-3">
               선택된 장소 ({{ currentDayPlaces.length }})
@@ -102,27 +97,31 @@
           </div>
         </div>
 
-        <!-- Right Panel - Map -->
         <div class="flex-1 bg-gray-100 relative">
-          <div id="kakao-map" class="w-full h-full"></div>
+          <KakaoMap
+            class="w-full h-full"
+            :center="mapCenter"
+            :level="7"
+            :markers="markerPositions"
+          />
 
-          <!-- Map Loading State -->
           <div
-            v-if="!mapLoaded"
-            class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#E8F4F3] to-[#D4E9E7]"
+            v-if="markerPositions.length === 0"
+            class="absolute inset-0 flex items-center justify-center pointer-events-none"
           >
             <div class="text-center">
               <div
-                class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2C2C2C] mx-auto mb-4"
-              ></div>
-              <p class="font-bold text-gray-600">지도를 불러오는 중...</p>
+                class="w-14 h-14 bg-white border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center mx-auto mb-3 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.4)]"
+              >
+                <MapPin :size="26" :stroke-width="2.5" class="text-[#2C2C2C]" />
+              </div>
+              <p class="font-bold text-gray-700">코스에 담긴 장소가 지도에 표시됩니다</p>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Place Detail Modal -->
     <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
   </div>
 </template>
@@ -131,6 +130,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Calendar, MapPin, Edit } from 'lucide-vue-next'
 import PlaceDetailModal from './PlaceDetailModal.vue'
+import KakaoMap from '@/components/common/KakaoMap.vue'
 
 interface Place {
   id: number
@@ -165,8 +165,6 @@ const emit = defineEmits(['close', 'edit'])
 
 const activeDay = ref(1)
 const selectedPlace = ref<Place | null>(null)
-const mapLoaded = ref(false)
-let map: any = null
 
 // Mock data - 실제로는 API에서 가져와야 함
 const days = ref<DayPlan[]>([
@@ -227,26 +225,30 @@ const currentDayPlaces = computed(() => {
   return day ? day.places : []
 })
 
+// KakaoMap에 내려줄 마커 리스트
+const markerPositions = computed(() =>
+  currentDayPlaces.value
+    .filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number')
+    .map((p) => ({
+      id: p.id,
+      lat: p.lat as number,
+      lng: p.lng as number,
+    })),
+)
+
+// 지도 중심 좌표: 현재 Day의 첫 번째 장소 기준, 없으면 기본값
+const mapCenter = computed(() => {
+  const first = currentDayPlaces.value.find(
+    (p) => typeof p.lat === 'number' && typeof p.lng === 'number',
+  )
+  if (first && typeof first.lat === 'number' && typeof first.lng === 'number') {
+    return { lat: first.lat, lng: first.lng }
+  }
+  return { lat: 37.5665, lng: 126.978 } // 기본 서울 시청
+})
+
 const handleEditClick = () => {
   emit('edit', props.trip)
-}
-
-// 카카오맵 초기화
-const initKakaoMap = () => {
-  const container = document.getElementById('kakao-map')
-  if (!container) {
-    console.error('Map container not found')
-    return
-  }
-
-  const options = {
-    center: new (window as any).kakao.maps.LatLng(37.5665, 126.9780), // 서울 시청 좌표
-    level: 5, // 확대 레벨
-  }
-
-  map = new (window as any).kakao.maps.Map(container, options)
-  mapLoaded.value = true
-  console.log('Map initialized successfully')
 }
 
 // ESC 키로 닫기
@@ -258,15 +260,6 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
-
-  // 카카오맵 로드 및 초기화 (twalk SimpleMap.vue 방식)
-  if ((window as any).kakao && (window as any).kakao.maps) {
-    ;(window as any).kakao.maps.load(() => {
-      initKakaoMap()
-    })
-  } else {
-    console.error('Kakao Maps API not loaded')
-  }
 })
 
 onUnmounted(() => {

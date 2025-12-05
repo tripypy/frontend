@@ -1,11 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
-import TripView from '@/views/TripView.vue'
-import CreateTripView from '@/views/CreateTripView.vue'
-import SearchView from '@/views/SearchView.vue'
-import LogView from '@/views/LogView.vue'
-import TripDetailView from '@/views/TripDetailView.vue'
-import LoginView from '@/views/LoginView.vue' // 이 import를 추가합니다.
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,41 +6,40 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: () => import('@/views/HomeView.vue'),
     },
     {
       path: '/trips',
       name: 'trips',
-      component: TripView,
+      component: () => import('@/views/TripView.vue'),
     },
     {
       path: '/create-trip',
       name: 'create-trip',
-      component: CreateTripView,
+      component: () => import('@/views/TripPlanView.vue'),
     },
     {
       path: '/search',
       name: 'search',
-      component: SearchView,
+      component: () => import('@/views/SearchView.vue'),
     },
     {
-      path: '/trip/:id',
+      path: '/trips/:id',
       name: 'trip-detail',
-      component: TripDetailView,
-      props: true, // URL 파라미터를 props로 전달
+      component: () => import('@/views/TripPlanView.vue'),
     },
     {
       path: '/log',
       name: 'log',
-      component: LogView,
+      component: () => import('@/views/LogView.vue'),
     },
-    { // 이 라우트를 추가합니다.
+    {
+      // 이 라우트를 추가합니다.
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: import('@/views/LoginView.vue'),
     },
   ],
 })
 
 export default router
-
