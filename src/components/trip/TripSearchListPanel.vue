@@ -27,33 +27,56 @@
           <div
             class="p-3 border-[2px] border-[#2C2C2C] rounded-xl hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)] transition-all bg-white group"
           >
-            <div class="flex items-start justify-between gap-2 mb-2">
-              <div class="flex items-center gap-2">
-                <div
-                  class="w-8 h-8 rounded-lg border-[2px] border-[#2C2C2C] flex items-center justify-center bg-[#9BCCC4] flex-shrink-0"
-                >
-                  <MapPin class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-                </div>
-                <div>
-                  <h4 class="font-black text-[12px] text-[#2C2C2C] leading-tight mb-0.5">
+            <div class="flex items-start gap-2 mb-2">
+              <div
+                class="w-8 h-8 rounded-lg border-[2px] border-[#2C2C2C] flex items-center justify-center flex-shrink-0 bg-[#9BCCC4]"
+              >
+                <component
+                  :is="getCategoryIcon(place.category)"
+                  class="w-4 h-4 text-[#2C2C2C]"
+                  stroke-width="2.5"
+                />
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-0.5">
+                  <h4 class="font-black text-[12px] text-[#2C2C2C] leading-tight truncate">
                     {{ place.name }}
                   </h4>
-                  <span
-                    class="inline-block px-1.5 py-0.5 rounded border-[1.5px] border-gray-200 text-[9px] font-bold text-gray-500"
+                  <a
+                    v-if="place.url"
+                    :href="place.url"
+                    target="_blank"
+                    class="text-gray-400 hover:text-[#2C2C2C] transition-colors flex-shrink-0"
+                    title="카카오맵 상세정보"
+                    @click.stop
                   >
-                    {{ place.category }}
-                  </span>
+                    <ExternalLink class="w-3 h-3" stroke-width="2.5" />
+                  </a>
                 </div>
+                <span
+                  class="inline-block px-1.5 py-0.5 rounded border-[1.5px] border-gray-200 text-[9px] font-bold text-gray-500 truncate max-w-full"
+                >
+                  {{ place.category }}
+                </span>
               </div>
             </div>
 
-            <p class="text-[10px] font-bold text-gray-500 mb-3 truncate px-1">
+            <p class="text-[10px] font-bold text-gray-500 mb-1 truncate px-1">
               {{ place.address }}
             </p>
 
+            <p
+              v-if="place.phone"
+              class="text-[10px] font-bold text-gray-400 mb-3 truncate px-1 flex items-center gap-1"
+            >
+              <Phone class="w-3 h-3" /> {{ place.phone }}
+            </p>
+            <div v-else class="mb-3"></div>
+
             <button
               @click="$emit('add-place', place)"
-              class="w-full py-2 flex items-center justify-center gap-1 bg-[#2C2C2C] text-white rounded-lg hover:bg-black transition-colors"
+              class="w-full py-2 flex items-center justify-center gap-1 bg-[#2C2C2C] text-white rounded-lg hover:bg-black transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
             >
               <Plus class="w-3 h-3" stroke-width="3" />
               <span class="text-[10px] font-bold uppercase tracking-wide">Add to Plan</span>
@@ -70,16 +93,9 @@
 </template>
 
 <script setup lang="ts">
-import { X, MapPin, Plus } from 'lucide-vue-next'
-
-interface Place {
-  id: number
-  name: string
-  address: string
-  category: string
-  lat: number
-  lng: number
-}
+import { X, Plus, ExternalLink, Phone } from 'lucide-vue-next'
+import type { Place } from '@/types/trip'
+import { getCategoryIcon } from '@/utils/placeCategory'
 
 defineProps<{
   results: Place[]

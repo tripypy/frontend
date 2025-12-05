@@ -7,6 +7,8 @@ export interface Place {
   category: string
   lat: number
   lng: number
+  phone?: string
+  url?: string
 }
 
 export function usePlaceSearch() {
@@ -49,6 +51,8 @@ export function usePlaceSearch() {
             category: item.category_group_name || '기타',
             lat: Number(item.y),
             lng: Number(item.x),
+            phone: item.phone,
+            url: item.place_url,
           }))
         } else if (status === (window as any).kakao.maps.services.Status.ZERO_RESULT) {
           searchResults.value = []
