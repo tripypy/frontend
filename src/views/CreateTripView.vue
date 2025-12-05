@@ -246,75 +246,19 @@
       </div>
 
       <div class="flex-1 bg-gray-100 relative z-0">
-        <div class="w-full h-full relative bg-gradient-to-br from-[#E8F4F3] to-[#D4E9E7]">
-          <div
-            class="absolute inset-0"
-            style="
-              background-image:
-                linear-gradient(#c4d9d7 1px, transparent 1px),
-                linear-gradient(90deg, #c4d9d7 1px, transparent 1px);
-              background-size: 50px 50px;
-            "
-          ></div>
-
-          <div
-            v-for="(place, index) in allSelectedPlaces"
-            :key="place.id"
-            class="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
-            :style="getMarkerPosition(index)"
-          >
-            <div class="relative z-10">
-              <div
-                class="w-12 h-12 rounded-full border-[3px] border-[#2C2C2C] flex items-center justify-center font-black shadow-[3px_3px_0px_0px_rgba(44,44,44,0.4)] hover:scale-110 transition-transform bg-[#9BCCC4] text-[#2C2C2C] text-lg"
-              >
-                {{ index + 1 }}
-              </div>
-              <div
-                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20"
-              >
-                <div
-                  class="bg-white border-[2px] border-[#2C2C2C] rounded-lg px-3 py-2 shadow-[3px_3px_0px_0px_rgba(44,44,44,0.3)]"
-                >
-                  <p class="font-black text-xs">{{ place.name }}</p>
-                  <p class="text-[10px] font-bold text-gray-500">{{ place.category }}</p>
-                </div>
-              </div>
-            </div>
-
-            <svg
-              v-if="index < allSelectedPlaces.length - 1"
-              class="absolute top-6 left-6 w-48 h-48 pointer-events-none overflow-visible"
-              style="z-index: 0"
-            >
-              <line
-                x1="0"
-                y1="0"
-                x2="100"
-                y2="50"
-                stroke="#2C2C2C"
-                stroke-width="2"
-                stroke-dasharray="5,5"
-              />
-            </svg>
-          </div>
-
-          <div
-            v-if="allSelectedPlaces.length === 0"
-            class="absolute inset-0 flex items-center justify-center pointer-events-none"
-          >
-            <div class="text-center">
-              <MapPin class="w-12 h-12 text-gray-400 mx-auto mb-3" stroke-width="2" />
-              <p class="font-bold text-gray-600">지도 영역</p>
-              <p class="text-sm text-gray-500 mt-1">선택한 장소들이 여기에 표시됩니다</p>
-            </div>
-          </div>
-        </div>
+        <KakaoMap
+          class="w-full h-full"
+          :center="{ lat: 37.5665, lng: 126.978 }"
+          :level="7"
+          :markers="markerPositions"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import KakaoMap from '@/components/common/KakaoMap.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import draggable from 'vuedraggable'
@@ -329,10 +273,7 @@ import {
   GripVertical,
   Trash2,
   Edit,
-  Navigation,
 } from 'lucide-vue-next'
-// 실제 프로젝트에서는 axios 인스턴스를 import 해서 사용하세요
-// import axios from '@/api/axios';
 
 // 1. Interfaces
 interface Place {
@@ -342,7 +283,6 @@ interface Place {
   category: string
   lat: number
   lng: number
-  // 백엔드 데이터 구조에 맞춰 추가 필드 정의 가능
 }
 
 interface DayPlan {
@@ -372,7 +312,7 @@ const days = ref<DayPlan[]>([])
 const searchQuery = ref('')
 const searchResults = ref<Place[]>([])
 
-// 3. Computed
+// Computed
 const currentDayPlaces = computed({
   get: () => {
     const day = days.value.find((d) => d.dayNumber === activeDay.value)
@@ -386,35 +326,35 @@ const currentDayPlaces = computed({
   },
 })
 
-const allSelectedPlaces = computed(() => days.value.flatMap((d) => d.places))
-
 const formattedDate = computed(() =>
   tripDate.value ? new Date(tripDate.value).toLocaleDateString() : '날짜 미정',
+)
+const allSelectedPlaces = computed(() => days.value.flatMap((d) => d.places))
+
+const markerPositions = computed(() =>
+  allSelectedPlaces.value
+    .filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number')
+    .map((p) => ({
+      lat: p.lat,
+      lng: p.lng,
+      id: p.id,
+    })),
 )
 
 // 4. Methods (API Integration)
 
-// [GET] 여행 상세 정보 불러오기
 const fetchTripData = async () => {
-  if (!tripId.value) return // 생성 모드일 경우 패스
+  if (!tripId.value) return
 
   isLoading.value = true
   isError.value = false
 
   try {
-    // const response = await axios.get(`/api/trips/${tripId.value}`)
-    // const data = response.data
-
-    // API 연동 전 임시 지연 처리 (실제 연동 시 제거)
     await new Promise((resolve) => setTimeout(resolve, 500))
 
-    // TODO: 백엔드 응답 구조에 맞게 매핑 필요
-    // 예시 데이터 매핑
     tripTitle.value = '불러온 여행 제목'
     tripDate.value = '2024-12-25'
-    days.value = [
-      { dayNumber: 1, places: [] }, // 초기에는 빈 배열 혹은 DB 데이터
-    ]
+    days.value = [{ dayNumber: 1, places: [] }]
   } catch (error) {
     console.error('Failed to fetch trip data:', error)
     isError.value = true
@@ -423,7 +363,6 @@ const fetchTripData = async () => {
   }
 }
 
-// [GET] 장소 검색 API 호출
 const handleSearchPlaces = async () => {
   if (!searchQuery.value.trim()) {
     searchResults.value = []
@@ -435,10 +374,6 @@ const handleSearchPlaces = async () => {
   showSearchResults.value = true
 
   try {
-    // const response = await axios.get(`/api/places/search`, { params: { query: searchQuery.value } })
-    // searchResults.value = response.data
-
-    // 임시 더미 응답 (API 연동 시 제거)
     await new Promise((resolve) => setTimeout(resolve, 300))
     console.log(`Searching for: ${searchQuery.value}`)
     searchResults.value = [
@@ -447,16 +382,16 @@ const handleSearchPlaces = async () => {
         name: `${searchQuery.value} 카페`,
         address: '서울시 강남구',
         category: '카페',
-        lat: 37.5,
-        lng: 127.0,
+        lat: 37.514575,
+        lng: 127.0495556,
       },
       {
         id: 102,
         name: `${searchQuery.value} 공원`,
         address: '서울시 서초구',
         category: '공원',
-        lat: 37.51,
-        lng: 127.01,
+        lat: 37.5132,
+        lng: 127.0589,
       },
     ]
   } catch (error) {
@@ -466,7 +401,6 @@ const handleSearchPlaces = async () => {
   }
 }
 
-// [POST/PUT] 여행 저장
 const handleSave = async () => {
   try {
     const payload = {
@@ -474,15 +408,7 @@ const handleSave = async () => {
       date: tripDate.value,
       days: days.value,
     }
-
-    if (tripId.value) {
-      // await axios.put(`/api/trips/${tripId.value}`, payload)
-      console.log('Update Trip:', payload)
-    } else {
-      // await axios.post(`/api/trips`, payload)
-      console.log('Create Trip:', payload)
-    }
-
+    console.log('Saving Trip:', payload)
     isEditMode.value = false
     alert('저장되었습니다!')
   } catch (error) {
@@ -490,12 +416,9 @@ const handleSave = async () => {
   }
 }
 
-// [DELETE] 여행 삭제
 const handleDelete = async () => {
   if (!confirm('정말 삭제하시겠습니까?')) return
-
   try {
-    // await axios.delete(`/api/trips/${tripId.value}`)
     alert('삭제되었습니다.')
     router.push('/trips')
   } catch (error) {
@@ -503,13 +426,11 @@ const handleDelete = async () => {
   }
 }
 
-// UI Interaction Methods
 const goBack = () => {
   if (isEditMode.value) {
     if (confirm('작성 중인 내용이 있습니다. 취소하시겠습니까?')) {
-      // 수정 취소 시 데이터를 원복하는 로직이 필요하다면 여기에 추가 (다시 fetch 등)
       isEditMode.value = false
-      if (!tripId.value) router.back() // 생성 모드였다면 뒤로가기
+      if (!tripId.value) router.back()
     }
   } else {
     router.back()
@@ -519,7 +440,6 @@ const goBack = () => {
 const handleAddPlace = (place: Place) => {
   const dayIndex = days.value.findIndex((d) => d.dayNumber === activeDay.value)
   if (dayIndex !== -1) {
-    // 중복 체크
     if (!days.value[dayIndex]!.places.find((p) => p.id === place.id)) {
       days.value[dayIndex]!.places.push(place)
     }
@@ -547,24 +467,8 @@ const handleRemoveDay = (dayNum: number) => {
     .filter((d) => d.dayNumber !== dayNum)
     .map((d, i) => ({ ...d, dayNumber: i + 1 }))
 
-  // 활성 탭 조정
   if (activeDay.value === dayNum) activeDay.value = days.value[0]?.dayNumber ?? 1
   else if (activeDay.value > dayNum) activeDay.value = activeDay.value - 1
-}
-
-// Mock Map Position Generator
-// TODO: 실제 지도 API(Kakao/Naver) 연동 시에는 Lat/Lng를 pixel 좌표로 변환하는 함수로 대체 필요
-const getMarkerPosition = (index: number) => {
-  // 시각적 테스트를 위한 임시 랜덤 위치 (API 데이터가 들어오면 lat/lng 기반으로 그려야 함)
-  const positions = [
-    { top: '30%', left: '40%' },
-    { top: '45%', left: '55%' },
-    { top: '60%', left: '35%' },
-    { top: '35%', left: '65%' },
-    { top: '55%', left: '50%' },
-    { top: '40%', left: '70%' },
-  ]
-  return positions[index % positions.length]
 }
 
 // 5. Lifecycle
@@ -572,13 +476,11 @@ onMounted(() => {
   const idParam = route.params.id
 
   if (route.name === 'create-trip' || !idParam) {
-    // 생성 모드
     isLoading.value = false
     isEditMode.value = true
     tripId.value = null
-    days.value = [{ dayNumber: 1, places: [] }] // 빈 날짜 하나 생성
+    days.value = [{ dayNumber: 1, places: [] }]
   } else {
-    // 조회/수정 모드
     tripId.value = Number(idParam)
     fetchTripData()
     if (route.query.edit === 'true') {
@@ -587,7 +489,6 @@ onMounted(() => {
   }
 })
 
-// Watch search query to clear results if empty
 watch(searchQuery, (newVal) => {
   if (!newVal) {
     showSearchResults.value = false

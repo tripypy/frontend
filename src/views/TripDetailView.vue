@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen bg-[#F5F5F5] h-screen flex flex-col font-sans">
+    <!-- 헤더 -->
     <div class="bg-white border-b-[4px] border-black px-8 py-4 flex-shrink-0 z-30 relative">
       <div class="max-w-[1800px] mx-auto flex items-center justify-between gap-8">
         <button
@@ -82,7 +83,9 @@
       </div>
     </div>
 
+    <!-- 본문 -->
     <div class="flex-1 flex overflow-hidden relative z-10">
+      <!-- 왼쪽: Day / 리스트 영역 -->
       <div
         class="w-[500px] bg-white border-r-[4px] border-black flex flex-col h-full relative flex-shrink-0 z-20 shadow-[6px_0px_0px_0px_rgba(0,0,0,0.1)]"
       >
@@ -246,17 +249,17 @@
         </div>
       </div>
 
-      <div class="flex-1 bg-[#E8F4F3] relative z-0">
-        <div
-          class="absolute inset-0 pointer-events-none"
-          style="
-            background-image:
-              linear-gradient(#c4d9d7 2px, transparent 2px),
-              linear-gradient(90deg, #c4d9d7 2px, transparent 2px);
-            background-size: 60px 60px;
-          "
-        ></div>
+      <!-- 오른쪽: 실제 카카오 지도 -->
+      <div class="flex-1 relative z-0">
+        <!-- KakaoMap 컴포넌트 -->
+        <KakaoMap
+          class="absolute inset-0"
+          :center="{ lat: 37.5665, lng: 126.978 }"
+          :level="5"
+          :markers="markerPositions"
+        />
 
+        <!-- 우측 상단 플로팅 버튼들 (현재는 기능 없음, UI만 유지) -->
         <div class="absolute top-6 right-6 flex flex-col gap-3 z-20">
           <button
             class="w-12 h-12 bg-white border-[3px] border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center transition-all focus:outline-none active:shadow-none active:translate-0"
@@ -270,7 +273,11 @@
           </button>
         </div>
 
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <!-- 선택된 장소가 없을 때만 중앙 오버레이 표시 -->
+        <div
+          v-if="totalPlacesCount === 0"
+          class="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
+        >
           <div class="text-center relative">
             <div
               class="w-20 h-20 bg-white border-[4px] border-black rounded-full flex items-center justify-center mx-auto mb-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative z-10"
@@ -302,6 +309,7 @@ import {
   Trash2,
   Edit,
 } from 'lucide-vue-next'
+import KakaoMap from '@/components/common/KakaoMap.vue'
 
 // 1. Interfaces
 interface Place {
@@ -357,12 +365,12 @@ const mockPlaces: Place[] = [
 // 3. State
 const route = useRoute()
 const router = useRouter()
-const isEditMode = ref(false) // 기본 읽기 모드
+const isEditMode = ref(false)
 const tripTitle = ref('')
 const tripDate = ref('')
 const searchQuery = ref('')
 const activeDay = ref(1)
-const days = ref<DayPlan[]>([{ dayNumber: 1, places: [] }]) // 빈 데이터로 초기화
+const days = ref<DayPlan[]>([{ dayNumber: 1, places: [] }])
 
 // 4. Computed
 const filteredPlaces = computed(() => {
@@ -387,17 +395,27 @@ const currentDayPlaces = computed({
   },
 })
 
-const totalPlacesCount = computed(() => days.value.flatMap((d) => d.places).length)
+const allSelectedPlaces = computed(() => days.value.flatMap((d) => d.places))
+
+const totalPlacesCount = computed(() => allSelectedPlaces.value.length)
+
 const formattedDate = computed(() =>
   tripDate.value ? new Date(tripDate.value).toLocaleDateString() : '날짜 미정',
 )
 
+// KakaoMap에 내려줄 마커 목록
+const markerPositions = computed(() =>
+  allSelectedPlaces.value.map((p) => ({
+    id: p.id,
+    lat: p.lat,
+    lng: p.lng,
+  })),
+)
+
 // 5. Lifecycle & Init
 onMounted(() => {
-  // ID가 있으면 데이터 로드 (Mock)
   const id = route.params.id
   if (id) {
-    // Mock Load: ID가 1번이면 성수동 데이터 로드
     if (id === '1') {
       tripTitle.value = '성수동 감성 카페 투어'
       tripDate.value = '2024-12-15'
@@ -413,7 +431,6 @@ onMounted(() => {
     }
   }
 
-  // 쿼리 파라미터로 모드 결정
   if (route.query.edit === 'true') {
     isEditMode.value = true
   }
@@ -424,7 +441,7 @@ const goBack = () => {
   if (isEditMode.value) {
     if (confirm('수정 내용을 취소하시겠습니까?')) {
       isEditMode.value = false
-      // (실제로는 여기서 데이터 원복 로직 필요)
+      // 실제로는 데이터 원복 필요
     }
   } else {
     router.back()

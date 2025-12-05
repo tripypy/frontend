@@ -104,18 +104,26 @@
 
         <!-- Right Panel - Map -->
         <div class="flex-1 bg-gray-100 relative">
-          <div id="kakao-map" class="w-full h-full"></div>
+          <!-- 공용 KakaoMap 컴포넌트 -->
+          <KakaoMap
+            class="w-full h-full"
+            :center="mapCenter"
+            :level="7"
+            :markers="markerPositions"
+          />
 
-          <!-- Map Loading State -->
+          <!-- 선택된 장소가 없을 때 안내 오버레이 (원하면 제거 가능) -->
           <div
-            v-if="!mapLoaded"
-            class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#E8F4F3] to-[#D4E9E7]"
+            v-if="markerPositions.length === 0"
+            class="absolute inset-0 flex items-center justify-center pointer-events-none"
           >
             <div class="text-center">
               <div
-                class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2C2C2C] mx-auto mb-4"
-              ></div>
-              <p class="font-bold text-gray-600">지도를 불러오는 중...</p>
+                class="w-14 h-14 bg-white border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center mx-auto mb-3 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.4)]"
+              >
+                <MapPin :size="26" :stroke-width="2.5" class="text-[#2C2C2C]" />
+              </div>
+              <p class="font-bold text-gray-700">코스에 담긴 장소가 지도에 표시됩니다</p>
             </div>
           </div>
         </div>
@@ -131,7 +139,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Calendar, MapPin, Edit } from 'lucide-vue-next'
 import PlaceDetailModal from './PlaceDetailModal.vue'
-import { useKakaoMap } from '@/composables/useKakaoMap'
+import KakaoMap from '@/components/common/KakaoMap.vue'
 
 interface Place {
   id: number
@@ -226,14 +234,31 @@ const currentDayPlaces = computed(() => {
   return day ? day.places : []
 })
 
+// KakaoMap에 내려줄 마커 리스트
+const markerPositions = computed(() =>
+  currentDayPlaces.value
+    .filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number')
+    .map((p) => ({
+      id: p.id,
+      lat: p.lat as number,
+      lng: p.lng as number,
+    })),
+)
+
+// 지도 중심 좌표: 현재 Day의 첫 번째 장소 기준, 없으면 기본값
+const mapCenter = computed(() => {
+  const first = currentDayPlaces.value.find(
+    (p) => typeof p.lat === 'number' && typeof p.lng === 'number',
+  )
+  if (first && typeof first.lat === 'number' && typeof first.lng === 'number') {
+    return { lat: first.lat, lng: first.lng }
+  }
+  return { lat: 37.5665, lng: 126.978 } // 기본 서울 시청
+})
+
 const handleEditClick = () => {
   emit('edit', props.trip)
 }
-
-const { map, mapLoaded } = useKakaoMap('kakao-map', {
-  center: { lat: 37.5665, lng: 126.978 },
-  level: 5,
-})
 
 // ESC 키로 닫기
 const handleKeydown = (e: KeyboardEvent) => {
