@@ -83,9 +83,45 @@
               </div>
             </div>
           </div>
-          <button class="p-2 hover:bg-gray-100 rounded transition-all">
-            <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
-          </button>
+          <div class="relative">
+            <button
+              @click="showDropdown = !showDropdown"
+              class="p-2 hover:bg-gray-100 rounded transition-all"
+            >
+              <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
+            </button>
+
+            <div
+              v-if="showDropdown"
+              class="absolute right-0 top-full mt-2 w-40 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-20"
+            >
+              <button
+                @click="handleShare"
+                class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left"
+              >
+                <Share class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+                <span class="font-bold text-sm text-[#2C2C2C]">공유</span>
+              </button>
+
+              <template v-if="isAuthor">
+                <button
+                  @click="handleEdit"
+                  class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left border-t border-gray-200"
+                >
+                  <Edit class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+                  <span class="font-bold text-sm text-[#2C2C2C]">수정</span>
+                </button>
+
+                <button
+                  @click="handleDelete"
+                  class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-red-50 transition-colors text-left border-t border-gray-200"
+                >
+                  <Trash2 class="w-4 h-4 text-red-500" stroke-width="2.5" />
+                  <span class="font-bold text-sm text-red-500">삭제</span>
+                </button>
+              </template>
+            </div>
+          </div>
         </div>
 
         <div class="p-5 border-b border-gray-200">
@@ -185,7 +221,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue' // 👈 생명주기 훅 import
+import { ref, computed, onMounted, onUnmounted } from 'vue' // 👈 생명주기 훅 import
 import {
   Heart,
   Bookmark,
@@ -194,6 +230,9 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
+  Share,
+  Edit,
+  Trash2,
 } from 'lucide-vue-next'
 import PlaceDetailModal from './PlaceDetailModal.vue'
 
@@ -222,6 +261,10 @@ const isLiked = ref(false)
 const currentLikes = ref(props.likes)
 const isBookmarked = ref(false)
 const selectedPlace = ref<CourseItem | null>(null)
+const showDropdown = ref(false)
+
+// 본인 여부 확인
+const isAuthor = computed(() => props.author === '김민준')
 
 const handlePrevImage = () => {
   currentImageIndex.value =
@@ -239,6 +282,27 @@ const handleLike = () => {
   isLiked.value = !isLiked.value
 }
 
+// 드롭다운 메뉴 핸들러
+const handleShare = () => {
+  showDropdown.value = false
+  console.log('공유하기')
+  // TODO: 공유 기능 구현
+}
+
+const handleEdit = () => {
+  showDropdown.value = false
+  console.log('수정하기')
+  // TODO: 수정 기능 구현
+}
+
+const handleDelete = () => {
+  showDropdown.value = false
+  if (confirm('정말 삭제하시겠습니까?')) {
+    console.log('삭제하기')
+    // TODO: 삭제 기능 구현
+  }
+}
+
 const colors = ['#FFD60A', '#FF6B9D', '#98D8C8', '#B4E4FF', '#E88555']
 const getBadgeColor = (idx: number) => colors[idx % colors.length]
 
@@ -249,15 +313,25 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
+// 드롭다운 외부 클릭 시 닫기
+const handleClickOutside = (e: MouseEvent) => {
+  const target = e.target as HTMLElement
+  if (!target.closest('.relative')) {
+    showDropdown.value = false
+  }
+}
+
 // 모달이 열릴 때 이벤트 리스너 등록, 닫힐 때 해제
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('click', handleClickOutside)
   // 모달 열릴 때 뒤에 스크롤 막고 싶으면 아래 주석 해제
   // document.body.style.overflow = 'hidden';
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('click', handleClickOutside)
   // document.body.style.overflow = '';
 })
 
