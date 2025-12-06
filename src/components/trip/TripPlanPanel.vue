@@ -77,7 +77,7 @@
                 <GripVertical class="w-3 h-3 text-gray-400" stroke-width="2.5" />
               </div>
               <div
-                class="w-7 h-7 rounded border-[2px] border-[#2C2C2C] flex items-center justify-center font-black text-[11px] flex-shrink-0 bg-[#9BCCC4]"
+                class="w-7 h-7 rounded border-[2px] border-[#2C2C2C] flex items-center justify-center font-black text-[11.5px] flex-shrink-0 bg-[#9BCCC4]"
               >
                 {{ index + 1 }}
               </div>
