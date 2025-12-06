@@ -83,22 +83,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Plus } from 'lucide-vue-next'
-import { useNavigate } from '@/composables/navigation'
+import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
-import ScrollToTop from '@/components/common/ScrollToTop.vue' // Import 추가
+import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { initialTrips } from '@/data/trips'
-
-interface Trip {
-  id: number
-  title: string
-  spots: number
-  status: string
-  tags?: string[]
-  spotPreviews: { name: string }[]
-  completedDate?: string
-}
+import type { Trip } from '@/types/trip'
 
 const { handleNavigate } = useNavigate()
 
