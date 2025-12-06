@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import apiClient from '@/services/api'
-import type { LoginRequestDto } from '@/types/auth'
+import type { LoginRequestDto, SignupRequestDto } from '@/types/auth'
 
 export interface User {
   email: string
@@ -79,6 +79,52 @@ export const useAuthStore = defineStore('auth', () => {
       clearAuthentication()
     }
   }
+  
+  async function signup(signupRequest: SignupRequestDto): Promise<boolean> {
+    try {
+      await apiClient.post('/auth/signup', signupRequest);
+      return true;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        // You can refine error handling here, e.g., by returning the error message
+        alert(error.response?.data?.message || '회원가입 중 오류가 발생했습니다.');
+        console.error('Signup failed:', error.response?.data || error.message);
+      } else {
+        alert('알 수 없는 오류가 발생했습니다.');
+        console.error('An unexpected error occurred during signup:', error);
+      }
+      return false;
+    }
+  }
+
+  async function findEmailByNickname(nickname: string): Promise<string> {
+    try {
+      const response = await apiClient.get(`/auth/find-email/${nickname}`);
+      return response.data.email;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || '이메일 찾기 중 오류가 발생했습니다.');
+      } else {
+        throw new Error('알 수 없는 오류가 발생했습니다.');
+      }
+    }
+  }
+
+  async function resetPassword(email: string): Promise<boolean> {
+    try {
+      await apiClient.post('/auth/reset-password', { email });
+      return true;
+    } catch (error: unknown) {
+      // This endpoint fails silently on the backend, so frontend errors are less likely
+      // unless there's a network issue or validation failure.
+      if (axios.isAxiosError(error)) {
+        console.error('Password reset failed:', error.response?.data || error.message);
+      } else {
+        console.error('An unexpected error occurred during password reset:', error);
+      }
+      return false;
+    }
+  }
 
   // This is the key action for session persistence
   async function refreshAccessToken() {
@@ -86,22 +132,16 @@ export const useAuthStore = defineStore('auth', () => {
       isInitialized.value = true
       return
     }
-
     try {
       const response = await apiClient.post('/auth/refresh')
       const { accessToken: token, expiresIn } = response.data
-
-      // We have a new access token, but we need the user data.
-      // It's already in localStorage from the a initial login.
       const storedUser = localStorage.getItem('user')
       if (storedUser) {
         setAuthenticated(token, JSON.parse(storedUser), expiresIn)
       } else {
-        // This case is unlikely if refresh succeeds, but handle it just in case.
         throw new Error('User data not found in localStorage after token refresh.')
       }
     } catch (error: unknown) {
-      // Refresh failed (e.g., expired refresh token), ensure user is logged out.
       if (axios.isAxiosError(error)) {
         console.error('Refresh token failed:', error.response?.data || error.message)
       } else {
@@ -121,6 +161,9 @@ export const useAuthStore = defineStore('auth', () => {
     isInitialized,
     login,
     logout,
+    signup,
+    findEmailByNickname,
+    resetPassword,
     refreshAccessToken
   }
 })
