@@ -21,3 +21,11 @@ export const getTripDetail = async (tripId: number): Promise<TripDetailResponseD
   const response = await apiClient.get<TripDetailResponseDto>(`/trips/${tripId}`)
   return response.data
 }
+
+/**
+ * 특정 여행 계획을 삭제합니다.
+ * @param tripId 삭제할 여행 계획의 ID
+ */
+export const deleteTrip = async (tripId: number): Promise<void> => {
+  await apiClient.delete(`/trips/${tripId}`)
+}

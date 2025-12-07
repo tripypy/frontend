@@ -1,4 +1,8 @@
-import { createTrip as apiCreateTrip, getTripDetail as apiGetTripDetail } from '@/apis/trip'
+import {
+  createTrip as apiCreateTrip,
+  getTripDetail as apiGetTripDetail,
+  deleteTrip as apiDeleteTrip,
+} from '@/apis/trip'
 import type { TripDetailResponseDto } from '@/types/trip'
 
 /**
@@ -18,4 +22,12 @@ export const createTrip = async (): Promise<TripDetailResponseDto> => {
  */
 export const getTripDetail = async (tripId: number): Promise<TripDetailResponseDto> => {
   return await apiGetTripDetail(tripId)
+}
+
+/**
+ * 특정 여행 계획을 삭제하는 서비스 함수.
+ * @param tripId 삭제할 여행 계획의 ID
+ */
+export const deleteTrip = async (tripId: number): Promise<void> => {
+  await apiDeleteTrip(tripId)
 }
