@@ -28,8 +28,12 @@ export interface Trip {
   completedDate?: string
 }
 
+export type TripStatus = 'DRAFT' | 'PLANNED' | 'COMPLETED'
+export type TripVisibility = 'PUBLIC' | 'PRIVATE'
+
 // 장소 정보를 나타내는 인터페이스 (API 응답용)
 export interface Spot {
+  id: number
   kakaoPlaceId: string
   name: string
   address: string
@@ -37,7 +41,7 @@ export interface Spot {
   lat: number
   lng: number
   placeUrl: string
-  thumbnailUrl?: string // 썸네일 URL은 선택 사항
+  thumbnailUrl?: string
 }
 
 // 여행 아이템 응답 DTO 인터페이스
@@ -55,7 +59,8 @@ export interface TripDetailResponseDto {
   title: string
   startDate?: string // 시작일은 선택 사항
   endDate?: string // 종료일은 선택 사항
-  status: 'DRAFT' | 'PUBLIC' // 여행 상태 (임시 또는 공개)
+  status: TripStatus
+  visibility: TripVisibility
   isOwner: boolean // 현재 사용자가 여행의 소유자인지 여부
   tripItems: TripItemResponseDto[] // 여행에 포함된 아이템 목록
 }
@@ -66,8 +71,18 @@ export interface TripResponseDto {
   title: string
   startDate?: string
   endDate?: string
-  status: 'DRAFT' | 'PUBLIC'
+  status: TripStatus
+  visibility: TripVisibility
   isOwner: boolean
+}
+
+// 여행 정보 수정 요청 DTO
+export interface TripUpdateRequestDto {
+  title: string
+  startDate?: string
+  endDate?: string
+  status: TripStatus
+  visibility: TripVisibility
 }
 
 // 동기화 요청 시 신규 아이템을 위한 spot 정보

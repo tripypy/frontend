@@ -3,6 +3,7 @@ import type {
   TripDetailResponseDto,
   TripItemResponseDto,
   TripItemSyncRequestDto,
+  TripUpdateRequestDto,
 } from '@/types/trip'
 
 // API 호출 함수
@@ -45,5 +46,19 @@ export const syncTripItems = async (
   syncData: TripItemSyncRequestDto,
 ): Promise<TripItemResponseDto[]> => {
   const response = await apiClient.put<TripItemResponseDto[]>(`/trips/${tripId}/items`, syncData)
+  return response.data
+}
+
+/**
+ * 여행의 기본 정보(제목, 날짜, 상태, 공개 여부)를 수정합니다.
+ * @param tripId 수정할 여행의 ID
+ * @param updateData 수정할 여행 정보
+ * @returns 수정된 여행의 상세 정보 (TripDetailResponseDto)
+ */
+export const updateTrip = async (
+  tripId: number,
+  updateData: TripUpdateRequestDto,
+): Promise<TripDetailResponseDto> => {
+  const response = await apiClient.put<TripDetailResponseDto>(`/trips/${tripId}`, updateData)
   return response.data
 }

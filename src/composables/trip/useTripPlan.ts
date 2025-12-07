@@ -2,15 +2,18 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type {
   Place,
-  TripDetailResponseDto,
   TripItemSyncRequestDto,
   ItemSyncDto,
   TripItemResponseDto,
+  TripStatus,
+  TripVisibility,
+  TripUpdateRequestDto,
 } from '@/types/trip'
 import {
   getTripDetail,
   deleteTrip as apiDeleteTrip,
   syncTripItems as apiSyncTripItems,
+  updateTrip as apiUpdateTrip,
 } from '@/services/trip'
 
 export interface DayPlan {
@@ -35,7 +38,8 @@ export function useTripPlan() {
   const route = useRoute()
   const router = useRouter()
   const tripId = ref<number | null>(null)
-  const tripStatus = ref<TripDetailResponseDto['status'] | null>(null)
+  const tripStatus = ref<TripStatus | null>(null)
+  const tripVisibility = ref<TripVisibility | null>(null)
 
   // State
   const isEditMode = ref(false)
@@ -59,6 +63,7 @@ export function useTripPlan() {
       tripTitle.value = tripDetail.title
       tripDate.value = tripDetail.startDate || ''
       tripStatus.value = tripDetail.status
+      tripVisibility.value = tripDetail.visibility
 
       // API 응답을 로컬 상태로 변환
       const maxDay = tripDetail.tripItems.reduce((max, item) => Math.max(max, item.dayNumber), 0)
@@ -87,7 +92,8 @@ export function useTripPlan() {
       await reloadTripData()
 
       isEditMode.value = true
-      if (tripStatus.value === 'PUBLIC') {
+      if (tripVisibility.value === 'PUBLIC') {
+        // Changed from tripStatus to tripVisibility
         enterEditMode()
       }
     }
@@ -107,16 +113,14 @@ export function useTripPlan() {
     if (!tripTitle.value.trim()) return alert('제목을 입력해주세요.')
 
     try {
-      const payload: TripItemSyncRequestDto = {
+      // 1. 여행 아이템 동기화
+      const itemPayload: TripItemSyncRequestDto = {
         days: days.value.map((day) => ({
           dayNumber: day.dayNumber,
           items: day.places.map((place): ItemSyncDto => {
-            // id가 있는 장소는 기존 아이템
             if (place.id) {
               return { tripItemId: place.id, memo: place.memo }
-            }
-            // id가 없는 장소는 신규 아이템
-            else {
+            } else {
               return {
                 spot: {
                   kakaoPlaceId: place.kakaoPlaceId,
@@ -133,17 +137,22 @@ export function useTripPlan() {
           }),
         })),
       }
+      await apiSyncTripItems(tripId.value, itemPayload)
 
-      await apiSyncTripItems(tripId.value, payload)
+      // 2. 여행 기본 정보 (제목, 날짜, 상태, 공개 여부) 업데이트
+      const updatePayload: TripUpdateRequestDto = {
+        title: tripTitle.value,
+        startDate: tripDate.value || undefined,
+        endDate: undefined, // Assuming endDate is not managed by frontend yet
+        status: 'PLANNED', // User wants to save as PLANNED
+        visibility: 'PUBLIC', // User wants to save as PUBLIC
+      }
+      await apiUpdateTrip(tripId.value, updatePayload)
 
-      // 데이터를 다시 로드하여 UI를 동기화합니다.
+      // 3. 데이터를 다시 로드하여 UI를 동기화합니다.
       await reloadTripData()
 
-      // TODO: 여행 정보(제목, 날짜 등) 수정 API 호출
-      // PUT /api/trips/{tripId}
-
       alert('저장되었습니다!')
-      tripStatus.value = 'PUBLIC'
       isEditMode.value = false
       if (callback) callback()
     } catch (error) {
@@ -264,5 +273,6 @@ export function useTripPlan() {
     updatePlaces,
     addDay,
     removeDay,
+    tripVisibility,
   }
 }
