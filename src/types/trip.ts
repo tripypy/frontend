@@ -1,15 +1,16 @@
 // src/types/trip.ts
 
 export interface Place {
-  id: number // tripItemId 또는 초기 kakaoPlaceId
+  id?: number // 동기화 전에는 id가 없을 수 있음 (tripItemId)
   kakaoPlaceId: string // 장소의 고유 카카오 ID
   name: string
   address: string
   category: string
   lat: number
   lng: number
-  phone?: string // 선택적 속성 (?)
-  url?: string // 선택적 속성 (?)
+  phone?: string
+  url?: string
+  memo?: string // 아이템 메모
 }
 
 export interface DayPlan {
@@ -69,7 +70,7 @@ export interface TripResponseDto {
   isOwner: boolean
 }
 
-// 여행 아이템 추가 요청 시 spot 정보 DTO
+// 동기화 요청 시 신규 아이템을 위한 spot 정보
 export interface SpotAddDto {
   kakaoPlaceId: string
   name: string
@@ -81,10 +82,17 @@ export interface SpotAddDto {
   thumbnailUrl?: string
 }
 
-// 여행 아이템 추가 요청 DTO
-export interface TripItemAddRequestDto {
-  dayNumber: number
-  orderIndex: number
+// 동기화 요청 시 개별 아이템 DTO
+export interface ItemSyncDto {
+  tripItemId?: number
+  spot?: SpotAddDto
   memo?: string
-  spot: SpotAddDto
+}
+
+// 여행 아이템 목록 전체 동기화 요청 DTO
+export interface TripItemSyncRequestDto {
+  days: {
+    dayNumber: number
+    items: ItemSyncDto[]
+  }[]
 }

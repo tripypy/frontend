@@ -2,12 +2,12 @@ import {
   createTrip as apiCreateTrip,
   getTripDetail as apiGetTripDetail,
   deleteTrip as apiDeleteTrip,
-  addTripItem as apiAddTripItem,
+  syncTripItems as apiSyncTripItems,
 } from '@/apis/trip'
 import type {
   TripDetailResponseDto,
-  TripItemAddRequestDto,
   TripItemResponseDto,
+  TripItemSyncRequestDto,
 } from '@/types/trip'
 
 /**
@@ -38,14 +38,14 @@ export const deleteTrip = async (tripId: number): Promise<void> => {
 }
 
 /**
- * 특정 여행 계획에 새로운 장소(아이템)를 추가하는 서비스 함수.
- * @param tripId 여행 계획 ID
- * @param itemData 추가할 아이템 정보
- * @returns 생성된 여행 아이템 정보
+ * 여행 아이템 목록 전체를 동기화하는 서비스 함수.
+ * @param tripId 동기화할 여행의 ID
+ * @param syncData 날짜별 아이템 목록
+ * @returns 변경이 완료된 전체 아이템 목록
  */
-export const addTripItem = async (
+export const syncTripItems = async (
   tripId: number,
-  itemData: TripItemAddRequestDto,
-): Promise<TripItemResponseDto> => {
-  return await apiAddTripItem(tripId, itemData)
+  syncData: TripItemSyncRequestDto,
+): Promise<TripItemResponseDto[]> => {
+  return await apiSyncTripItems(tripId, syncData)
 }
