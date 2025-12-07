@@ -24,9 +24,9 @@
         @update:search-query="searchQuery = $event"
         @update:active-day="trip.activeDay.value = $event"
         @search="mapInteraction.triggerSearch"
-        @remove-place="trip.removePlace"
         @add-day="trip.addDay"
         @remove-day="trip.removeDay"
+        @remove-place="trip.removePlace"
         @update-places="trip.updatePlaces"
         @click-place="mapInteraction.handlePlaceClick"
       />
@@ -128,7 +128,10 @@ const mapInteraction = useMapInteraction({
 const { kakaoMapRef } = mapInteraction
 
 // 저장/뒤로가기 연결
-const tripSave = () => trip.saveTrip(closeSearchPanel)
+const tripSave = () => {
+  console.log('tripSave called');
+  trip.saveTrip(closeSearchPanel);
+}
 const tripBack = () => trip.goBack(closeSearchPanel)
 </script>
 

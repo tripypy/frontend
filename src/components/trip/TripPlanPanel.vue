@@ -88,7 +88,7 @@
 
               <button
                 v-if="isEditMode"
-                @click="$emit('remove-place', place.id)"
+                @click.stop="$emit('remove-place', place)"
                 class="w-4 h-4 bg-red-50 border-[1px] border-red-300 rounded hover:bg-red-100 flex items-center justify-center transition-colors flex-shrink-0"
               >
                 <X class="w-2.5 h-2.5 text-red-600" stroke-width="2.5" />
@@ -132,7 +132,7 @@ defineEmits<{
   (e: 'update:searchQuery', val: string): void
   (e: 'update:activeDay', val: number): void
   (e: 'search'): void
-  (e: 'remove-place', placeId: number): void
+  (e: 'remove-place', place: Place): void
   (e: 'add-day'): void
   (e: 'remove-day', dayNum: number): void
   (e: 'update-places', newPlaces: Place[]): void
