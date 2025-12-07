@@ -128,7 +128,10 @@ const mapInteraction = useMapInteraction({
 const { kakaoMapRef } = mapInteraction
 
 // 저장/뒤로가기 연결
-const tripSave = () => trip.saveTrip(closeSearchPanel)
+const tripSave = () => {
+  console.log('tripSave called');
+  trip.saveTrip(closeSearchPanel);
+}
 const tripBack = () => trip.goBack(closeSearchPanel)
 </script>
 

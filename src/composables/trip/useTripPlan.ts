@@ -1,6 +1,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Place } from './usePlaceSearch'
+import type { Place } from '@/types/trip'
+import { getTripDetail } from '@/services/trip'
 
 export interface DayPlan {
   dayNumber: number
@@ -10,10 +11,11 @@ export interface DayPlan {
 export function useTripPlan() {
   const route = useRoute()
   const router = useRouter()
-  const isCreating = route.name === 'create-trip'
+  const tripId = ref<number | null>(null) // tripId 상태 추가
+  const isCreating = computed(() => route.name === 'create-trip') // isCreating을 computed로 변경
 
   // State
-  const isEditMode = ref(isCreating)
+  const isEditMode = ref(false) // 초기값 false로 변경
   const backupData = ref('')
   const tripTitle = ref('')
   const tripDate = ref('')
@@ -28,7 +30,38 @@ export function useTripPlan() {
 
   // Methods
   const initData = async () => {
-    if (isCreating) {
+    if (route.name === 'trip-detail') {
+      // 기존 여행 계획 상세 조회 및 편집 모드 진입
+      tripId.value = Number(route.params.id)
+      try {
+        const tripDetail = await getTripDetail(tripId.value)
+        tripTitle.value = tripDetail.title
+        tripDate.value = tripDetail.startDate || '' // startDate가 없으면 빈 문자열로 설정
+        // tripItems를 days 형태로 변환 (현재는 dayNumber가 1로 고정되어 있다고 가정)
+        // TODO: 실제 tripItems의 dayNumber에 따라 days 배열을 구성하는 로직 필요
+        days.value = [
+          {
+            dayNumber: 1,
+            places: tripDetail.tripItems.map((item) => ({
+              id: item.id, // tripItemId를 id로 변경
+              name: item.spot.name,
+              address: item.spot.address,
+              category: item.spot.category,
+              lat: item.spot.lat,
+              lng: item.spot.lng,
+              phone: undefined, // API 응답에 phone이 없으므로 undefined
+              url: item.spot.placeUrl,
+            })),
+          },
+        ]
+        isEditMode.value = true // 편집 모드로 바로 진입
+      } catch (error) {
+        console.error(`여행 계획 (ID: ${tripId.value}) 상세 정보 불러오기 실패:`, error)
+        alert('여행 계획 상세 정보를 불러오는데 실패했습니다.')
+        router.push('/trips') // 실패 시 목록 페이지로 리다이렉트
+      }
+    } else if (isCreating.value) {
+      // /create-trip 경로로 직접 접근한 경우 (현재는 TripView에서 생성 후 이동하므로 이 경로는 사용되지 않을 수 있음)
       tripTitle.value = ''
       tripDate.value = new Date().toISOString().split('T')[0]
       days.value = [{ dayNumber: 1, places: [] }]
@@ -68,6 +101,8 @@ export function useTripPlan() {
 
   const saveTrip = async (callback?: () => void) => {
     if (!tripTitle.value.trim()) return alert('제목을 입력해주세요.')
+
+    // 이제 여행 계획 생성은 TripView에서 처리하므로, 여기서는 항상 수정 모드로 간주합니다.
     await new Promise((r) => setTimeout(r, 200))
     alert('저장되었습니다!')
     isEditMode.value = false
@@ -77,7 +112,7 @@ export function useTripPlan() {
   const goBack = (callback?: () => void) => {
     if (isEditMode.value) {
       if (confirm('취소하시겠습니까?')) {
-        if (isCreating) router.push('/trips')
+        if (isCreating.value) router.push('/trips')
         else {
           const restored = JSON.parse(backupData.value)
           tripTitle.value = restored.title
@@ -137,6 +172,7 @@ export function useTripPlan() {
   onMounted(() => initData())
 
   return {
+    tripId, // tripId 반환
     isEditMode,
     tripTitle,
     tripDate,

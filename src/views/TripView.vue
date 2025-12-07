@@ -12,7 +12,7 @@
         </div>
 
         <button
-          @click="handleNavigate('create-trip')"
+          @click="handleCreateNewTrip"
           class="flex items-center justify-center gap-3 px-6 py-4 bg-[#F9CA6B] border-[3px] border-black rounded-2xl font-black text-sm tracking-tight shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all uppercase w-full md:w-auto focus:outline-none"
         >
           <Plus class="w-5 h-5" stroke-width="3" />
@@ -90,12 +90,28 @@ import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { initialTrips } from '@/data/trips'
 import type { Trip } from '@/types/trip'
+import { useRouter } from 'vue-router' // useRouter import
+import { createTrip } from '@/services/trip' // createTrip import
 
 const { handleNavigate } = useNavigate()
+const router = useRouter() // useRouter 인스턴스 생성
 
 const activeTab = ref<'all' | 'planning' | 'completed' | 'saved'>('all')
 const tripsList = ref<Trip[]>(initialTrips)
 const selectedTrip = ref<any>(null)
+
+// 새로운 여행 계획 생성 핸들러
+const handleCreateNewTrip = async () => {
+  try {
+    const newTrip = await createTrip(); // API 호출
+    console.log('newTrip:', newTrip); // newTrip 값 확인
+    alert('새로운 여행 계획이 생성되었습니다!');
+    router.push(`/trips/${newTrip.id}`); // 생성된 여행의 상세 페이지로 이동 (newTrip.id 사용)
+  } catch (error) {
+    console.error('여행 계획 생성 실패:', error);
+    alert('여행 계획 생성에 실패했습니다.');
+  }
+}
 
 // 탭 필터링 로직
 const planningTrips = computed(() => tripsList.value.filter((t) => t.status === '계획중'))
