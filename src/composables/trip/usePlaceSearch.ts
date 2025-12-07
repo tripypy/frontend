@@ -36,6 +36,7 @@ export function usePlaceSearch() {
         if (status === (window as any).kakao.maps.services.Status.OK) {
           searchResults.value = data.map((item: any) => ({
             id: Number(item.id),
+            kakaoPlaceId: item.id, // 카카오 ID를 문자열로 저장
             name: item.place_name,
             address: item.road_address_name || item.address_name,
             category: item.category_group_name || '기타',

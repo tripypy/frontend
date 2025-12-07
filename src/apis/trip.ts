@@ -1,5 +1,9 @@
 import apiClient from '@/services/api'
-import type { TripDetailResponseDto } from '@/types/trip'
+import type {
+  TripDetailResponseDto,
+  TripItemAddRequestDto,
+  TripItemResponseDto,
+} from '@/types/trip'
 
 // API 호출 함수
 /**
@@ -28,4 +32,18 @@ export const getTripDetail = async (tripId: number): Promise<TripDetailResponseD
  */
 export const deleteTrip = async (tripId: number): Promise<void> => {
   await apiClient.delete(`/trips/${tripId}`)
+}
+
+/**
+ * 특정 여행 계획에 새로운 장소(아이템)를 추가합니다.
+ * @param tripId 여행 계획 ID
+ * @param itemData 추가할 아이템 정보
+ * @returns 생성된 여행 아이템 정보
+ */
+export const addTripItem = async (
+  tripId: number,
+  itemData: TripItemAddRequestDto,
+): Promise<TripItemResponseDto> => {
+  const response = await apiClient.post<TripItemResponseDto>(`/trips/${tripId}/items`, itemData)
+  return response.data
 }

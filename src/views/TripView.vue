@@ -103,13 +103,12 @@ const selectedTrip = ref<any>(null)
 // 새로운 여행 계획 생성 핸들러
 const handleCreateNewTrip = async () => {
   try {
-    const newTrip = await createTrip(); // API 호출
-    console.log('newTrip:', newTrip); // newTrip 값 확인
-    alert('새로운 여행 계획이 생성되었습니다!');
-    router.push(`/trips/${newTrip.id}`); // 생성된 여행의 상세 페이지로 이동 (newTrip.id 사용)
+    const newTrip = await createTrip() // API 호출
+    console.log('newTrip:', newTrip) // newTrip 값 확인
+    router.push(`/trips/${newTrip.id}`) // 생성된 여행의 상세 페이지로 이동 (newTrip.id 사용)
   } catch (error) {
-    console.error('여행 계획 생성 실패:', error);
-    alert('여행 계획 생성에 실패했습니다.');
+    console.error('여행 계획 생성 실패:', error)
+    alert('여행 계획 생성에 실패했습니다.')
   }
 }
 

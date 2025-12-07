@@ -1,7 +1,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Place, TripDetailResponseDto } from '@/types/trip'
-import { getTripDetail, deleteTrip as apiDeleteTrip } from '@/services/trip'
+import type { Place, TripDetailResponseDto, TripItemAddRequestDto } from '@/types/trip'
+import {
+  getTripDetail,
+  deleteTrip as apiDeleteTrip,
+  addTripItem as apiAddTripItem,
+} from '@/services/trip'
 
 export interface DayPlan {
   dayNumber: number
@@ -64,15 +68,19 @@ export function useTripPlan() {
             places: tripDetail.tripItems
               .filter((item) => item.dayNumber === i)
               .sort((a, b) => a.orderIndex - b.orderIndex)
-              .map((item) => ({
-                id: item.id,
-                name: item.spot.name,
-                address: item.spot.address,
-                category: item.spot.category,
-                lat: item.spot.lat,
-                lng: item.spot.lng,
-                url: item.spot.placeUrl,
-              })),
+              .map(
+                (item) =>
+                  ({
+                    id: item.id,
+                    kakaoPlaceId: item.spot.kakaoPlaceId, // kakaoPlaceId 추가
+                    name: item.spot.name,
+                    address: item.spot.address,
+                    category: item.spot.category,
+                    lat: item.spot.lat,
+                    lng: item.spot.lng,
+                    url: item.spot.placeUrl,
+                  } as Place),
+              ),
           })
         }
         days.value = newDays.length > 0 ? newDays : [{ dayNumber: 1, places: [] }]
@@ -146,13 +154,53 @@ export function useTripPlan() {
     }
   }
 
-  // ... (일정 관리 메서드들은 동일)
-  const addPlace = (place: Place) => {
+  // 일정 관리 (Place CRUD)
+  const addPlace = async (place: Place) => {
+    if (!tripId.value) {
+      alert('여행 계획이 올바르게 로드되지 않았습니다.')
+      return
+    }
+
     const day = days.value.find((d) => d.dayNumber === activeDay.value)
-    if (day && !day.places.find((p) => p.id === place.id)) {
-      day.places.push({ ...place })
-    } else {
+    if (!day) {
+      alert('유효하지 않은 일차입니다.')
+      return
+    }
+
+    // 카카오 장소 ID로 중복 체크
+    const isDuplicate = day.places.some((p) => p.kakaoPlaceId === place.kakaoPlaceId)
+    if (isDuplicate) {
       alert('이미 추가된 장소입니다.')
+      return
+    }
+
+    try {
+      const itemData: TripItemAddRequestDto = {
+        dayNumber: activeDay.value,
+        orderIndex: day.places.length,
+        spot: {
+          kakaoPlaceId: place.kakaoPlaceId,
+          name: place.name,
+          address: place.address,
+          category: place.category,
+          lat: place.lat,
+          lng: place.lng,
+          placeUrl: place.url || '',
+        },
+      }
+
+      const newItem = await apiAddTripItem(tripId.value, itemData)
+
+      // API 호출 성공 후 UI에 반영
+      // 중요: 백엔드에서 받은 tripItemId를 프론트엔드 Place 객체의 id로 사용
+      const newPlace: Place = {
+        ...place,
+        id: newItem.id,
+      }
+      day.places.push(newPlace)
+    } catch (error) {
+      console.error('장소 추가 실패:', error)
+      alert('장소 추가에 실패했습니다. 다시 시도해주세요.')
     }
   }
 
