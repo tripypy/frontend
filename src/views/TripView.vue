@@ -89,12 +89,11 @@ import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { useRouter } from 'vue-router'
-import { createTrip, getMyTrips } from '@/services/trip'
-import { TripResponseDto, TripStatus } from '@/types/trip'
+import { createTrip, getMyTrips, getTripDetail } from '@/services/trip' // Added getTripDetail
+import { TripResponseDto, TripStatus, TripDetailResponseDto } from '@/types/trip' // Added TripDetailResponseDto
 
 // TODO: TripCard에서 필요한 spots, tags, spotPreviews, completedDate 필드가 TripResponseDto에 없음.
-// 현재는 TripResponseDto를 기반으로 하되, TripCard에 필요한 필드는 임시로 처리하거나,
-// TripCard의 props 타입을 TripResponseDto에 맞게 조정해야 합니다.
+// 현재는 TripResponseDto를 기반으로 하되, TripCard의 props 타입을 TripResponseDto에 맞게 조정해야 합니다.
 // 장기적으로는 백엔드 API에서 해당 정보를 제공하거나, TripCard 컴포넌트의 요구사항을 조정해야 합니다.
 
 const { handleNavigate } = useNavigate()
@@ -114,7 +113,7 @@ onMounted(async () => {
   }
 })
 
-const selectedTrip = ref<any>(null)
+const selectedTrip = ref<TripDetailResponseDto | null>(null) // Changed type to TripDetailResponseDto | null
 
 // 새로운 여행 계획 생성 핸들러
 const handleCreateNewTrip = async () => {
@@ -187,16 +186,24 @@ const formatMonth = (monthStr: string) => {
 // --- 핸들러 함수들 ---
 
 // 1. 모달 열기 로직
-const handleOpenModal = (tripId: number) => {
-  const trip = tripsList.value.find((t) => t.id === tripId)
-  if (trip) {
+const handleOpenModal = async (tripId: number) => { // Made async
+  try {
+    const detail = await getTripDetail(tripId) // Fetch detailed trip data
     selectedTrip.value = {
-      ...trip,
+      ...detail,
+      // description은 tripItems에서 파생
+      description: detail.tripItems && detail.tripItems.length > 0
+        ? detail.tripItems.map((item) => item.spot.name).join(' → ')
+        : '장소 없음',
+      // duration, views, imageUrl은 TripDetailResponseDto에 없으므로 mock data 유지 또는 제거
       duration: '반나절', // Mock Data
-      description: trip.spotPreviews && trip.spotPreviews.length > 0 ? trip.spotPreviews.map((s) => s.name).join(' → ') : '장소 없음',
       views: 1240, // Mock Data
       imageUrl: '', // Mock Data
     }
+  } catch (error) {
+    console.error(`여행 상세 조회 실패 (ID: ${tripId}):`, error)
+    alert('여행 상세 정보를 불러오는데 실패했습니다.')
+    selectedTrip.value = null // 모달을 열지 않음
   }
 }
 

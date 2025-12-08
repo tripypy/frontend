@@ -25,7 +25,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <MapPin :size="18" :stroke-width="2.5" />
-                <span>{{ trip.spots }}개 장소</span>
+                <span>{{ trip.tripItems.length }}개 장소</span>
               </div>
             </div>
           </div>
@@ -131,94 +131,34 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Calendar, MapPin, Edit } from 'lucide-vue-next'
 import PlaceDetailModal from './PlaceDetailModal.vue'
 import KakaoMap from '@/components/common/KakaoMap.vue'
+import { TripDetailResponseDto, SpotResponseDto } from '@/types/trip' // Import types
 
-interface Place {
-  id: number
-  name: string
-  address: string
-  category: string
-  lat?: number
-  lng?: number
-}
-
-interface DayPlan {
+interface DayPlanDisplay {
   dayNumber: number
-  places: Place[]
-}
-
-interface Trip {
-  id: number
-  title: string
-  spots: number
-  duration: string
-  description: string
-  tags: string[]
-  views: number
-  imageUrl: string
+  places: SpotResponseDto[]
 }
 
 const props = defineProps<{
-  trip: Trip
+  trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string } // Extend with optional fields from TripView
 }>()
 
 const emit = defineEmits(['close', 'edit'])
 
 const activeDay = ref(1)
-const selectedPlace = ref<Place | null>(null)
+const selectedPlace = ref<SpotResponseDto | null>(null) // Changed type
 
-// Mock data - 실제로는 API에서 가져와야 함
-const days = ref<DayPlan[]>([
-  {
-    dayNumber: 1,
-    places: [
-      {
-        id: 1,
-        name: '대림창고',
-        address: '서울시 성동구 성수동1가 656-1',
-        category: '카페',
-        lat: 37.5443,
-        lng: 127.0557,
-      },
-      {
-        id: 2,
-        name: '그리노 성수',
-        address: '서울시 성동구 왕십리로 83-21',
-        category: '카페',
-        lat: 37.5445,
-        lng: 127.0559,
-      },
-      {
-        id: 3,
-        name: '테라로사 성수',
-        address: '서울시 성동구 아차산로7길 12',
-        category: '카페',
-        lat: 37.5448,
-        lng: 127.0562,
-      },
-    ],
-  },
-  {
-    dayNumber: 2,
-    places: [
-      {
-        id: 4,
-        name: '성수연방',
-        address: '서울시 성동구 연무장5길 7',
-        category: '카페',
-        lat: 37.544,
-        lng: 127.0555,
-      },
-      {
-        id: 5,
-        name: '서울숲',
-        address: '서울시 성동구 뚝섬로 273',
-        category: '공원',
-        lat: 37.5447,
-        lng: 127.0374,
-      },
-    ],
-  },
-])
+// trip.tripItems를 DayPlanDisplay[] 형태로 변환
+const days = computed<DayPlanDisplay[]>(() => {
+  const grouped = props.trip.tripItems.reduce((acc, item) => {
+    if (!acc[item.dayNumber]) {
+      acc[item.dayNumber] = { dayNumber: item.dayNumber, places: [] }
+    }
+    acc[item.dayNumber].places.push(item.spot)
+    return acc
+  }, {} as Record<number, DayPlanDisplay>)
+
+  return Object.values(grouped).sort((a, b) => a.dayNumber - b.dayNumber)
+})
 
 const currentDayPlaces = computed(() => {
   const day = days.value.find((d) => d.dayNumber === activeDay.value)
