@@ -6,8 +6,12 @@
       :formatted-date="trip.formattedDate.value"
       :is-edit-mode="trip.isEditMode.value"
       :total-places-count="trip.allSelectedPlaces.value.length"
+      :trip-status="trip.tripStatus.value"
+      :trip-visibility="trip.tripVisibility.value"
       @update:trip-title="trip.tripTitle.value = $event"
       @update:trip-date="trip.tripDate.value = $event"
+      @update:trip-status="trip.tripStatus.value = $event"
+      @update:trip-visibility="trip.tripVisibility.value = $event"
       @back="tripBack"
       @save="tripSave"
       @delete="trip.deleteTrip"
@@ -48,7 +52,7 @@
         :is-loading="isSearching"
         :selected-id="mapInteraction.selectedMarkerId.value"
         @close="closeSearchPanel"
-        @add-place="trip.addPlace"
+        @add-place="handleAddPlace"
         @click-item="mapInteraction.handlePlaceClick"
       />
 
@@ -87,6 +91,7 @@ import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
 import TripSearchListPanel from '@/components/trip/TripSearchListPanel.vue'
+import type { Place } from '@/types/trip'
 
 // Import Composables
 import { useResizablePanel } from '@/composables/common/useResizablePanel'
@@ -121,11 +126,20 @@ const mapInteraction = useMapInteraction({
   searchQuery,
   isSearchPanelOpen,
   searchPlaces,
+  activeDay: trip.activeDay, // activeDay 추가
+  days: trip.days, // days 추가
 })
 
 // 템플릿에서 ref를 쓰기 위해 꺼내줌 (구조분해 해도 되지만, mapInteraction.xxx로 쓰는 게 출처가 명확함)
 // 단, ref="kakaoMapRef" 연결을 위해 이것만 별도로 꺼내줍니다.
 const { kakaoMapRef } = mapInteraction
+
+const handleAddPlace = (place: Place) => {
+  const newPlace = trip.addPlace(place)
+  if (newPlace) {
+    mapInteraction.handlePlaceClick(newPlace)
+  }
+}
 
 // 저장/뒤로가기 연결
 const tripSave = () => {

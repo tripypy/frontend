@@ -131,12 +131,9 @@ const handleShare = () => {
 
 const displayDateRange = computed(() => {
   const start = props.trip.startDate
-  const end = props.trip.endDate
   const completed = props.trip.completedDate
 
-  if (start && end) {
-    return `${start} - ${end}`
-  } else if (start) {
+  if (start) {
     return start
   } else if (completed) {
     return completed

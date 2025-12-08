@@ -2,8 +2,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type {
   Place,
-  TripItemSyncRequestDto,
-  ItemSyncDto,
+  TripItemsUpdateRequestDto, // Changed from TripItemSyncRequestDto
+  TripItemsUpdateRequestDto_ItemSync,
   TripItemResponseDto,
   TripStatus,
   TripVisibility,
@@ -11,7 +11,7 @@ import type {
 } from '@/types/trip'
 import {
   getTripDetail,
-  deleteTrip as apiDeleteTrip,
+  deleteTrip as apiDeleteTrip, // Added
   syncTripItems as apiSyncTripItems,
   updateTrip as apiUpdateTrip,
 } from '@/services/trip'
@@ -114,11 +114,11 @@ export function useTripPlan() {
 
     try {
       // 1. 여행 아이템 동기화
-      const itemPayload: TripItemSyncRequestDto = {
+      const itemPayload: TripItemsUpdateRequestDto = {
         days: days.value.map((day) => ({
           dayNumber: day.dayNumber,
-          items: day.places.map((place): ItemSyncDto => {
-            if (place.id) {
+          items: day.places.map((place): TripItemsUpdateRequestDto_ItemSync => {
+            if (place.id !== undefined) {
               return { tripItemId: place.id, memo: place.memo }
             } else {
               return {
@@ -143,9 +143,9 @@ export function useTripPlan() {
       const updatePayload: TripUpdateRequestDto = {
         title: tripTitle.value,
         startDate: tripDate.value || undefined,
-        endDate: undefined, // Assuming endDate is not managed by frontend yet
-        status: 'PLANNED', // User wants to save as PLANNED
-        visibility: 'PUBLIC', // User wants to save as PUBLIC
+        endDate: tripDate.value || undefined, // Assuming endDate is not managed by frontend yet
+        status: tripStatus.value || 'PLANNED',
+        visibility: tripVisibility.value || 'PRIVATE',
       }
       await apiUpdateTrip(tripId.value, updatePayload)
 
@@ -203,27 +203,22 @@ export function useTripPlan() {
 
   // --- 로컬 상태 변경 함수들 ---
 
-  const addPlace = (place: Place) => {
+  const addPlace = (place: Place): Place | undefined => {
     const day = days.value.find((d) => d.dayNumber === activeDay.value)
-    if (!day) return alert('유효하지 않은 일차입니다.')
+    if (!day) {
+      alert('유효하지 않은 일차입니다.')
+      return
+    }
 
-    const isDuplicate = day.places.some((p) => p.kakaoPlaceId === place.kakaoPlaceId)
-    if (isDuplicate) return alert('이미 추가된 장소입니다.')
-
-    // id 없이 로컬에만 추가
-    day.places.push({ ...place, id: undefined, memo: '' })
+    const newPlace = { ...place, id: undefined, memo: '' }
+    day.places.push(newPlace)
+    return newPlace
   }
 
-  const removePlace = (placeToRemove: Place) => {
+  const removePlace = (index: number) => {
     const day = days.value.find((d) => d.dayNumber === activeDay.value)
-    if (day) {
-      day.places = day.places.filter((p) => {
-        // id가 있으면 id로, 없으면 kakaoPlaceId로 비교하여 삭제
-        if (p.id && placeToRemove.id) {
-          return p.id !== placeToRemove.id
-        }
-        return p.kakaoPlaceId !== placeToRemove.kakaoPlaceId
-      })
+    if (day && day.places[index]) {
+      day.places.splice(index, 1)
     }
   }
 
@@ -274,5 +269,6 @@ export function useTripPlan() {
     addDay,
     removeDay,
     tripVisibility,
+    tripStatus,
   }
 }
