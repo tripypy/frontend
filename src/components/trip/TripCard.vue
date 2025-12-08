@@ -7,7 +7,7 @@
       <div class="flex items-center justify-between mb-3 h-6">
         <div class="flex items-center gap-1.5 text-xs text-[#2C2C2C] font-bold">
           <Calendar class="w-3.5 h-3.5" stroke-width="2.5" />
-          <span>{{ trip.completedDate || '날짜 미정' }}</span>
+          <span>{{ displayDateRange }}</span>
         </div>
 
         <div class="flex items-center gap-1.5">
@@ -128,6 +128,22 @@ const getNumberColor = (idx: number) => numberColors[idx % numberColors.length]
 const handleShare = () => {
   alert('공유 기능 준비 중입니다!')
 }
+
+const displayDateRange = computed(() => {
+  const start = props.trip.startDate
+  const end = props.trip.endDate
+  const completed = props.trip.completedDate
+
+  if (start && end) {
+    return `${start} - ${end}`
+  } else if (start) {
+    return start
+  } else if (completed) {
+    return completed
+  } else {
+    return '날짜 미정'
+  }
+})
 </script>
 
 <style scoped>
