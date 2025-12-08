@@ -193,11 +193,8 @@ const handleEditClick = () => {
 
 const displayDuration = computed(() => {
   const start = props.trip.startDate
-  const end = props.trip.endDate
 
-  if (start && end) {
-    return `${start} - ${end}`
-  } else if (start) {
+  if (start) {
     return start
   } else {
     return '날짜 미정'
