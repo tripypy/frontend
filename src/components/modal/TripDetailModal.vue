@@ -169,10 +169,12 @@ const currentDayPlaces = computed(() => {
 const markerPositions = computed(() =>
   currentDayPlaces.value
     .filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number')
-    .map((p) => ({
+    .map((p, index) => ({
       id: p.id,
       lat: p.lat as number,
       lng: p.lng as number,
+      type: 'plan' as const,
+      order: index + 1,
     })),
 )
 
