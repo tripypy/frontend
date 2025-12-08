@@ -3,6 +3,27 @@
     class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
     @click="emit('close')"
   >
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      leave-active-class="transition-all duration-200 ease-in"
+      enter-from-class="opacity-0 translate-y-[-20px]"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-[-20px]"
+    >
+      <div
+        v-if="showToast"
+        class="fixed top-6 right-6 z-[60] bg-white border-[3px] border-[#2C2C2C] rounded-xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.3)] px-5 py-3 flex items-center gap-3"
+      >
+        <div class="w-6 h-6 bg-[#FFD60A] border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#2C2C2C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="font-black text-sm text-[#2C2C2C]">링크가 복사되었습니다!</span>
+      </div>
+    </Transition>
+
     <button
       @click="emit('close')"
       class="absolute top-6 right-6 z-10 text-white hover:opacity-80 transition-opacity"
@@ -83,9 +104,45 @@
               </div>
             </div>
           </div>
-          <button class="p-2 hover:bg-gray-100 rounded transition-all">
-            <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
-          </button>
+          <div class="relative">
+            <button
+              @click="showDropdown = !showDropdown"
+              class="p-2 hover:bg-gray-100 rounded transition-all"
+            >
+              <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
+            </button>
+
+            <div
+              v-if="showDropdown"
+              class="absolute right-0 top-full mt-2 w-40 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-20"
+            >
+              <button
+                @click="handleShare"
+                class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left"
+              >
+                <Share class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+                <span class="font-bold text-sm text-[#2C2C2C]">공유</span>
+              </button>
+
+              <template v-if="isAuthor">
+                <button
+                  @click="handleEdit"
+                  class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left border-t border-gray-200"
+                >
+                  <Edit class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+                  <span class="font-bold text-sm text-[#2C2C2C]">수정</span>
+                </button>
+
+                <button
+                  @click="handleDelete"
+                  class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-red-50 transition-colors text-left border-t border-gray-200"
+                >
+                  <Trash2 class="w-4 h-4 text-red-500" stroke-width="2.5" />
+                  <span class="font-bold text-sm text-red-500">삭제</span>
+                </button>
+              </template>
+            </div>
+          </div>
         </div>
 
         <div class="p-5 border-b border-gray-200">
@@ -185,7 +242,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue' // 👈 생명주기 훅 import
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   Heart,
   Bookmark,
@@ -194,6 +251,9 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
+  Share,
+  Edit,
+  Trash2,
 } from 'lucide-vue-next'
 import PlaceDetailModal from './PlaceDetailModal.vue'
 
@@ -202,18 +262,24 @@ interface CourseItem {
   name: string
 }
 
-const props = defineProps<{
-  author: string
-  authorAvatar: string
-  location: string
-  date: string
-  title: string
-  content: string
-  images: string[]
-  likes: number
-  comments: number
-  course?: CourseItem[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    id?: number
+    author: string
+    authorAvatar: string
+    location: string
+    date: string
+    title: string
+    content: string
+    images: string[]
+    likes: number
+    comments: number
+    course?: CourseItem[]
+  }>(),
+  {
+    id: 1,
+  },
+)
 
 const emit = defineEmits(['close'])
 
@@ -222,6 +288,11 @@ const isLiked = ref(false)
 const currentLikes = ref(props.likes)
 const isBookmarked = ref(false)
 const selectedPlace = ref<CourseItem | null>(null)
+const showDropdown = ref(false)
+const showToast = ref(false)
+
+// 본인 여부 확인 (author가 "김민준"인 경우)
+const isAuthor = computed(() => props.author === '김민준')
 
 const handlePrevImage = () => {
   currentImageIndex.value =

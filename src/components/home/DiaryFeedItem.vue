@@ -1,5 +1,25 @@
 <template>
-  <div class="mb-8 block">
+  <div class="mb-8 block relative">
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      leave-active-class="transition-all duration-200 ease-in"
+      enter-from-class="opacity-0 translate-y-[-20px]"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-[-20px]"
+    >
+      <div
+        v-if="showToast"
+        class="fixed top-6 right-6 z-[60] bg-white border-[3px] border-[#2C2C2C] rounded-xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.3)] px-5 py-3 flex items-center gap-3"
+      >
+        <div class="w-6 h-6 bg-[#FFD60A] border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#2C2C2C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="font-black text-sm text-[#2C2C2C]">링크가 복사되었습니다!</span>
+      </div>
+    </Transition>
     <div
       class="bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-[3px_3px_0px_0px_rgba(44,44,44,0.1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all p-5"
     >
@@ -24,6 +44,7 @@
 
         <div class="flex items-center gap-2">
           <button
+            @click="handleShare"
             class="p-2 border-[2px] border-[#2C2C2C] rounded-lg bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all focus:outline-none"
           >
             <Share2 class="w-3.5 h-3.5 text-gray-600" stroke-width="2.5" />
@@ -224,6 +245,7 @@ const isBookmarked = ref(false)
 const currentLikes = ref(props.likes)
 const isExpanded = ref(false)
 const currentImageIndex = ref(0)
+const showToast = ref(false)
 
 // Modal States
 const showCommentModal = ref(false)
@@ -243,6 +265,22 @@ const toggleLike = () => {
   if (isLiked.value) currentLikes.value--
   else currentLikes.value++
   isLiked.value = !isLiked.value
+}
+
+// Share Action
+const handleShare = async () => {
+  const diaryUrl = `${window.location.origin}/diary/${props.id}`
+
+  try {
+    await navigator.clipboard.writeText(diaryUrl)
+    showToast.value = true
+
+    setTimeout(() => {
+      showToast.value = false
+    }, 2500)
+  } catch (err) {
+    console.error('클립보드 복사 실패:', err)
+  }
 }
 
 // Course Badge Colors
