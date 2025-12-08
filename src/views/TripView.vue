@@ -81,23 +81,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
-import { initialTrips } from '@/data/trips'
-import type { Trip } from '@/types/trip'
-import { useRouter } from 'vue-router' // useRouter import
-import { createTrip } from '@/services/trip' // createTrip import
+import { useRouter } from 'vue-router'
+import { createTrip, getMyTrips } from '@/services/trip'
+import { TripResponseDto, TripStatus } from '@/types/trip'
+
+// TODO: TripCard에서 필요한 spots, tags, spotPreviews, completedDate 필드가 TripResponseDto에 없음.
+// 현재는 TripResponseDto를 기반으로 하되, TripCard에 필요한 필드는 임시로 처리하거나,
+// TripCard의 props 타입을 TripResponseDto에 맞게 조정해야 합니다.
+// 장기적으로는 백엔드 API에서 해당 정보를 제공하거나, TripCard 컴포넌트의 요구사항을 조정해야 합니다.
 
 const { handleNavigate } = useNavigate()
-const router = useRouter() // useRouter 인스턴스 생성
+const router = useRouter()
 
-const activeTab = ref<'all' | 'planning' | 'completed' | 'saved'>('all')
-const tripsList = ref<Trip[]>(initialTrips)
+const activeTab = ref<'all' | 'PLANNED' | 'COMPLETED' | 'saved'>('all') // Changed to use TripStatus enum values
+const tripsList = ref<TripResponseDto[]>([]) // Changed to TripResponseDto[]
+
+onMounted(async () => {
+  try {
+    const response = await getMyTrips()
+    tripsList.value = response
+    console.log('Fetched tripsList:', tripsList.value) // Added log
+  } catch (error) {
+    console.error('내 여행 목록 조회 실패:', error)
+    // 에러 처리 로직 추가 (예: 사용자에게 알림)
+  }
+})
+
 const selectedTrip = ref<any>(null)
 
 // 새로운 여행 계획 생성 핸들러
@@ -113,34 +129,38 @@ const handleCreateNewTrip = async () => {
 }
 
 // 탭 필터링 로직
-const planningTrips = computed(() => tripsList.value.filter((t) => t.status === '계획중'))
-const completedTrips = computed(() => tripsList.value.filter((t) => t.status === '완료'))
-const savedTrips = computed(() => tripsList.value.filter((t) => t.status === '스크랩'))
+const planningTrips = computed(() => tripsList.value.filter((t) => t.status === TripStatus.PLANNED))
+const completedTrips = computed(() => tripsList.value.filter((t) => t.status === TripStatus.COMPLETED))
+const savedTrips = computed(() => tripsList.value.filter((t) => t.status === '스크랩')) // '스크랩'은 TripStatus에 없으므로 로컬 필터링 유지
 
 const displayTrips = computed(() => {
-  if (activeTab.value === 'planning') return planningTrips.value
-  if (activeTab.value === 'completed') return completedTrips.value
-  if (activeTab.value === 'saved') return savedTrips.value
-  return tripsList.value
+  const filteredTrips = (() => {
+    if (activeTab.value === 'PLANNED') return planningTrips.value
+    if (activeTab.value === 'COMPLETED') return completedTrips.value
+    if (activeTab.value === 'saved') return savedTrips.value
+    return tripsList.value
+  })();
+  console.log('displayTrips:', filteredTrips); // Added log
+  return filteredTrips;
 })
 
 const tabs = [
   { id: 'all', label: '전체' },
-  { id: 'planning', label: '계획중' },
-  { id: 'completed', label: '완료' },
+  { id: 'PLANNED', label: '계획중' }, // Changed to PLANNED
+  { id: 'COMPLETED', label: '완료' }, // Changed to COMPLETED
   { id: 'saved', label: '스크랩' },
 ]
 
 const getCount = (tabId: string) => {
   if (tabId === 'all') return tripsList.value.length
-  if (tabId === 'planning') return planningTrips.value.length
-  if (tabId === 'completed') return completedTrips.value.length
+  if (tabId === 'PLANNED') return planningTrips.value.length
+  if (tabId === 'COMPLETED') return completedTrips.value.length
   if (tabId === 'saved') return savedTrips.value.length
   return 0
 }
 
 const groupedCompletedTrips = computed(() => {
-  const groups: Record<string, Trip[]> = {}
+  const groups: Record<string, TripResponseDto[]> = {} // Changed to TripResponseDto[]
   completedTrips.value.forEach((trip) => {
     if (trip.completedDate) {
       const monthKey = trip.completedDate.substring(0, 7)
@@ -155,7 +175,7 @@ const groupedCompletedTrips = computed(() => {
         acc[key] = groups[key]
         return acc
       },
-      {} as Record<string, Trip[]>,
+      {} as Record<string, TripResponseDto[]>, // Changed to TripResponseDto[]
     )
 })
 
@@ -173,9 +193,9 @@ const handleOpenModal = (tripId: number) => {
     selectedTrip.value = {
       ...trip,
       duration: '반나절', // Mock Data
-      description: trip.spotPreviews.map((s) => s.name).join(' → '),
-      views: 1240,
-      imageUrl: '',
+      description: trip.spotPreviews && trip.spotPreviews.length > 0 ? trip.spotPreviews.map((s) => s.name).join(' → ') : '장소 없음',
+      views: 1240, // Mock Data
+      imageUrl: '', // Mock Data
     }
   }
 }
