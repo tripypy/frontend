@@ -27,6 +27,14 @@
                 <MapPin :size="18" :stroke-width="2.5" />
                 <span>{{ trip.tripItems.length }}개 장소</span>
               </div>
+              <div class="flex items-center gap-2">
+                <ListChecks :size="18" :stroke-width="2.5" />
+                <span>{{ trip.status }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <Shield :size="18" :stroke-width="2.5" />
+                <span>{{ trip.visibility }}</span>
+              </div>
             </div>
           </div>
           <button
@@ -134,9 +142,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, Edit } from 'lucide-vue-next'
+import { Calendar, MapPin, Edit, ListChecks, Shield } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
-import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue' // [NEW]
+import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import { TripDetailResponseDto, SpotResponseDto } from '@/types/trip'
 
 interface DayPlanDisplay {
@@ -154,6 +162,12 @@ const kakaoMapRef = ref<any>(null)
 const activeDay = ref(1)
 const selectedPlace = ref<SpotResponseDto | null>(null)
 const selectedMarkerId = ref<number | string | null>(null)
+
+const statusStyles = computed(() => ({
+  [TripStatus.PLANNED]: 'bg-green-100 text-green-800',
+  [TripStatus.COMPLETED]: 'bg-yellow-100 text-yellow-800',
+  [TripStatus.DRAFT]: 'bg-orange-100 text-orange-800',
+}))
 
 const days = computed<DayPlanDisplay[]>(() => {
   const grouped = props.trip.tripItems.reduce((acc, item) => {
