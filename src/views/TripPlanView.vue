@@ -121,6 +121,8 @@ const mapInteraction = useMapInteraction({
   searchQuery,
   isSearchPanelOpen,
   searchPlaces,
+  activeDay: trip.activeDay, // activeDay 추가
+  days: trip.days, // days 추가
 })
 
 // 템플릿에서 ref를 쓰기 위해 꺼내줌 (구조분해 해도 되지만, mapInteraction.xxx로 쓰는 게 출처가 명확함)

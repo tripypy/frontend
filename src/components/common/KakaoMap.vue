@@ -28,7 +28,8 @@ interface LatLng {
 }
 
 interface MarkerOption extends LatLng {
-  id?: number | string
+  id?: number | string // tripItemId 또는 kakaoPlaceId
+  kakaoPlaceId?: string // kakaoPlaceId 추가
   type?: 'plan' | 'search'
 }
 
