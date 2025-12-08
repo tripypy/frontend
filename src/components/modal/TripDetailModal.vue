@@ -11,7 +11,7 @@
     </button>
 
     <div
-      class="relative w-full max-w-4xl h-[90vh] bg-white border-[4px] border-[#2C2C2C] rounded-3xl shadow-[12px_12px_0px_0px_rgba(44,44,44,1)] flex flex-col overflow-hidden"
+      class="relative w-full max-w-4xl h-[80vh] bg-white border-[4px] border-[#2C2C2C] rounded-3xl shadow-[12px_12px_0px_0px_rgba(44,44,44,1)] flex flex-col overflow-hidden"
       @click.stop
     >
       <div class="bg-white border-b-[3px] border-[#2C2C2C] px-6 py-4 flex-shrink-0">
@@ -162,12 +162,6 @@ const kakaoMapRef = ref<any>(null)
 const activeDay = ref(1)
 const selectedPlace = ref<SpotResponseDto | null>(null)
 const selectedMarkerId = ref<number | string | null>(null)
-
-const statusStyles = computed(() => ({
-  [TripStatus.PLANNED]: 'bg-green-100 text-green-800',
-  [TripStatus.COMPLETED]: 'bg-yellow-100 text-yellow-800',
-  [TripStatus.DRAFT]: 'bg-orange-100 text-orange-800',
-}))
 
 const days = computed<DayPlanDisplay[]>(() => {
   const grouped = props.trip.tripItems.reduce((acc, item) => {
