@@ -35,12 +35,13 @@ export function useMapInteraction({
     const planKakaoPlaceIds = new Set(currentDayPlaces.map((p) => p.kakaoPlaceId))
 
     // 1. 내 일정 마커 (현재 활성화된 일차의 장소만 'plan' 타입으로 표시)
-    const tripMarkers = currentDayPlaces.map((p) => ({
+    const tripMarkers = currentDayPlaces.map((p, index) => ({
       lat: p.lat,
       lng: p.lng,
       id: p.id || p.kakaoPlaceId, // tripItemId가 있으면 사용, 없으면 kakaoPlaceId 사용
       kakaoPlaceId: p.kakaoPlaceId, // kakaoPlaceId도 저장
       type: 'plan' as const,
+      order: index + 1, // 순서 번호 추가
     }))
 
     // 2. 검색 결과 마커 (패널 열려있을 때만, 현재 일차 일정에 없는 것만)

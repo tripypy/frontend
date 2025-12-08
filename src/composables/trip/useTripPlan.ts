@@ -203,15 +203,22 @@ export function useTripPlan() {
 
   // --- 로컬 상태 변경 함수들 ---
 
-  const addPlace = (place: Place) => {
+  const addPlace = (place: Place): Place | undefined => {
     const day = days.value.find((d) => d.dayNumber === activeDay.value)
-    if (!day) return alert('유효하지 않은 일차입니다.')
+    if (!day) {
+      alert('유효하지 않은 일차입니다.')
+      return
+    }
 
     const isDuplicate = day.places.some((p) => p.kakaoPlaceId === place.kakaoPlaceId)
-    if (isDuplicate) return alert('이미 추가된 장소입니다.')
+    if (isDuplicate) {
+      alert('이미 추가된 장소입니다.')
+      return
+    }
 
-    // id 없이 로컬에만 추가
-    day.places.push({ ...place, id: undefined, memo: '' })
+    const newPlace = { ...place, id: undefined, memo: '' }
+    day.places.push(newPlace)
+    return newPlace
   }
 
   const removePlace = (placeToRemove: Place) => {

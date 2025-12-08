@@ -48,7 +48,7 @@
         :is-loading="isSearching"
         :selected-id="mapInteraction.selectedMarkerId.value"
         @close="closeSearchPanel"
-        @add-place="trip.addPlace"
+        @add-place="handleAddPlace"
         @click-item="mapInteraction.handlePlaceClick"
       />
 
@@ -87,6 +87,7 @@ import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
 import TripSearchListPanel from '@/components/trip/TripSearchListPanel.vue'
+import type { Place } from '@/types/trip'
 
 // Import Composables
 import { useResizablePanel } from '@/composables/common/useResizablePanel'
@@ -128,6 +129,13 @@ const mapInteraction = useMapInteraction({
 // 템플릿에서 ref를 쓰기 위해 꺼내줌 (구조분해 해도 되지만, mapInteraction.xxx로 쓰는 게 출처가 명확함)
 // 단, ref="kakaoMapRef" 연결을 위해 이것만 별도로 꺼내줍니다.
 const { kakaoMapRef } = mapInteraction
+
+const handleAddPlace = (place: Place) => {
+  const newPlace = trip.addPlace(place)
+  if (newPlace) {
+    mapInteraction.handlePlaceClick(newPlace)
+  }
+}
 
 // 저장/뒤로가기 연결
 const tripSave = () => {
