@@ -3,13 +3,18 @@ import {
   getTripDetail as apiGetTripDetail,
   deleteTrip as apiDeleteTrip,
   syncTripItems as apiSyncTripItems,
-  updateTrip as apiUpdateTrip,
+  updateTrip as apiUpdateTrip, // Added
+  getMyTrips as apiGetMyTrips,
+  getMyTripSummaries as apiGetMyTripSummaries,
 } from '@/apis/trip'
 import type {
   TripDetailResponseDto,
   TripItemResponseDto,
-  TripItemSyncRequestDto,
-  TripUpdateRequestDto,
+  TripItemsUpdateRequestDto,
+  TripUpdateRequestDto, // Added
+  TripResponseDto,
+  TripSummaryResponseDto,
+  TripStatus,
 } from '@/types/trip'
 
 /**
@@ -19,6 +24,25 @@ import type {
  */
 export const createTrip = async (): Promise<TripDetailResponseDto> => {
   return await apiCreateTrip()
+}
+
+/**
+ * 내 여행 목록을 조회하는 서비스 함수.
+ * API 계층의 getMyTrips 함수를 호출하고 결과를 반환합니다.
+ * @param status 여행 상태별 필터링 (DRAFT, PLANNED, COMPLETED)
+ * @returns 내 여행 목록 (TripResponseDto 배열)
+ */
+export const getMyTrips = async (status?: TripStatus): Promise<TripResponseDto[]> => {
+  return await apiGetMyTrips(status)
+}
+
+/**
+ * 내 여행 요약 목록을 조회하는 서비스 함수 (카드용).
+ * API 계층의 getMyTripSummaries 함수를 호출하고 결과를 반환합니다.
+ * @returns 내 여행 요약 목록 (TripSummaryResponseDto 배열)
+ */
+export const getMyTripSummaries = async (): Promise<TripSummaryResponseDto[]> => {
+  return await apiGetMyTripSummaries()
 }
 
 /**
@@ -47,7 +71,7 @@ export const deleteTrip = async (tripId: number): Promise<void> => {
  */
 export const syncTripItems = async (
   tripId: number,
-  syncData: TripItemSyncRequestDto,
+  syncData: TripItemsUpdateRequestDto,
 ): Promise<TripItemResponseDto[]> => {
   return await apiSyncTripItems(tripId, syncData)
 }
