@@ -144,8 +144,8 @@ export function useTripPlan() {
         title: tripTitle.value,
         startDate: tripDate.value || undefined,
         endDate: tripDate.value || undefined, // Assuming endDate is not managed by frontend yet
-        status: 'PLANNED', // User wants to save as PLANNED
-        visibility: 'PUBLIC', // User wants to save as PUBLIC
+        status: tripStatus.value || 'PLANNED',
+        visibility: tripVisibility.value || 'PRIVATE',
       }
       await apiUpdateTrip(tripId.value, updatePayload)
 
@@ -269,5 +269,6 @@ export function useTripPlan() {
     addDay,
     removeDay,
     tripVisibility,
+    tripStatus,
   }
 }
