@@ -21,7 +21,7 @@
             <div class="flex items-center gap-4 text-sm font-bold text-gray-600">
               <div class="flex items-center gap-2">
                 <Calendar :size="18" :stroke-width="2.5" />
-                <span>{{ trip.duration }}</span>
+                <span>{{ displayDuration }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <MapPin :size="18" :stroke-width="2.5" />
@@ -190,6 +190,19 @@ const mapCenter = computed(() => {
 const handleEditClick = () => {
   emit('edit', props.trip)
 }
+
+const displayDuration = computed(() => {
+  const start = props.trip.startDate
+  const end = props.trip.endDate
+
+  if (start && end) {
+    return `${start} - ${end}`
+  } else if (start) {
+    return start
+  } else {
+    return '날짜 미정'
+  }
+})
 
 // ESC 키로 닫기
 const handleKeydown = (e: KeyboardEvent) => {

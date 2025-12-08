@@ -3,15 +3,17 @@ import {
   getTripDetail as apiGetTripDetail,
   deleteTrip as apiDeleteTrip,
   syncTripItems as apiSyncTripItems,
+  updateTrip as apiUpdateTrip, // Added
   getMyTrips as apiGetMyTrips,
   getMyTripSummaries as apiGetMyTripSummaries,
 } from '@/apis/trip'
 import type {
   TripDetailResponseDto,
   TripItemResponseDto,
-  TripItemsUpdateRequestDto, // Changed from TripItemSyncRequestDto
+  TripItemsUpdateRequestDto,
+  TripUpdateRequestDto, // Added
   TripResponseDto,
-  TripSummaryResponseDto, // Added
+  TripSummaryResponseDto,
   TripStatus,
 } from '@/types/trip'
 
@@ -69,7 +71,20 @@ export const deleteTrip = async (tripId: number): Promise<void> => {
  */
 export const syncTripItems = async (
   tripId: number,
-  syncData: TripItemsUpdateRequestDto, // Changed type
+  syncData: TripItemsUpdateRequestDto,
 ): Promise<TripItemResponseDto[]> => {
   return await apiSyncTripItems(tripId, syncData)
+}
+
+/**
+ * 여행의 기본 정보(제목, 날짜, 상태, 공개 여부)를 수정하는 서비스 함수.
+ * @param tripId 수정할 여행의 ID
+ * @param updateData 수정할 여행 정보
+ * @returns 수정된 여행의 상세 정보 (TripDetailResponseDto)
+ */
+export const updateTrip = async (
+  tripId: number,
+  updateData: TripUpdateRequestDto,
+): Promise<TripDetailResponseDto> => {
+  return await apiUpdateTrip(tripId, updateData)
 }
