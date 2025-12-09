@@ -237,32 +237,35 @@
                   <div class="flex gap-4">
                     <!-- Images Grid -->
                     <div class="w-32 h-32 flex-shrink-0">
-            <div
-              v-if="diary.images && diary.images.length === 1"
-              class="w-full h-full border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
-            >
-              <img
-                :src="diary.images[0]"
-                :alt="diary.title"
-                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                @error="handleImageError"
-              />
-            </div>
-            <div v-else-if="diary.images && diary.images.length > 1" class="grid grid-cols-2 gap-1 w-full h-full">
-              <div
-                v-for="(img, idx) in diary.images.slice(0, 4)"
-                :key="idx"
-                class="border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
-              >
-                <img
-                  :src="img"
-                  :alt="`${diary.title} ${idx + 1}`"
-                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  @error="handleImageError"
-                />
-              </div>
-            </div>
-          </div>
+                      <div
+                        v-if="diary.images && diary.images.length === 1"
+                        class="w-full h-full border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
+                      >
+                        <img
+                          :src="diary.images[0]"
+                          :alt="diary.title"
+                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          @error="handleImageError"
+                        />
+                      </div>
+                      <div
+                        v-else-if="diary.images && diary.images.length > 1"
+                        class="grid grid-cols-2 gap-1 w-full h-full"
+                      >
+                        <div
+                          v-for="(img, idx) in diary.images.slice(0, 4)"
+                          :key="idx"
+                          class="border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
+                        >
+                          <img
+                            :src="img"
+                            :alt="`${diary.title} ${idx + 1}`"
+                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            @error="handleImageError"
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <!-- Content -->
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 mb-2">
@@ -441,7 +444,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useNavigate } from '@/composables/navigation'
+import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { Search, MapPin, Star, Heart, MessageCircle } from 'lucide-vue-next'

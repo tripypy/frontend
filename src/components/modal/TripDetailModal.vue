@@ -21,11 +21,19 @@
             <div class="flex items-center gap-4 text-sm font-bold text-gray-600">
               <div class="flex items-center gap-2">
                 <Calendar :size="18" :stroke-width="2.5" />
-                <span>{{ trip.duration }}</span>
+                <span>{{ displayDuration }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <MapPin :size="18" :stroke-width="2.5" />
-                <span>{{ trip.spots }}개 장소</span>
+                <span>{{ trip.tripItems.length }}개 장소</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <ListChecks :size="18" :stroke-width="2.5" />
+                <span>{{ trip.status }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <Shield :size="18" :stroke-width="2.5" />
+                <span>{{ trip.visibility }}</span>
               </div>
             </div>
           </div>
@@ -70,7 +78,7 @@
                 v-for="(place, index) in currentDayPlaces"
                 :key="place.id"
                 class="p-3 bg-white border-[2px] border-[#2C2C2C] rounded-lg hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] transition-all cursor-pointer group"
-                @click="selectedPlace = place"
+                @click="handlePlaceClick(place)"
               >
                 <div class="flex items-center gap-3">
                   <div
@@ -97,146 +105,93 @@
           </div>
         </div>
 
-        <div class="flex-1 bg-gray-100 relative">
-          <KakaoMap
-            class="w-full h-full"
-            :center="mapCenter"
-            :level="7"
-            :markers="markerPositions"
-          />
-
-          <div
-            v-if="markerPositions.length === 0"
-            class="absolute inset-0 flex items-center justify-center pointer-events-none"
-          >
-            <div class="text-center">
-              <div
-                class="w-14 h-14 bg-white border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center mx-auto mb-3 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.4)]"
-              >
-                <MapPin :size="26" :stroke-width="2.5" class="text-[#2C2C2C]" />
+        <div class="flex-1 flex flex-col bg-gray-100">
+          <!-- Map Container -->
+          <div class="flex-1 relative">
+            <KakaoMap
+              ref="kakaoMapRef"
+              class="absolute inset-0 w-full h-full"
+              :center="mapCenter"
+              :level="7"
+              :markers="markerPositions"
+              :selected-marker-id="selectedMarkerId"
+              @marker-click="handleMarkerClick"
+            />
+            <div
+              v-if="markerPositions.length === 0"
+              class="absolute inset-0 flex items-center justify-center pointer-events-none"
+            >
+              <div class="text-center">
+                <div
+                  class="w-14 h-14 bg-white border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center mx-auto mb-3 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.4)]"
+                >
+                  <MapPin :size="26" :stroke-width="2.5" class="text-[#2C2C2C]" />
+                </div>
+                <p class="font-bold text-gray-700">코스에 담긴 장소가 지도에 표시됩니다</p>
               </div>
-              <p class="font-bold text-gray-700">코스에 담긴 장소가 지도에 표시됩니다</p>
             </div>
           </div>
+
+          <!-- Place Detail Panel -->
+          <PlaceDetailPanel :place="selectedPlace" @close="selectedPlace = null" />
         </div>
       </div>
     </div>
-
-    <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Calendar, MapPin, Edit } from 'lucide-vue-next'
-import PlaceDetailModal from './PlaceDetailModal.vue'
+import { Calendar, MapPin, Edit, ListChecks, Shield } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
+import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
+import { TripDetailResponseDto, SpotResponseDto } from '@/types/trip'
 
-interface Place {
-  id: number
-  name: string
-  address: string
-  category: string
-  lat?: number
-  lng?: number
-}
-
-interface DayPlan {
+interface DayPlanDisplay {
   dayNumber: number
-  places: Place[]
-}
-
-interface Trip {
-  id: number
-  title: string
-  spots: number
-  duration: string
-  description: string
-  tags: string[]
-  views: number
-  imageUrl: string
+  places: SpotResponseDto[]
 }
 
 const props = defineProps<{
-  trip: Trip
+  trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string }
 }>()
 
 const emit = defineEmits(['close', 'edit'])
 
+const kakaoMapRef = ref<any>(null)
 const activeDay = ref(1)
-const selectedPlace = ref<Place | null>(null)
+const selectedPlace = ref<SpotResponseDto | null>(null)
+const selectedMarkerId = ref<number | string | null>(null)
 
-// Mock data - 실제로는 API에서 가져와야 함
-const days = ref<DayPlan[]>([
-  {
-    dayNumber: 1,
-    places: [
-      {
-        id: 1,
-        name: '대림창고',
-        address: '서울시 성동구 성수동1가 656-1',
-        category: '카페',
-        lat: 37.5443,
-        lng: 127.0557,
-      },
-      {
-        id: 2,
-        name: '그리노 성수',
-        address: '서울시 성동구 왕십리로 83-21',
-        category: '카페',
-        lat: 37.5445,
-        lng: 127.0559,
-      },
-      {
-        id: 3,
-        name: '테라로사 성수',
-        address: '서울시 성동구 아차산로7길 12',
-        category: '카페',
-        lat: 37.5448,
-        lng: 127.0562,
-      },
-    ],
-  },
-  {
-    dayNumber: 2,
-    places: [
-      {
-        id: 4,
-        name: '성수연방',
-        address: '서울시 성동구 연무장5길 7',
-        category: '카페',
-        lat: 37.544,
-        lng: 127.0555,
-      },
-      {
-        id: 5,
-        name: '서울숲',
-        address: '서울시 성동구 뚝섬로 273',
-        category: '공원',
-        lat: 37.5447,
-        lng: 127.0374,
-      },
-    ],
-  },
-])
+const days = computed<DayPlanDisplay[]>(() => {
+  const grouped = props.trip.tripItems.reduce((acc, item) => {
+    if (!acc[item.dayNumber]) {
+      acc[item.dayNumber] = { dayNumber: item.dayNumber, places: [] }
+    }
+    acc[item.dayNumber].places.push(item.spot)
+    return acc
+  }, {} as Record<number, DayPlanDisplay>)
+
+  return Object.values(grouped).sort((a, b) => a.dayNumber - b.dayNumber)
+})
 
 const currentDayPlaces = computed(() => {
   const day = days.value.find((d) => d.dayNumber === activeDay.value)
   return day ? day.places : []
 })
 
-// KakaoMap에 내려줄 마커 리스트
 const markerPositions = computed(() =>
   currentDayPlaces.value
     .filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number')
-    .map((p) => ({
+    .map((p, index) => ({
       id: p.id,
       lat: p.lat as number,
       lng: p.lng as number,
+      type: 'plan' as const,
+      order: index + 1,
     })),
 )
 
-// 지도 중심 좌표: 현재 Day의 첫 번째 장소 기준, 없으면 기본값
 const mapCenter = computed(() => {
   const first = currentDayPlaces.value.find(
     (p) => typeof p.lat === 'number' && typeof p.lng === 'number',
@@ -244,14 +199,37 @@ const mapCenter = computed(() => {
   if (first && typeof first.lat === 'number' && typeof first.lng === 'number') {
     return { lat: first.lat, lng: first.lng }
   }
-  return { lat: 37.5665, lng: 126.978 } // 기본 서울 시청
+  return { lat: 37.5665, lng: 126.978 }
 })
 
 const handleEditClick = () => {
   emit('edit', props.trip)
 }
 
-// ESC 키로 닫기
+const handlePlaceClick = (place: SpotResponseDto) => {
+  selectedPlace.value = place
+  selectedMarkerId.value = place.id
+  if (place.lat && place.lng) {
+    kakaoMapRef.value?.panTo(place.lat, place.lng)
+  }
+}
+
+const handleMarkerClick = (id: number | string) => {
+  const place = currentDayPlaces.value.find((p) => p.id === id)
+  if (place) {
+    handlePlaceClick(place)
+  }
+}
+
+const displayDuration = computed(() => {
+  const start = props.trip.startDate
+  if (start) {
+    return start
+  } else {
+    return '날짜 미정'
+  }
+})
+
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     emit('close')

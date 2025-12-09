@@ -7,7 +7,7 @@
       <div class="flex items-center justify-between mb-3 h-6">
         <div class="flex items-center gap-1.5 text-xs text-[#2C2C2C] font-bold">
           <Calendar class="w-3.5 h-3.5" stroke-width="2.5" />
-          <span>{{ trip.completedDate || '날짜 미정' }}</span>
+          <span>{{ displayDateRange }}</span>
         </div>
 
         <div class="flex items-center gap-1.5">
@@ -101,23 +101,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Calendar, Share2, Bookmark, MapPin } from 'lucide-vue-next'
-
-interface SpotPreview {
-  name: string
-}
-
-interface Trip {
-  id: number
-  title: string
-  spots: number
-  status: string
-  tags?: string[]
-  spotPreviews: SpotPreview[]
-  completedDate?: string
-}
+import { TripResponseDto, TripStatus } from '@/types/trip' // Import TripResponseDto and TripStatus
 
 const props = defineProps<{
-  trip: Trip
+  trip: TripResponseDto // Use TripResponseDto type
 }>()
 
 const emit = defineEmits<{
@@ -125,12 +112,12 @@ const emit = defineEmits<{
   (e: 'navigate', page: string, id?: number): void
 }>()
 
-const isBookmarked = ref(props.trip.status === '스크랩')
+const isBookmarked = ref(false) // Assuming bookmarking is not directly tied to API status anymore
 
-const statusColors: Record<string, string> = {
-  완료: '#F9CA6B',
-  계획중: '#9BCCC4',
-  스크랩: '#E88555',
+const statusColors: Record<TripStatus, string> = { // Use TripStatus enum
+  COMPLETED: '#F9CA6B',
+  PLANNED: '#9BCCC4',
+  DRAFT: '#E88555', // Assuming DRAFT maps to '스크랩' color for now
 }
 
 const headerColor = computed(() => statusColors[props.trip.status] || '#9BCCC4')
@@ -141,6 +128,19 @@ const getNumberColor = (idx: number) => numberColors[idx % numberColors.length]
 const handleShare = () => {
   alert('공유 기능 준비 중입니다!')
 }
+
+const displayDateRange = computed(() => {
+  const start = props.trip.startDate
+  const completed = props.trip.completedDate
+
+  if (start) {
+    return start
+  } else if (completed) {
+    return completed
+  } else {
+    return '날짜 미정'
+  }
+})
 </script>
 
 <style scoped>
