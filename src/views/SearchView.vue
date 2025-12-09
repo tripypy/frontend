@@ -10,7 +10,7 @@
             class="text-5xl font-black tracking-tighter uppercase"
             style="font-family: 'Outfit', sans-serif"
           >
-            Discover <span class="italic text-[#9BCCC4]">Places</span>
+            Discover <span class="text-[#9BCCC4]">Places</span>
           </h2>
         </div>
 
@@ -331,7 +331,7 @@
           class="text-5xl mb-6 font-black tracking-tighter uppercase"
           style="font-family: 'Outfit', sans-serif"
         >
-          Hot Place <span class="italic text-[#E88555]">Top 10</span>
+          Hot Place <span class="text-[#E88555]">Top 10</span>
         </h2>
 
         <div class="space-y-4">

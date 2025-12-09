@@ -6,7 +6,7 @@
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
         <div>
           <h1 class="text-5xl font-black tracking-tighter uppercase mb-2 font-sans text-black">
-            My <span class="italic text-[#9BCCC4]">Trips</span>
+            My <span class="ml-2 text-[#9BCCC4]">Trips</span>
           </h1>
           <p class="text-sm font-bold text-gray-600">나만의 여행 계획을 만들고 관리하세요</p>
         </div>
@@ -40,7 +40,7 @@
         <div v-for="(group, month) in groupedCompletedTrips" :key="month">
           <div class="mb-6">
             <h2 class="text-5xl font-black tracking-tighter uppercase font-sans text-black">
-              {{ formatMonth(month as string).year }}.<span class="italic text-[#E88555]">{{
+              {{ formatMonth(month as string).year }}.<span class="text-[#E88555]">{{
                 formatMonth(month as string).month
               }}</span>
             </h2>
