@@ -209,8 +209,31 @@ const handleEditClick = () => {
 const handlePlaceClick = (place: SpotResponseDto) => {
   selectedPlace.value = place
   selectedMarkerId.value = place.id
-  if (place.lat && place.lng) {
-    kakaoMapRef.value?.panTo(place.lat, place.lng)
+  if (place.lat && place.lng && kakaoMapRef.value) {
+    let finalLat = place.lat
+
+    const map = kakaoMapRef.value.map
+    if (!map) {
+      kakaoMapRef.value.panTo(place.lat, place.lng)
+      return
+    }
+
+    const bounds = map.getBounds()
+    const mapDiv = kakaoMapRef.value.$el
+
+    if (bounds && mapDiv && mapDiv.offsetHeight > 0) {
+      const mapHeightInPixels = mapDiv.offsetHeight
+      // 패널 높이(256px)의 약 1/3인 85px을 오프셋으로 사용
+      const pixelOffset = 85
+
+      const latSpan = bounds.getNorthEast().getLat() - bounds.getSouthWest().getLat()
+      const latOffset = (latSpan / mapHeightInPixels) * pixelOffset
+
+      // 중심을 아래로 이동시켜 마커가 패널 위로 보이게 함
+      finalLat -= latOffset
+    }
+
+    kakaoMapRef.value.panTo(finalLat, place.lng)
   }
 }
 
