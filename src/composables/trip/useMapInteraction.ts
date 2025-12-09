@@ -91,14 +91,19 @@ export function useMapInteraction({
 
       // panWithOffset 옵션이 true일 경우, 지도 중심을 아래로 이동시켜 마커가 위쪽에 표시되도록 함
       if (options?.panWithOffset) {
-        const map = kakaoMapRef.value.getMap()
+        const map = kakaoMapRef.value.map
+        if (!map) {
+          kakaoMapRef.value.panTo(targetLat, targetLng)
+          return
+        }
+
         const bounds = map.getBounds()
         const mapDiv = kakaoMapRef.value.$el
 
-        if (bounds && mapDiv) {
+        if (bounds && mapDiv && mapDiv.offsetHeight > 0) {
           const mapHeightInPixels = mapDiv.offsetHeight
-          const panelHeightInPixels = 256 // PlaceDetailPanel의 높이 (h-64 = 16rem = 256px)
-          const pixelOffset = panelHeightInPixels / 2
+          // 패널 높이(256px)의 약 1/3인 85px을 오프셋으로 사용
+          const pixelOffset = 85
 
           const latSpan = bounds.getNorthEast().getLat() - bounds.getSouthWest().getLat()
           const latOffset = (latSpan / mapHeightInPixels) * pixelOffset
