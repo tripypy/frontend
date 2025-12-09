@@ -310,6 +310,27 @@ const handleLike = () => {
   isLiked.value = !isLiked.value
 }
 
+// 드롭다운 메뉴 핸들러
+const handleShare = () => {
+  showDropdown.value = false
+  console.log('공유하기')
+  // TODO: 공유 기능 구현
+}
+
+const handleEdit = () => {
+  showDropdown.value = false
+  console.log('수정하기')
+  // TODO: 수정 기능 구현
+}
+
+const handleDelete = () => {
+  showDropdown.value = false
+  if (confirm('정말 삭제하시겠습니까?')) {
+    console.log('삭제하기')
+    // TODO: 삭제 기능 구현
+  }
+}
+
 const colors = ['#FFD60A', '#FF6B9D', '#98D8C8', '#B4E4FF', '#E88555']
 const getBadgeColor = (idx: number) => colors[idx % colors.length]
 
@@ -320,15 +341,25 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
+// 드롭다운 외부 클릭 시 닫기
+const handleClickOutside = (e: MouseEvent) => {
+  const target = e.target as HTMLElement
+  if (!target.closest('.relative')) {
+    showDropdown.value = false
+  }
+}
+
 // 모달이 열릴 때 이벤트 리스너 등록, 닫힐 때 해제
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('click', handleClickOutside)
   // 모달 열릴 때 뒤에 스크롤 막고 싶으면 아래 주석 해제
   // document.body.style.overflow = 'hidden';
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('click', handleClickOutside)
   // document.body.style.overflow = '';
 })
 
