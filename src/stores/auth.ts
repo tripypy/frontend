@@ -4,18 +4,28 @@ import axios from 'axios'
 import apiClient from '@/services/api'
 import type { LoginRequestDto, SignupRequestDto } from '@/types/auth'
 
+// This represents the full user profile object, including optional fields
+// This is what we store in `user.value` and localStorage
 export interface User {
-  email: string
-  nickname: string
+  id: number;
+  email?: string;
+  nickname: string;
+  profileImageUrl: string | null;
+  bio?: string;
+  friendsCount: number;
+}
+
+// This represents the minimal data received from the /login endpoint
+interface LoggedInUser {
+    id: number;
+    nickname: string;
+    email: string;
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  // User info is persisted in localStorage to avoid UI flicker on page refresh.
-  // Access token and its expiry are stored ONLY in memory for security.
   const user = ref<User | null>(JSON.parse(localStorage.getItem('user') || 'null'))
   const accessToken = ref<string | null>(null)
-  const accessTokenExpiresAt = ref<number | null>(null) // Expiration timestamp (Date.now() + expiresIn)
-  const isInitialized = ref(false) // To track if initial auth check is done
+  const isInitialized = ref(false)
 
   const isLoggedIn = computed(() => !!accessToken.value && !!user.value)
 
@@ -27,37 +37,51 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Called on successful login or refresh
-  function setAuthenticated(token: string, userData: User, expiresIn: number) {
+  function setAuthenticated(token: string, userData: User) {
     accessToken.value = token
-    accessTokenExpiresAt.value = Date.now() + expiresIn
     user.value = userData
     localStorage.setItem('user', JSON.stringify(userData))
     setAuthorizationHeader(token)
   }
 
-  // Called on logout or auth failure
   function clearAuthentication() {
     accessToken.value = null
-    accessTokenExpiresAt.value = null
     user.value = null
     localStorage.removeItem('user')
     setAuthorizationHeader(null)
   }
 
-  async function login(loginRequest: LoginRequestDto) {
+  async function fetchUser(): Promise<User | null> {
     try {
-      const response = await apiClient.post('/auth/login', loginRequest)
-      const { accessToken: token, expiresIn, username, nickname } = response.data
-      const userData: User = { email: username, nickname }
-      setAuthenticated(token, userData, expiresIn)
-      return true
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        console.error('Login failed:', error.response?.data || error.message)
+      const response = await apiClient.get<User>('/user/me');
+      return response.data;
+    } catch(error) {
+      console.error("Failed to fetch user data:", error);
+      return null;
+    }
+  }
+
+  async function login(loginRequest: LoginRequestDto): Promise<boolean> {
+    try {
+      // 1. Login to get the access token
+      const loginResponse = await apiClient.post('/auth/login', loginRequest)
+      const token = loginResponse.data.accessToken
+
+      // 2. Set token immediately for subsequent requests
+      setAuthorizationHeader(token);
+
+      // 3. Fetch the complete user profile
+      const fetchedUser = await fetchUser();
+
+      if (fetchedUser) {
+        // 4. Set the full authenticated state
+        setAuthenticated(token, fetchedUser);
+        return true;
       } else {
-        console.error('An unexpected error occurred during login:', error)
+        throw new Error("Failed to fetch user profile after login.");
       }
+    } catch (error) {
+      console.error('Login process failed:', error)
       clearAuthentication()
       return false
     }
@@ -68,14 +92,9 @@ export const useAuthStore = defineStore('auth', () => {
       if (accessToken.value) {
         await apiClient.post('/auth/logout')
       }
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        console.error('Logout API call failed:', error.response?.data || error.message)
-      } else {
+    } catch (error) {
         console.error('An unexpected error occurred during logout:', error)
-      }
     } finally {
-      // Always clear local state
       clearAuthentication()
     }
   }
@@ -85,13 +104,10 @@ export const useAuthStore = defineStore('auth', () => {
       await apiClient.post('/auth/signup', signupRequest);
       return true;
     } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        // You can refine error handling here, e.g., by returning the error message
-        alert(error.response?.data?.message || '회원가입 중 오류가 발생했습니다.');
-        console.error('Signup failed:', error.response?.data || error.message);
+      if (axios.isAxiosError(error) && error.response) {
+        alert(error.response.data?.message || '회원가입 중 오류가 발생했습니다.');
       } else {
         alert('알 수 없는 오류가 발생했습니다.');
-        console.error('An unexpected error occurred during signup:', error);
       }
       return false;
     }
@@ -99,64 +115,96 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function findEmailByNickname(nickname: string): Promise<string> {
     try {
-      const response = await apiClient.get(`/auth/find-email/${nickname}`);
+      const response = await apiClient.get<{ email: string }>(`/auth/find-email/${nickname}`);
       return response.data.email;
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || '이메일 찾기 중 오류가 발생했습니다.');
-      } else {
-        throw new Error('알 수 없는 오류가 발생했습니다.');
-      }
+    } catch (error: any) {
+      console.error('이메일 찾기 실패:', error);
+      throw new Error(error.response?.data?.message || '이메일 찾기 중 알 수 없는 오류가 발생했습니다.');
     }
   }
 
-  async function resetPassword(email: string): Promise<boolean> {
+  async function resetPassword(email: string): Promise<void> {
     try {
       await apiClient.post('/auth/reset-password', { email });
+    } catch (error: any) {
+      console.error('비밀번호 재설정 요청 실패:', error);
+      throw new Error(error.response?.data?.message || '비밀번호 재설정 중 알 수 없는 오류가 발생했습니다.');
+    }
+  }
+
+  async function updateUserProfile(data: { nickname?: string; bio?: string }): Promise<boolean> {
+    try {
+      await apiClient.patch('/user/me', data);
+      await fetchUserAndUpdateStore(); // Custom helper to just update the store
       return true;
-    } catch (error: unknown) {
-      // This endpoint fails silently on the backend, so frontend errors are less likely
-      // unless there's a network issue or validation failure.
-      if (axios.isAxiosError(error)) {
-        console.error('Password reset failed:', error.response?.data || error.message);
-      } else {
-        console.error('An unexpected error occurred during password reset:', error);
-      }
+    } catch (error) {
+      console.error('프로필 업데이트 실패:', error);
+      alert('프로필 업데이트에 실패했습니다.');
       return false;
     }
   }
 
-  // This is the key action for session persistence
-  async function refreshAccessToken() {
-    if (!user.value) {
-      isInitialized.value = true
-      return
-    }
+  async function fetchUserAndUpdateStore() {
+      const updatedUser = await fetchUser();
+      if(updatedUser) {
+          user.value = updatedUser;
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+  }
+
+  async function uploadProfileImage(imageFile: File): Promise<boolean> {
+    if (!user.value) return false;
+    const formData = new FormData();
+    formData.append('image', imageFile);
     try {
-      const response = await apiClient.post('/auth/refresh')
-      const { accessToken: token, expiresIn } = response.data
-      const storedUser = localStorage.getItem('user')
-      if (storedUser) {
-        setAuthenticated(token, JSON.parse(storedUser), expiresIn)
+      await apiClient.post(`/user/profile-image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      await fetchUserAndUpdateStore();
+      return true;
+    } catch (error) {
+      console.error('프로필 이미지 업로드 실패:', error);
+      alert('프로필 이미지 업로드에 실패했습니다.');
+      return false;
+    }
+  }
+
+  async function deleteProfileImage(): Promise<boolean> {
+    if (!user.value) return false;
+    try {
+      await apiClient.delete(`/user/profile-image`);
+      await fetchUserAndUpdateStore();
+      return true;
+    } catch (error) {
+      console.error('프로필 이미지 삭제 실패:', error);
+      alert('프로필 이미지 삭제에 실패했습니다.');
+      return false;
+    }
+  }
+
+  async function refreshAccessToken() {
+    try {
+      const response = await apiClient.post('/auth/refresh');
+      const token = response.data.accessToken;
+      setAuthorizationHeader(token);
+      
+      const fetchedUser = await fetchUser();
+      if (fetchedUser) {
+        setAuthenticated(token, fetchedUser);
       } else {
-        throw new Error('User data not found in localStorage after token refresh.')
+        throw new Error('Failed to fetch user data during token refresh.');
       }
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        console.error('Refresh token failed:', error.response?.data || error.message)
-      } else {
-        console.error('An unexpected error occurred during token refresh:', error)
-      }
-      clearAuthentication()
+    } catch (error) {
+      console.error('Token refresh failed, logging out.', error);
+      clearAuthentication();
     } finally {
-      isInitialized.value = true
+      isInitialized.value = true;
     }
   }
 
   return {
     user,
     accessToken,
-    accessTokenExpiresAt,
     isLoggedIn,
     isInitialized,
     login,
@@ -164,6 +212,9 @@ export const useAuthStore = defineStore('auth', () => {
     signup,
     findEmailByNickname,
     resetPassword,
+    updateUserProfile,
+    uploadProfileImage,
+    deleteProfileImage,
     refreshAccessToken
   }
 })

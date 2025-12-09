@@ -1,106 +1,96 @@
-<template>
-  <div class="min-h-screen bg-[#F5F5F5]">
-    <TravelNavbar :current-page="'log'" @navigate="handleNavigate" />
-
-    <div class="pt-40 max-w-[1200px] mx-auto px-6 pb-20">
-      <div
-        class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 md:p-8 mb-12 shadow-[8px_8px_0px_0px_rgba(44,44,44,1)] flex flex-col md:flex-row items-center md:items-start gap-6"
-      >
-        <div class="relative flex-shrink-0">
-          <div
-            class="w-24 h-24 md:w-28 md:h-28 rounded-full border-[4px] border-[#2C2C2C] overflow-hidden bg-gray-100"
-          >
-            <img :src="userProfile.avatar" alt="Profile" class="w-full h-full object-cover" />
-          </div>
-          <button
-            class="absolute bottom-0 right-0 w-8 h-8 bg-[#9BCCC4] border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-md"
-          >
-            <Settings class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-          </button>
-        </div>
-
-        <div class="flex-1 text-center md:text-left">
-          <div
-            class="flex flex-col md:flex-row md:items-center gap-2 mb-3 justify-center md:justify-start"
-          >
-            <h1 class="text-2xl font-black text-[#2C2C2C] font-sans">{{ userProfile.name }}</h1>
-            <span
-              class="px-2 py-0.5 bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-full text-[10px] font-black uppercase tracking-wide"
-            >
-              Traveler
-            </span>
-          </div>
-
-          <p class="text-sm font-bold text-gray-600 mb-4 whitespace-pre-line leading-relaxed">
-            {{ userProfile.bio }}
-          </p>
-
-          <div class="flex items-center justify-center md:justify-start gap-6">
-            <div class="text-center">
-              <span class="block text-lg font-black text-[#2C2C2C]">{{ logs.length }}</span>
-              <span class="text-[10px] font-bold text-gray-400 uppercase">Logs</span>
-            </div>
-            <div class="w-[2px] h-6 bg-gray-200"></div>
-            <div class="text-center">
-              <span class="block text-lg font-black text-[#2C2C2C]">{{
-                userProfile.followers
-              }}</span>
-              <span class="text-[10px] font-bold text-gray-400 uppercase">Followers</span>
-            </div>
-            <div class="w-[2px] h-6 bg-gray-200"></div>
-            <div class="text-center">
-              <span class="block text-lg font-black text-[#2C2C2C]">{{
-                userProfile.following
-              }}</span>
-              <span class="text-[10px] font-bold text-gray-400 uppercase">Following</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="hidden md:block">
-          <button
-            class="px-5 py-2 bg-black text-white border-[3px] border-black rounded-xl font-bold text-xs hover:bg-[#2C2C2C] transition-colors shadow-[4px_4px_0px_0px_rgba(150,150,150,1)]"
-          >
-            프로필 편집
-          </button>
-        </div>
-      </div>
-
-      <div class="flex items-end justify-between mb-8 px-2">
-        <div>
-          <h2 class="text-4xl font-black text-[#2C2C2C] font-sans mb-2 uppercase">My Records</h2>
-          <div class="h-[4px] w-20 bg-[#2C2C2C]"></div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-        <LogCard v-for="log in logs" :key="log.id" :log="log" />
-      </div>
-    </div>
-    <ScrollToTop />
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Settings } from 'lucide-vue-next'
+import { ref, computed, watch, watchEffect } from 'vue'
+import { useRoute } from 'vue-router'
+import { Settings, Pencil } from 'lucide-vue-next'
 import { useNavigate } from '@/composables/common/useNavagation'
+import { useAuthStore, type User } from '@/stores/auth'
+import { fetchUserProfile, fetchFriends } from '@/services/user' // Keep fetchFriends for modal
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import LogCard from '@/components/log/LogCard.vue'
+import ProfileImageModal from '@/components/log/ProfileImageModal.vue'
+import FriendsListModal from '@/components/log/FriendsListModal.vue'
 
 const { handleNavigate } = useNavigate()
+const authStore = useAuthStore()
+const route = useRoute()
+const defaultProfileImage = '/default-profile.svg'
 
-// Mock User Profile Data
-const userProfile = ref({
-  name: '김민준',
-  avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop',
-  bio: '새로운 곳을 찾아 떠나는 것을 좋아합니다.\n주로 카페 투어와 풍경 사진을 찍습니다. 📸',
-  followers: 1240,
-  following: 356,
+const loggedInUser = computed(() => authStore.user)
+const profileData = ref<User | null>(null)
+const isMyProfile = computed(() => {
+  const routeUserId = route.params.userId
+  return !routeUserId || (loggedInUser.value && Number(routeUserId) === loggedInUser.value.id)
 })
 
-// Mock Logs Data
+const showProfileModal = ref(false)
+const showFriendsModal = ref(false)
+
+const isEditMode = ref(false)
+const editableNickname = ref('')
+const editableBio = ref('')
+
+watchEffect(async () => {
+  const routeUserId = route.params.userId
+  isEditMode.value = false; // Reset edit mode on route change
+  if (isMyProfile.value) {
+    profileData.value = loggedInUser.value
+  } else {
+    profileData.value = await fetchUserProfile(Number(routeUserId))
+  }
+})
+
+watch(profileData, (newProfile) => {
+  if (newProfile) {
+    editableNickname.value = newProfile.nickname
+    editableBio.value = newProfile.bio || ''
+  }
+}, { immediate: true })
+
+async function handleSave() {
+  if (!isMyProfile.value || !profileData.value) return;
+
+  const payload: { nickname?: string; bio?: string } = {};
+  if (editableNickname.value !== profileData.value.nickname) {
+    payload.nickname = editableNickname.value;
+  }
+  if (editableBio.value !== (profileData.value.bio || '')) {
+    payload.bio = editableBio.value;
+  }
+
+  if (Object.keys(payload).length > 0) {
+    const success = await authStore.updateUserProfile(payload);
+    if (success) {
+      isEditMode.value = false
+      alert('프로필이 업데이트되었습니다.')
+    } else {
+      alert('프로필 업데이트에 실패했습니다.')
+    }
+  } else {
+    isEditMode.value = false; // No changes, just exit edit mode
+  }
+}
+
+function handleEnterEditMode() {
+  if (profileData.value) {
+    editableNickname.value = profileData.value.nickname
+    editableBio.value = profileData.value.bio || ''
+    isEditMode.value = true
+  }
+}
+
+function cancelEdit() {
+  isEditMode.value = false
+  if (profileData.value) {
+    editableNickname.value = profileData.value.nickname
+    editableBio.value = profileData.value.bio || ''
+  }
+}
+
+function openFriendsModal() {
+  showFriendsModal.value = true;
+}
+
 const logs = [
   {
     id: 1,
@@ -115,58 +105,128 @@ const logs = [
     likes: 234,
     comments: 45,
   },
-  {
-    id: 2,
-    title: '제주도 서귀포 힐링 여행 3박 4일 코스 추천',
-    preview:
-      '복잡한 일상을 떠나 제주도 서귀포에서 보낸 힐링 같은 시간. 맛집과 숙소 정보를 공유합니다.',
-    date: '2024.11.15',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1542662565-7792455873ac?w=800',
-    tags: ['제주도', '서귀포', '힐링'],
-    author: '김민준',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
-    likes: 189,
-    comments: 32,
-  },
-  {
-    id: 3,
-    title: '부산 해운대 블루라인파크 탑승 후기',
-    preview:
-      '해변열차를 타고 바라본 부산의 바다는 정말 아름다웠습니다. 예약 꿀팁과 포토존 위치를 알려드려요.',
-    date: '2024.11.10',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1569926673473-b3eb27770146?w=800',
-    tags: ['부산', '해운대', '블루라인파크'],
-    author: '김민준',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
-    likes: 156,
-    comments: 28,
-  },
-  {
-    id: 4,
-    title: '강릉 안목해변 커피거리 산책',
-    preview: '바다 냄새와 커피 향이 어우러진 강릉 안목해변. 주말 나들이 장소로 추천합니다.',
-    date: '2024.11.05',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800',
-    tags: ['강릉', '안목해변', '커피'],
-    author: '김민준',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
-    likes: 98,
-    comments: 15,
-  },
-  {
-    id: 5,
-    title: '가을 경복궁 야간개장 관람기',
-    preview: '가을 밤의 고궁은 낮과는 또 다른 매력이 있습니다. 한복 입고 무료 입장한 후기!',
-    date: '2024.10.28',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=800',
-    tags: ['서울', '경복궁', '야경'],
-    author: '김민준',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
-    likes: 312,
-    comments: 67,
-  },
+  // ... other logs
 ]
 </script>
+
+<template>
+  <div class="min-h-screen bg-[#F5F5F5]">
+    <TravelNavbar :current-page="'log'" @navigate="handleNavigate" />
+
+    <div v-if="profileData" class="pt-40 max-w-[1200px] mx-auto px-6 pb-20">
+      <div
+        class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 md:p-8 mb-12 shadow-[8px_8px_0px_0px_rgba(44,44,44,1)] flex flex-col md:flex-row items-center md:items-start gap-6"
+      >
+        <div class="relative flex-shrink-0">
+          <div
+            class="w-24 h-24 md:w-28 md:h-28 rounded-full border-[4px] border-[#2C2C2C] overflow-hidden bg-gray-100"
+          >
+            <img
+              :src="profileData.profileImageUrl || defaultProfileImage"
+              alt="Profile"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <button
+            v-if="isMyProfile && isEditMode"
+            @click="showProfileModal = true"
+            class="absolute bottom-0 right-0 w-8 h-8 bg-[#9BCCC4] border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-md"
+          >
+            <Pencil class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+          </button>
+        </div>
+
+        <div class="flex-1 text-center md:text-left">
+          <div v-if="isEditMode && isMyProfile" class="mb-3">
+             <label for="nickname" class="text-xs font-bold text-gray-500">닉네임</label>
+             <input
+              type="text"
+              id="nickname"
+              v-model="editableNickname"
+              class="w-full mt-1 p-2 border-2 border-gray-300 rounded-md focus:ring-2 focus:ring-[#9BCCC4] focus:border-[#9BCCC4] transition"
+            />
+          </div>
+          <div v-else class="flex items-center gap-2 mb-3 justify-center md:justify-start">
+            <h1 class="text-2xl font-black text-[#2C2C2C] font-sans">
+              {{ profileData.nickname || '여행자' }}
+            </h1>
+          </div>
+
+          <div v-if="isEditMode && isMyProfile" class="mb-4">
+            <label for="bio" class="text-xs font-bold text-gray-500">소개</label>
+            <textarea
+              id="bio"
+              v-model="editableBio"
+              class="w-full mt-1 p-2 border-2 border-gray-300 rounded-md focus:ring-2 focus:ring-[#9BCCC4] focus:border-[#9BCCC4] transition"
+              rows="3"
+              placeholder="자신을 소개하는 글을 작성해주세요."
+            ></textarea>
+          </div>
+          <p v-else class="text-sm font-bold text-gray-600 mb-4 whitespace-pre-line leading-relaxed">
+            {{ profileData.bio || '자기소개가 없습니다.' }}
+          </p>
+
+          <div class="flex items-center justify-center md:justify-start gap-6">
+            <div class="text-center">
+              <span class="block text-lg font-black text-[#2C2C2C]">{{ logs.length }}</span>
+              <span class="text-[10px] font-bold text-gray-400 uppercase">Logs</span>
+            </div>
+            <div class="w-[2px] h-6 bg-gray-200"></div>
+            <button @click="openFriendsModal()" class="text-center" title="친구 목록 보기">
+              <span class="block text-lg font-black text-[#2C2C2C]">{{ profileData.friendsCount }}</span>
+              <span class="text-[10px] font-bold text-gray-400 uppercase">Friends</span>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="isMyProfile" class="hidden md:flex flex-col gap-2">
+          <button
+            v-if="!isEditMode"
+            @click="handleEnterEditMode"
+            class="px-5 py-2 border-[3px] rounded-xl font-bold text-xs transition-colors shadow-[4px_4px_0px_0px_rgba(150,150,150,1)] bg-black text-white border-black hover:bg-[#2C2C2C]"
+          >
+            프로필 편집
+          </button>
+          <template v-if="isEditMode">
+            <button
+              @click="handleSave"
+              class="px-5 py-2 border-[3px] rounded-xl font-bold text-xs transition-colors shadow-[4px_4px_0px_0px_rgba(150,150,150,1)] bg-green-500 text-white border-green-600 hover:bg-green-600"
+            >
+              저장
+            </button>
+            <button
+              @click="cancelEdit"
+              class="px-5 py-2 border-[3px] border-gray-400 text-gray-600 bg-white rounded-xl font-bold text-xs transition-colors hover:bg-gray-100"
+            >
+              취소
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <div class="flex items-end justify-between mb-8 px-2">
+        <div>
+          <h2 class="text-4xl font-black text-[#2C2C2C] font-sans mb-2 uppercase">My Records</h2>
+          <div class="h-[4px] w-20 bg-[#2C2C2C]"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+        <LogCard v-for="log in logs" :key="log.id" :log="log" />
+      </div>
+    </div>
+     <div v-else class="pt-40 text-center">
+      <p class="text-lg font-bold text-gray-600">사용자 정보를 불러오는 중...</p>
+    </div>
+    <ScrollToTop />
+    <ProfileImageModal :show="showProfileModal" @close="showProfileModal = false" />
+    <FriendsListModal 
+        :show="showFriendsModal" 
+        :user-id="profileData.id" 
+        @close="showFriendsModal = false" 
+    />
+  </div>
+</template>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');

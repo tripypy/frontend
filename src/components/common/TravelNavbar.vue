@@ -89,8 +89,8 @@
               class="w-11 h-11 bg-white border-[2px] rounded-full border-[#2C2C2C] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all overflow-hidden p-0 focus:outline-none"
             >
               <img
-                src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop"
-                alt="User profile"
+                :src="userProfileImage"
+                :alt="authStore.user?.nickname || 'User profile'"
                 class="w-full h-full object-cover"
               />
             </button>
@@ -103,8 +103,8 @@
                 <div class="flex items-center gap-3 mb-2">
                   <div class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden">
                     <img
-                      src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop"
-                      alt="User profile"
+                      :src="userProfileImage"
+                      :alt="authStore.user?.nickname || 'User profile'"
                       class="w-full h-full object-cover"
                     />
                   </div>
@@ -115,12 +115,13 @@
                 </div>
               </div>
               <div class="p-2">
-                <button
+                <router-link
+                  to="/settings"
                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#FFF8ED] transition-colors text-left border-[2px] border-transparent hover:border-[#2C2C2C] font-bold"
                 >
                   <Settings class="w-5 h-5" stroke-width="2" />
-                  <span class="text-sm">마이 페이지</span>
-                </button>
+                  <span class="text-sm">설정</span>
+                </router-link>
               </div>
               <div class="p-2 border-t-[2px] border-gray-200">
                 <button
@@ -148,13 +149,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { Home, Search, Map, Bell, Settings, LogOut, BookOpen } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const defaultProfileImage = '/default-profile.svg'
+const userProfileImage = computed(
+  () => authStore.user?.profileImageUrl || defaultProfileImage,
+)
 
 defineProps<{
   currentPage: 'main' | 'search' | 'trips' | 'log'
