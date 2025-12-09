@@ -43,7 +43,7 @@ export function usePlaceSearch() {
             lat: Number(item.y),
             lng: Number(item.x),
             phone: item.phone,
-            url: item.place_url,
+            placeUrl: item.place_url,
           }))
         } else if (status === (window as any).kakao.maps.services.Status.ZERO_RESULT) {
           searchResults.value = []

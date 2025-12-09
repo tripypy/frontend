@@ -63,7 +63,12 @@ export function useMapInteraction({
   // --- Actions ---
 
   // 1. 장소/마커 클릭 시 처리 (지도 이동 & 강조)
-  const selectAndPanToPlace = (id: number | string, lat?: number, lng?: number) => {
+  const selectAndPanToPlace = (
+    id: number | string,
+    lat?: number,
+    lng?: number,
+    options?: { panWithOffset?: boolean }
+  ) => {
     selectedMarkerId.value = id
 
     // 좌표가 인자로 안 들어왔으면(마커 클릭 시), 리스트에서 찾음
@@ -72,7 +77,9 @@ export function useMapInteraction({
 
     if (targetLat === undefined || targetLng === undefined) {
       // id가 tripItemId일 수도, kakaoPlaceId일 수도 있으므로 둘 다 비교
-      const target = markerPositions.value.find((m) => String(m.id) === String(id) || String(m.kakaoPlaceId) === String(id))
+      const target = markerPositions.value.find(
+        (m) => String(m.id) === String(id) || String(m.kakaoPlaceId) === String(id)
+      )
       if (target) {
         targetLat = target.lat
         targetLng = target.lng
@@ -80,19 +87,43 @@ export function useMapInteraction({
     }
 
     if (targetLat !== undefined && targetLng !== undefined && kakaoMapRef.value?.panTo) {
-      kakaoMapRef.value.panTo(targetLat, targetLng)
+      let finalLat = targetLat
+
+      // panWithOffset 옵션이 true일 경우, 지도 중심을 아래로 이동시켜 마커가 위쪽에 표시되도록 함
+      if (options?.panWithOffset) {
+        const map = kakaoMapRef.value.map
+        if (!map) {
+          kakaoMapRef.value.panTo(targetLat, targetLng)
+          return
+        }
+
+        const bounds = map.getBounds()
+        const mapDiv = kakaoMapRef.value.$el
+
+        if (bounds && mapDiv && mapDiv.offsetHeight > 0) {
+          const mapHeightInPixels = mapDiv.offsetHeight
+          // 패널 높이(256px)의 약 1/3인 85px을 오프셋으로 사용
+          const pixelOffset = 85
+
+          const latSpan = bounds.getNorthEast().getLat() - bounds.getSouthWest().getLat()
+          const latOffset = (latSpan / mapHeightInPixels) * pixelOffset
+
+          finalLat -= latOffset // 중심을 아래로 이동 (마커가 위로 올라와 보임)
+        }
+      }
+      kakaoMapRef.value.panTo(finalLat, targetLng)
     }
   }
 
   // 2. 리스트에서 카드 클릭 핸들러
-  const handlePlaceClick = (place: Place) => {
+  const handlePlaceClick = (place: Place, options?: { panWithOffset?: boolean }) => {
     // place.id (tripItemId)가 있으면 그걸 사용하고, 없으면 kakaoPlaceId 사용
-    selectAndPanToPlace(place.id || place.kakaoPlaceId, place.lat, place.lng)
+    selectAndPanToPlace(place.id || place.kakaoPlaceId, place.lat, place.lng, options)
   }
 
   // 3. 지도 마커 클릭 핸들러
-  const handleMarkerClick = (id: number | string) => {
-    selectAndPanToPlace(id)
+  const handleMarkerClick = (id: number | string, options?: { panWithOffset?: boolean }) => {
+    selectAndPanToPlace(id, undefined, undefined, options)
   }
 
   // 4. 지도 움직임 감지
