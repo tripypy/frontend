@@ -30,7 +30,7 @@ const mapTripItemToPlace = (item: TripItemResponseDto): Place => ({
   category: item.spot.category,
   lat: item.spot.lat,
   lng: item.spot.lng,
-  url: item.spot.placeUrl,
+  placeUrl: item.spot.placeUrl,
   memo: item.memo,
 })
 
@@ -129,7 +129,7 @@ export function useTripPlan() {
                   category: place.category,
                   lat: place.lat,
                   lng: place.lng,
-                  placeUrl: place.url || '',
+                  placeUrl: place.placeUrl || '',
                 },
                 memo: place.memo,
               }
@@ -210,7 +210,13 @@ export function useTripPlan() {
       return
     }
 
-    const newPlace = { ...place, id: undefined, memo: '' }
+    // placeUrl을 명시적으로 복사하여 데이터 유실을 방지합니다.
+    const newPlace: Place = {
+      ...place,
+      placeUrl: place.placeUrl,
+      id: undefined,
+      memo: '',
+    }
     day.places.push(newPlace)
     return newPlace
   }

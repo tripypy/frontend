@@ -9,27 +9,7 @@ export interface Place {
   lat: number
   lng: number
   phone?: string
-  url?: string
-  memo?: string // 아이템 메모
-}
-
-export interface DayPlan {
-  dayNumber: number
-  places: Place[]
-}
-
-// src/types/trip.ts
-
-export interface Place {
-  id?: number // 동기화 전에는 id가 없을 수 있음 (tripItemId)
-  kakaoPlaceId: string // 장소의 고유 카카오 ID
-  name: string
-  address: string
-  category: string
-  lat: number
-  lng: number
-  phone?: string
-  url?: string
+  placeUrl?: string
   memo?: string // 아이템 메모
 }
 

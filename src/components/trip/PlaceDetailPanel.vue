@@ -31,15 +31,15 @@
             <MapPin :size="14" class="flex-shrink-0" />
             <span class="truncate">{{ place.address }}</span>
           </div>
-          <div v-if="place.url" class="flex items-center gap-2 font-bold">
+          <div v-if="place.placeUrl" class="flex items-center gap-2 font-bold">
             <Globe :size="14" class="flex-shrink-0" />
             <a
-              :href="place.url"
+              :href="place.placeUrl"
               target="_blank"
               class="truncate text-blue-600 hover:underline"
               @click.stop
             >
-              {{ place.url }}
+              {{ place.placeUrl }}
             </a>
           </div>
         </div>
