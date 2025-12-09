@@ -24,7 +24,7 @@
         <button
           v-for="tab in tabs"
           :key="tab.id"
-          @click="activeTab = tab.id as any"
+          @click="activeTab = tab.id"
           :class="[
             'px-3 py-1.5 rounded-lg transition-all text-xs font-bold whitespace-nowrap focus:outline-none border-[2px] border-transparent',
             activeTab === tab.id
@@ -36,7 +36,7 @@
         </button>
       </div>
 
-      <div v-if="activeTab === 'completed'" class="space-y-12">
+      <div v-if="activeTab === TripStatus.COMPLETED" class="space-y-12">
         <div v-for="(group, month) in groupedCompletedTrips" :key="month">
           <div class="mb-6">
             <h2 class="text-5xl font-black tracking-tighter uppercase font-sans text-black">
@@ -99,7 +99,7 @@ import { TripResponseDto, TripStatus, TripDetailResponseDto } from '@/types/trip
 const { handleNavigate } = useNavigate()
 const router = useRouter()
 
-const activeTab = ref<'all' | 'PLANNED' | 'COMPLETED' | 'saved'>('all') // Changed to use TripStatus enum values
+const activeTab = ref<TripStatus | 'all' | 'saved'>('all')
 const tripsList = ref<TripResponseDto[]>([]) // Changed to TripResponseDto[]
 
 onMounted(async () => {
@@ -134,26 +134,26 @@ const savedTrips = computed(() => tripsList.value.filter((t) => t.status === '�
 
 const displayTrips = computed(() => {
   const filteredTrips = (() => {
-    if (activeTab.value === 'PLANNED') return planningTrips.value
-    if (activeTab.value === 'COMPLETED') return completedTrips.value
+    if (activeTab.value === TripStatus.PLANNED) return planningTrips.value
+    if (activeTab.value === TripStatus.COMPLETED) return completedTrips.value
     if (activeTab.value === 'saved') return savedTrips.value
     return tripsList.value
-  })();
-  console.log('displayTrips:', filteredTrips); // Added log
-  return filteredTrips;
+  })()
+  console.log('displayTrips:', filteredTrips) // Added log
+  return filteredTrips
 })
 
 const tabs = [
   { id: 'all', label: '전체' },
-  { id: 'PLANNED', label: '계획중' }, // Changed to PLANNED
-  { id: 'COMPLETED', label: '완료' }, // Changed to COMPLETED
+  { id: TripStatus.PLANNED, label: '계획중' },
+  { id: TripStatus.COMPLETED, label: '완료' },
   { id: 'saved', label: '스크랩' },
 ]
 
-const getCount = (tabId: string) => {
+const getCount = (tabId: TripStatus | 'all' | 'saved') => {
   if (tabId === 'all') return tripsList.value.length
-  if (tabId === 'PLANNED') return planningTrips.value.length
-  if (tabId === 'COMPLETED') return completedTrips.value.length
+  if (tabId === TripStatus.PLANNED) return planningTrips.value.length
+  if (tabId === TripStatus.COMPLETED) return completedTrips.value.length
   if (tabId === 'saved') return savedTrips.value.length
   return 0
 }
@@ -161,8 +161,8 @@ const getCount = (tabId: string) => {
 const groupedCompletedTrips = computed(() => {
   const groups: Record<string, TripResponseDto[]> = {} // Changed to TripResponseDto[]
   completedTrips.value.forEach((trip) => {
-    if (trip.completedDate) {
-      const monthKey = trip.completedDate.substring(0, 7)
+    if (trip.startDate) {
+      const monthKey = trip.startDate.substring(0, 7)
       if (!groups[monthKey]) groups[monthKey] = []
       groups[monthKey].push(trip)
     }
@@ -179,22 +179,24 @@ const groupedCompletedTrips = computed(() => {
 })
 
 const formatMonth = (monthStr: string) => {
-  const [year, month] = monthStr.split('.')
+  const [year, month] = monthStr.split('-')
   return { year, month }
 }
 
 // --- 핸들러 함수들 ---
 
 // 1. 모달 열기 로직
-const handleOpenModal = async (tripId: number) => { // Made async
+const handleOpenModal = async (tripId: number) => {
+  // Made async
   try {
     const detail = await getTripDetail(tripId) // Fetch detailed trip data
     selectedTrip.value = {
       ...detail,
       // description은 tripItems에서 파생
-      description: detail.tripItems && detail.tripItems.length > 0
-        ? detail.tripItems.map((item) => item.spot.name).join(' → ')
-        : '장소 없음',
+      description:
+        detail.tripItems && detail.tripItems.length > 0
+          ? detail.tripItems.map((item) => item.spot.name).join(' → ')
+          : '장소 없음',
       // duration, views, imageUrl은 TripDetailResponseDto에 없으므로 mock data 유지 또는 제거
       duration: '반나절', // Mock Data
       views: 1240, // Mock Data
