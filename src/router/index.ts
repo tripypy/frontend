@@ -34,6 +34,12 @@ const router = createRouter({
       component: () => import('@/views/LogView.vue'),
     },
     {
+      path: '/log/:userId',
+      name: 'user-log',
+      component: () => import('@/views/LogView.vue'),
+      props: true
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),
@@ -47,6 +53,11 @@ const router = createRouter({
       path: '/find-account',
       name: 'find-account',
       component: () => import('@/views/FindAccountInfoView.vue'),
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('@/views/SettingsView.vue'),
     },
   ],
 })
