@@ -122,3 +122,48 @@ export interface TripItemsUpdateRequestDto_ItemSync {
   memo?: string // nullable
 }
 
+
+
+// 여행 계획 패널에서 사용하는 타입
+export interface TripPlanItem {
+  id: number // tripItemId
+  day: number
+  order: number
+  place: Place
+  memo?: string
+}
+
+// =================================================================
+// TripLog (여행 기록) 관련 타입
+// =================================================================
+
+export interface TripLogImage {
+  imageRefKey: string
+  imageUrl: string
+  orderIndex: number
+}
+
+export interface TripLogComment {
+  commentId: number
+  authorNickname: string
+  authorImageUrl: string
+  content: string
+  createdAt: string
+}
+
+export interface TripLogDetail {
+  logId: number
+  title: string
+  content: string
+  locationSummary: string
+  likeCount: number
+  commentCount: number
+  createdAt: string
+  authorNickname: string
+  authorImageUrl: string
+  tripId: number
+  tripTitle: string
+  images: TripLogImage[]
+  comments: TripLogComment[]
+}
+
