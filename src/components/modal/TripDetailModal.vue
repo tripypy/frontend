@@ -141,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
 import { Calendar, MapPin, Edit, ListChecks, Shield } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
@@ -154,6 +154,7 @@ interface DayPlanDisplay {
 
 const props = defineProps<{
   trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string }
+  initialPlaceId?: number | null
 }>()
 
 const emit = defineEmits(['close', 'edit'])
@@ -173,6 +174,21 @@ const days = computed<DayPlanDisplay[]>(() => {
   }, {} as Record<number, DayPlanDisplay>)
 
   return Object.values(grouped).sort((a, b) => a.dayNumber - b.dayNumber)
+})
+
+watchEffect(() => {
+  if (props.initialPlaceId) {
+    const initialItem = props.trip.tripItems.find(item => item.spot.id === props.initialPlaceId)
+    if (initialItem) {
+      activeDay.value = initialItem.dayNumber
+      // DOM 업데이트를 기다린 후 클릭 핸들러를 호출
+      setTimeout(() => {
+        handlePlaceClick(initialItem.spot)
+      }, 0)
+    }
+  } else if (days.value.length > 0) {
+    activeDay.value = days.value[0].dayNumber
+  }
 })
 
 const currentDayPlaces = computed(() => {

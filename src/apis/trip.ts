@@ -6,7 +6,8 @@ import type {
   TripUpdateRequestDto,
   TripResponseDto,
   TripSummaryResponseDto, // Added
-  TripStatus, // Added
+  TripStatus,
+  TripLogDetail, // Added
 } from '@/types/trip'
 
 // API 호출 함수
@@ -84,6 +85,16 @@ export const getMyTrips = async (status?: TripStatus): Promise<TripResponseDto[]
  */
 export const getMyTripSummaries = async (): Promise<TripSummaryResponseDto[]> => {
   const response = await apiClient.get<TripSummaryResponseDto[]>('/trips/summary')
+  return response.data
+}
+
+/**
+ * 여행 기록(로그) 상세 정보를 조회합니다.
+ * @param logId 조회할 여행 기록의 ID
+ * @returns 여행 기록 상세 정보 (TripLogDetail)
+ */
+export const getTripLogDetail = async (logId: number): Promise<TripLogDetail> => {
+  const response = await apiClient.get<TripLogDetail>(`/trip-logs/${logId}`)
   return response.data
 }
 

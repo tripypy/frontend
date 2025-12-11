@@ -1,7 +1,7 @@
 <template>
   <div
     class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-    @click="emit('close')"
+    @click.self="emit('close')"
   >
     <Transition
       enter-active-class="transition-all duration-300 ease-out"
@@ -32,27 +32,41 @@
     </button>
 
     <div
+      v-if="isLoading"
+      class="text-white font-black text-2xl"
+    >
+      로딩 중...
+    </div>
+    <div
+      v-else-if="error"
+      class="text-red-500 font-black text-2xl bg-white p-8 rounded-lg"
+    >
+      {{ error }}
+    </div>
+
+    <div
+      v-else-if="logDetail"
       class="bg-white border-[3px] border-[#2C2C2C] rounded-2xl shadow-[8px_8px_0px_0px_rgba(44,44,44,0.3)] max-w-6xl w-full h-[90vh] flex overflow-hidden"
       @click.stop
     >
       <div
         class="flex-1 bg-[#F5F5F5] relative border-r border-gray-200 overflow-hidden flex flex-col justify-center"
       >
-        <template v-if="images && images.length > 0">
+        <template v-if="sortedImages.length > 0">
           <div
             class="flex h-full transition-transform duration-500 ease-in-out will-change-transform"
             :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
           >
             <div
-              v-for="(img, index) in images"
-              :key="index"
+              v-for="img in sortedImages"
+              :key="img.imageRefKey"
               class="w-full h-full flex-shrink-0 flex items-center justify-center bg-[#F5F5F5]"
             >
-              <img :src="img" :alt="title" class="w-full h-full object-contain" />
+              <img :src="img.imageUrl" :alt="logDetail.title" class="w-full h-full object-contain" />
             </div>
           </div>
 
-          <template v-if="images.length > 1">
+          <template v-if="sortedImages.length > 1">
             <button
               @click="handlePrevImage"
               class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(44,44,44,0.3)] cursor-pointer z-10"
@@ -68,7 +82,7 @@
 
             <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
               <div
-                v-for="(_, index) in images"
+                v-for="(_, index) in sortedImages"
                 :key="index"
                 :class="[
                   'w-2.5 h-2.5 rounded-full border-[2px] border-[#2C2C2C] transition-all',
@@ -91,16 +105,16 @@
             <div
               class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
             >
-              <img :src="authorAvatar" :alt="author" class="w-full h-full object-cover" />
+              <img :src="logDetail.authorImageUrl" :alt="logDetail.authorNickname" class="w-full h-full object-cover" />
             </div>
             <div>
-              <h4 class="font-black text-[#2C2C2C] font-sans">{{ author }}</h4>
+              <h4 class="font-black text-[#2C2C2C] font-sans">{{ logDetail.authorNickname }}</h4>
               <div class="flex items-center gap-2 text-xs font-bold text-gray-600">
                 <MapPin class="w-3 h-3" stroke-width="2.5" />
-                <span>{{ location }}</span>
+                <span>{{ logDetail.locationSummary }}</span>
                 <span>•</span>
                 <Calendar class="w-3 h-3" stroke-width="2.5" />
-                <span>{{ date }}</span>
+                <span>{{ formattedDate }}</span>
               </div>
             </div>
           </div>
@@ -146,44 +160,75 @@
         </div>
 
         <div class="p-5 border-b border-gray-200">
-          <h3 class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ title }}</h3>
+          <h3 class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ logDetail.title }}</h3>
 
-          <div v-if="course && course.length > 0" class="mb-3 flex items-center flex-wrap gap-1.5">
-            <div v-for="(place, index) in course" :key="index" class="flex items-center gap-1.5">
+          <div v-if="groupedCourse.length > 0" class="mb-4">
+            <!-- Tabs -->
+            <div class="flex items-center border-b-2 border-gray-200">
               <button
-                class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] cursor-pointer hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all course-badge"
-                :style="{ '--hover-color': getBadgeColor(index) }"
-                @click="selectedPlace = place"
+                v-for="day in groupedCourse"
+                :key="day.dayNumber"
+                @click.stop="activeDay = day.dayNumber"
+                :class="[
+                  'px-3 py-1 font-bold text-xs transition-all',
+                  activeDay === day.dayNumber
+                    ? 'text-[#2C2C2C] border-b-2 border-[#2C2C2C]'
+                    : 'text-gray-500 hover:text-gray-800',
+                ]"
               >
-                <span class="text-xs font-black text-[#2C2C2C]">{{ place.number }}</span>
-                <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
-                  place.name
-                }}</span>
+                DAY {{ day.dayNumber }}
               </button>
-              <ChevronRight
-                v-if="index < course.length - 1"
-                class="w-3 h-3 text-gray-400 flex-shrink-0"
-                stroke-width="3"
-              />
+            </div>
+
+            <!-- Course Content -->
+            <div class="pt-3">
+              <div
+                v-for="day in groupedCourse"
+                :key="day.dayNumber"
+                v-show="activeDay === day.dayNumber"
+              >
+                <div class="flex items-center flex-wrap gap-x-1.5 gap-y-2">
+                  <div
+                    v-for="(place, index) in day.places"
+                    :key="index"
+                    class="flex items-center gap-1.5"
+                  >
+                    <div
+                      @click.stop="handleCourseClick(place.id)"
+                      class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge cursor-pointer"
+                      :style="{ '--hover-color': getBadgeColor(index) }"
+                    >
+                      <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
+                      <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
+                        place.name
+                      }}</span>
+                    </div>
+                    <ChevronRight
+                      v-if="index < day.places.length - 1"
+                      class="w-3 h-3 text-gray-400 flex-shrink-0"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           <p class="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
-            {{ content }}
+            {{ formattedContent }}
           </p>
         </div>
 
         <div class="flex-1 overflow-y-auto p-5 pt-3 space-y-4">
-          <div v-for="comment in mockComments" :key="comment.id" class="flex items-start gap-3">
+          <div v-for="comment in logDetail.comments" :key="comment.commentId" class="flex items-start gap-3">
             <div
               class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
             >
-              <img :src="comment.avatar" :alt="comment.author" class="w-full h-full object-cover" />
+              <img :src="comment.authorImageUrl" :alt="comment.authorNickname" class="w-full h-full object-cover" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
-                <span class="text-sm font-black text-[#2C2C2C]">{{ comment.author }}</span>
-                <span class="text-xs font-bold text-gray-400">{{ comment.time }}</span>
+                <span class="text-sm font-black text-[#2C2C2C]">{{ comment.authorNickname }}</span>
+                <span class="text-xs font-bold text-gray-400">{{ formatCommentDate(comment.createdAt) }}</span>
               </div>
               <p class="text-sm font-medium text-gray-800 leading-relaxed">{{ comment.content }}</p>
             </div>
@@ -237,12 +282,17 @@
       </div>
     </div>
 
-    <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
+    <TripDetailModal
+      v-if="isTripDetailModalVisible && tripDetail"
+      :trip="tripDetail"
+      :initial-place-id="initialSelectedPlaceId"
+      @close="isTripDetailModalVisible = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
 import {
   Heart,
   Bookmark,
@@ -254,56 +304,125 @@ import {
   Share,
   Edit,
   Trash2,
+  Link,
 } from 'lucide-vue-next'
-import PlaceDetailModal from './PlaceDetailModal.vue'
+import { getTripLogDetail, getTripDetail } from '@/apis/trip'
+import type { TripLogDetail, TripLogComment, TripDetailResponseDto } from '@/types/trip'
+import { format, parseISO } from 'date-fns'
+import TripDetailModal from './TripDetailModal.vue'
 
 interface CourseItem {
   number: number
   name: string
 }
 
-const props = withDefaults(
-  defineProps<{
-    id?: number
-    author: string
-    authorAvatar: string
-    location: string
-    date: string
-    title: string
-    content: string
-    images: string[]
-    likes: number
-    comments: number
-    course?: CourseItem[]
-  }>(),
-  {
-    id: 1,
-  },
-)
+const props = defineProps<{
+  logId: number
+}>()
 
 const emit = defineEmits(['close'])
 
+const logDetail = ref<TripLogDetail | null>(null)
+const tripDetail = ref<TripDetailResponseDto | null>(null)
+const isLoading = ref(true)
+const error = ref<string | null>(null)
+
 const currentImageIndex = ref(0)
 const isLiked = ref(false)
-const currentLikes = ref(props.likes)
 const isBookmarked = ref(false)
-const selectedPlace = ref<CourseItem | null>(null)
 const showDropdown = ref(false)
 const showToast = ref(false)
+const isTripDetailModalVisible = ref(false)
+const activeDay = ref(1)
+const initialSelectedPlaceId = ref<number | null>(null)
 
-// 본인 여부 확인 (author가 "김민준"인 경우)
-const isAuthor = computed(() => props.author === '김민준')
+// 데이터 로드
+onMounted(async () => {
+  try {
+    isLoading.value = true
+    logDetail.value = await getTripLogDetail(props.logId)
+  } catch (e) {
+    console.error('Failed to fetch trip log detail:', e)
+    error.value = '데이터를 불러오는 데 실패했습니다.'
+  } finally {
+    isLoading.value = false
+  }
+})
+
+watchEffect(async () => {
+  if (logDetail.value?.tripId) {
+    try {
+      tripDetail.value = await getTripDetail(logDetail.value.tripId)
+    } catch (e) {
+      console.error('Failed to fetch trip detail:', e)
+      // tripDetail을 못가져와도 로그 자체는 보여줘야 하므로 에러를 크게 표시하지 않음
+    }
+  }
+})
+
+// 본인 여부 확인 (임시 로직, 추후 실제 유저 정보와 비교해야 함)
+const isAuthor = computed(() => logDetail.value?.authorNickname === '김민준')
+
+const sortedImages = computed(() => {
+  if (!logDetail.value?.images) return []
+  return [...logDetail.value.images].sort((a, b) => a.orderIndex - b.orderIndex)
+})
+
+const formattedDate = computed(() => {
+  if (!logDetail.value?.createdAt) return ''
+  return format(parseISO(logDetail.value.createdAt), 'yyyy.MM.dd')
+})
+
+const formattedContent = computed(() => {
+  if (!logDetail.value?.content) return ''
+  // {{img_...}} 형식의 이미지 플레이스홀더가 포함된 줄 전체를 제거합니다.
+  return logDetail.value.content.replace(/^[ \t]*{{\s*img_.*?\s*}}[ \t]*$\r?\n?/gm, '')
+})
+
+const groupedCourse = computed(() => {
+  if (!tripDetail.value?.tripItems || tripDetail.value.tripItems.length === 0) {
+    return []
+  }
+  const grouped = tripDetail.value.tripItems.reduce(
+    (acc, item) => {
+      const day = item.dayNumber
+      if (!acc[day]) {
+        acc[day] = { dayNumber: day, places: [] }
+      }
+      // place에 id를 포함시켜서 전달
+      acc[day].places.push({ id: item.spot.id, name: item.spot.name })
+      return acc
+    },
+    {} as Record<number, { dayNumber: number; places: { id: number; name: string }[] }>,
+  )
+  return Object.values(grouped).sort((a, b) => a.dayNumber - b.dayNumber)
+})
+
+watchEffect(() => {
+  if (groupedCourse.value.length > 0) {
+    activeDay.value = groupedCourse.value[0].dayNumber
+  }
+})
+
+const handleCourseClick = (placeId: number) => {
+  initialSelectedPlaceId.value = placeId
+  isTripDetailModalVisible.value = true
+}
 
 const handlePrevImage = () => {
+  if (!logDetail.value) return
   currentImageIndex.value =
-    currentImageIndex.value > 0 ? currentImageIndex.value - 1 : props.images.length - 1
+    currentImageIndex.value > 0 ? currentImageIndex.value - 1 : logDetail.value.images.length - 1
 }
+
 
 const handleNextImage = () => {
+  if (!logDetail.value) return
   currentImageIndex.value =
-    currentImageIndex.value < props.images.length - 1 ? currentImageIndex.value + 1 : 0
+    currentImageIndex.value < logDetail.value.images.length - 1 ? currentImageIndex.value + 1 : 0
 }
 
+const currentLikes = ref(logDetail.value?.likeCount ?? 0)
 const handleLike = () => {
   if (isLiked.value) currentLikes.value--
   else currentLikes.value++
@@ -337,7 +456,11 @@ const getBadgeColor = (idx: number) => colors[idx % colors.length]
 // 👇 ESC 키 이벤트 핸들러
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
-    emit('close')
+    if (isTripDetailModalVisible.value) {
+      isTripDetailModalVisible.value = false
+    } else {
+      emit('close')
+    }
   }
 }
 
@@ -349,51 +472,28 @@ const handleClickOutside = (e: MouseEvent) => {
   }
 }
 
-// 모달이 열릴 때 이벤트 리스너 등록, 닫힐 때 해제
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
   document.addEventListener('click', handleClickOutside)
-  // 모달 열릴 때 뒤에 스크롤 막고 싶으면 아래 주석 해제
-  // document.body.style.overflow = 'hidden';
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
   document.removeEventListener('click', handleClickOutside)
-  // document.body.style.overflow = '';
 })
 
-// Mock Data
-const mockComments = [
-  {
-    id: 1,
-    author: '김민준',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    content: '여기 진짜 좋아요! 저도 다음주에 가볼게요 ㅎㅎ',
-    time: '2시간 전',
-  },
-  {
-    id: 2,
-    author: '박서연',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    content: '사진 너무 예쁘게 찍으셨네요! 👍',
-    time: '5시간 전',
-  },
-  {
-    id: 3,
-    author: '이준호',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-    content: '저도 여기 가봤는데 정말 좋더라구요~ 추천합니다!',
-    time: '7시간 전',
-  },
-  {
-    id: 4,
-    author: '최수진',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
-    content: '날씨 좋은 날 가면 더 예쁠 것 같아요 ☀️',
-    time: '1일 전',
-  },
-]
+const formatCommentDate = (dateString: string) => {
+  // 간단한 시간 차이 계산 (실제 프로덕션에서는 date-fns/formatDistanceToNow 등을 사용)
+  const date = parseISO(dateString)
+  const now = new Date()
+  const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000)
+  if (diffSeconds < 60) return `${diffSeconds}초 전`
+  const diffMinutes = Math.round(diffSeconds / 60)
+  if (diffMinutes < 60) return `${diffMinutes}분 전`
+  const diffHours = Math.round(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours}시간 전`
+  return format(date, 'yyyy.MM.dd')
+}
 </script>
 
 <style scoped>
@@ -401,3 +501,4 @@ const mockComments = [
   background-color: var(--hover-color);
 }
 </style>
+

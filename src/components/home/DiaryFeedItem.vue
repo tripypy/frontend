@@ -186,16 +186,7 @@
     <Teleport to="body">
       <DiaryCommentModal
         v-if="showCommentModal"
-        :author="author"
-        :author-avatar="authorAvatar"
-        :location="location"
-        :date="date"
-        :title="title"
-        :content="content"
-        :images="allImages"
-        :likes="likes"
-        :comments="comments"
-        :course="course"
+        :log-id="id"
         @close="showCommentModal = false"
       />
 
