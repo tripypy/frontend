@@ -162,11 +162,8 @@
         <div class="p-5 border-b border-gray-200">
           <h3 class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ logDetail.title }}</h3>
 
-          <div
-            v-if="groupedCourse.length > 0"
-            @click="isTripDetailModalVisible = true"
-            class="mb-4 cursor-pointer"
-          >
+          <div v-if="groupedCourse.length > 0" class="mb-4">
+            <!-- Tabs -->
             <div class="flex items-center border-b-2 border-gray-200">
               <button
                 v-for="day in groupedCourse"
@@ -197,7 +194,8 @@
                     class="flex items-center gap-1.5"
                   >
                     <div
-                      class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge"
+                      @click.stop="handleCourseClick(place.id)"
+                      class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge cursor-pointer"
                       :style="{ '--hover-color': getBadgeColor(index) }"
                     >
                       <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
@@ -208,7 +206,6 @@
                     <ChevronRight
                       v-if="index < day.places.length - 1"
                       class="w-3 h-3 text-gray-400 flex-shrink-0"
-                      stroke-width="3"
                     />
                   </div>
                 </div>
@@ -288,6 +285,7 @@
     <TripDetailModal
       v-if="isTripDetailModalVisible && tripDetail"
       :trip="tripDetail"
+      :initial-place-id="initialSelectedPlaceId"
       @close="isTripDetailModalVisible = false"
     />
   </div>
@@ -336,6 +334,7 @@ const showDropdown = ref(false)
 const showToast = ref(false)
 const isTripDetailModalVisible = ref(false)
 const activeDay = ref(1)
+const initialSelectedPlaceId = ref<number | null>(null)
 
 // 데이터 로드
 onMounted(async () => {
@@ -390,10 +389,11 @@ const groupedCourse = computed(() => {
       if (!acc[day]) {
         acc[day] = { dayNumber: day, places: [] }
       }
-      acc[day].places.push({ name: item.spot.name })
+      // place에 id를 포함시켜서 전달
+      acc[day].places.push({ id: item.spot.id, name: item.spot.name })
       return acc
     },
-    {} as Record<number, { dayNumber: number; places: { name: string }[] }>,
+    {} as Record<number, { dayNumber: number; places: { id: number; name: string }[] }>,
   )
   return Object.values(grouped).sort((a, b) => a.dayNumber - b.dayNumber)
 })
@@ -403,6 +403,11 @@ watchEffect(() => {
     activeDay.value = groupedCourse.value[0].dayNumber
   }
 })
+
+const handleCourseClick = (placeId: number) => {
+  initialSelectedPlaceId.value = placeId
+  isTripDetailModalVisible.value = true
+}
 
 const handlePrevImage = () => {
   if (!logDetail.value) return
