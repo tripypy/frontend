@@ -143,12 +143,16 @@ export interface TripLogImage {
   orderIndex: number
 }
 
-export interface TripLogComment {
+export interface TripLogCommentResponse {
   commentId: number
   authorNickname: string
   authorImageUrl: string
   content: string
   createdAt: string
+}
+
+export interface TripLogCommentRequest {
+  content: string
 }
 
 export interface TripLogDetail {
@@ -164,6 +168,5 @@ export interface TripLogDetail {
   tripId: number
   tripTitle: string
   images: TripLogImage[]
-  comments: TripLogComment[]
+  comments: TripLogCommentResponse[]
 }
-

@@ -182,33 +182,33 @@
 
             <!-- Course Content -->
             <div class="pt-3">
-              <div
-                v-for="day in groupedCourse"
-                :key="day.dayNumber"
-                v-show="activeDay === day.dayNumber"
-              >
-                <div class="flex items-center flex-wrap gap-x-1.5 gap-y-2">
-                  <div
-                    v-for="(place, index) in day.places"
-                    :key="index"
-                    class="flex items-center gap-1.5"
-                  >
-                    <div
-                      @click.stop="handleCourseClick(place.id)"
-                      class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge cursor-pointer"
-                      :style="{ '--hover-color': getBadgeColor(index) }"
-                    >
-                      <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
-                      <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
-                        place.name
-                      }}</span>
+              <div v-for="day in groupedCourse" :key="day.dayNumber">
+                <Transition name="no-animation">
+                  <div v-show="activeDay === day.dayNumber">
+                    <div class="flex items-center flex-wrap gap-x-1.5 gap-y-2">
+                      <div
+                        v-for="(place, index) in day.places"
+                        :key="index"
+                        class="flex items-center gap-1.5"
+                      >
+                        <div
+                          @click.stop="handleCourseClick(place.id)"
+                          class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge cursor-pointer"
+                          :style="{ '--hover-color': getBadgeColor(index) }"
+                        >
+                          <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
+                          <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
+                            place.name
+                          }}</span>
+                        </div>
+                        <ChevronRight
+                          v-if="index < day.places.length - 1"
+                          class="w-3 h-3 text-gray-400 flex-shrink-0"
+                        />
+                      </div>
                     </div>
-                    <ChevronRight
-                      v-if="index < day.places.length - 1"
-                      class="w-3 h-3 text-gray-400 flex-shrink-0"
-                    />
                   </div>
-                </div>
+                </Transition>
               </div>
             </div>
           </div>
@@ -266,17 +266,51 @@
             </button>
           </div>
 
-          <div class="p-4 pt-0 flex items-center gap-2.5">
-            <input
-              type="text"
-              placeholder="댓글을 입력하세요..."
-              class="flex-1 px-4 py-3 border-[2px] border-[#2C2C2C] rounded-lg text-sm font-medium bg-white focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(107,143,212,0.3)] transition-all placeholder:text-gray-400"
-            />
-            <button
-              class="px-5 py-3 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs bg-[#F9CA6B] text-[#2C2C2C] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase tracking-wide"
-            >
-              작성
-            </button>
+          <div class="p-4 pt-0">
+            <form @submit.prevent="handleCommentSubmit" class="flex items-center gap-2.5">
+              <div
+                class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
+              >
+                <img
+                  v-if="authStore.isLoggedIn && authStore.user?.profileImageUrl"
+                  :src="authStore.user.profileImageUrl"
+                  alt="My Profile"
+                  class="w-full h-full object-cover"
+                />
+                <img
+                  v-else
+                  src="/default-profile.svg"
+                  alt="Default Profile"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div class="relative flex-1">
+                <input
+                  v-model="newComment"
+                  :disabled="!authStore.isLoggedIn"
+                  type="text"
+                  :placeholder="
+                    authStore.isLoggedIn ? '댓글을 입력하세요...' : '로그인 후 댓글을 남길 수 있습니다.'
+                  "
+                  :class="[
+                    'w-full px-4 py-3 border-[2px] border-[#2C2C2C] rounded-lg text-sm font-medium bg-white focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(107,143,212,0.3)] transition-all placeholder:text-gray-400',
+                    !authStore.isLoggedIn ? 'bg-gray-100' : '',
+                  ]"
+                />
+                <div
+                  v-if="!authStore.isLoggedIn"
+                  @click="handleCommentInputClick"
+                  class="absolute inset-0 cursor-pointer"
+                ></div>
+              </div>
+              <button
+                type="submit"
+                :disabled="!authStore.isLoggedIn"
+                class="px-5 py-3 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs bg-[#F9CA6B] text-[#2C2C2C] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                작성
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -288,11 +322,22 @@
       :initial-place-id="initialSelectedPlaceId"
       @close="isTripDetailModalVisible = false"
     />
+
+    <AlertDialog
+      :show="isLoginAlertVisible"
+      title="로그인 필요"
+      message="로그인 후 이용해주세요!"
+      confirm-button-text="로그인"
+      close-button-text="취소"
+      @close="isLoginAlertVisible = false"
+      @confirm="handleLoginConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Heart,
   Bookmark,
@@ -304,23 +349,22 @@ import {
   Share,
   Edit,
   Trash2,
-  Link,
 } from 'lucide-vue-next'
-import { getTripLogDetail, getTripDetail } from '@/apis/trip'
-import type { TripLogDetail, TripLogComment, TripDetailResponseDto } from '@/types/trip'
+import { getTripLogDetail, getTripDetail, postTripLogComment } from '@/apis/trip'
+import type { TripLogDetail, TripDetailResponseDto } from '@/types/trip'
 import { format, parseISO } from 'date-fns'
 import TripDetailModal from './TripDetailModal.vue'
-
-interface CourseItem {
-  number: number
-  name: string
-}
+import AlertDialog from '@/components/common/AlertDialog.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{
   logId: number
 }>()
 
 const emit = defineEmits(['close'])
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const logDetail = ref<TripLogDetail | null>(null)
 const tripDetail = ref<TripDetailResponseDto | null>(null)
@@ -335,9 +379,11 @@ const showToast = ref(false)
 const isTripDetailModalVisible = ref(false)
 const activeDay = ref(1)
 const initialSelectedPlaceId = ref<number | null>(null)
+const newComment = ref('')
+const isLoginAlertVisible = ref(false)
 
 // 데이터 로드
-onMounted(async () => {
+const fetchLogDetail = async () => {
   try {
     isLoading.value = true
     logDetail.value = await getTripLogDetail(props.logId)
@@ -347,7 +393,9 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-})
+}
+
+onMounted(fetchLogDetail)
 
 watchEffect(async () => {
   if (logDetail.value?.tripId) {
@@ -355,12 +403,10 @@ watchEffect(async () => {
       tripDetail.value = await getTripDetail(logDetail.value.tripId)
     } catch (e) {
       console.error('Failed to fetch trip detail:', e)
-      // tripDetail을 못가져와도 로그 자체는 보여줘야 하므로 에러를 크게 표시하지 않음
     }
   }
 })
 
-// 본인 여부 확인 (임시 로직, 추후 실제 유저 정보와 비교해야 함)
 const isAuthor = computed(() => logDetail.value?.authorNickname === '김민준')
 
 const sortedImages = computed(() => {
@@ -375,7 +421,6 @@ const formattedDate = computed(() => {
 
 const formattedContent = computed(() => {
   if (!logDetail.value?.content) return ''
-  // {{img_...}} 형식의 이미지 플레이스홀더가 포함된 줄 전체를 제거합니다.
   return logDetail.value.content.replace(/^[ \t]*{{\s*img_.*?\s*}}[ \t]*$\r?\n?/gm, '')
 })
 
@@ -389,7 +434,6 @@ const groupedCourse = computed(() => {
       if (!acc[day]) {
         acc[day] = { dayNumber: day, places: [] }
       }
-      // place에 id를 포함시켜서 전달
       acc[day].places.push({ id: item.spot.id, name: item.spot.name })
       return acc
     },
@@ -412,48 +456,82 @@ const handleCourseClick = (placeId: number) => {
 const handlePrevImage = () => {
   if (!logDetail.value) return
   currentImageIndex.value =
-    currentImageIndex.value > 0 ? currentImageIndex.value - 1 : logDetail.value.images.length - 1
+    currentImageIndex.value > 0 ? currentImageIndex.value - 1 : sortedImages.value.length - 1
 }
-
 
 const handleNextImage = () => {
   if (!logDetail.value) return
   currentImageIndex.value =
-    currentImageIndex.value < logDetail.value.images.length - 1 ? currentImageIndex.value + 1 : 0
+    currentImageIndex.value < sortedImages.value.length - 1 ? currentImageIndex.value + 1 : 0
 }
 
 const currentLikes = ref(logDetail.value?.likeCount ?? 0)
 const handleLike = () => {
+  if (!authStore.isLoggedIn) {
+    isLoginAlertVisible.value = true
+    return
+  }
   if (isLiked.value) currentLikes.value--
   else currentLikes.value++
   isLiked.value = !isLiked.value
 }
 
-// 드롭다운 메뉴 핸들러
+const handleCommentSubmit = async () => {
+  if (!authStore.isLoggedIn) {
+    isLoginAlertVisible.value = true
+    return
+  }
+  if (!newComment.value.trim()) return
+  try {
+    await postTripLogComment(props.logId, { content: newComment.value })
+    newComment.value = ''
+    // 댓글 목록 갱신
+    const updatedLogDetail = await getTripLogDetail(props.logId)
+    if (logDetail.value) {
+      logDetail.value.comments = updatedLogDetail.comments
+      logDetail.value.commentCount = updatedLogDetail.commentCount
+    }
+  } catch (error) {
+    console.error('Failed to post comment:', error)
+    alert('댓글 작성에 실패했습니다.')
+  }
+}
+
+const handleCommentInputClick = () => {
+  if (!authStore.isLoggedIn) {
+    isLoginAlertVisible.value = true
+  }
+}
+
+const handleLoginConfirm = () => {
+  isLoginAlertVisible.value = false
+  router.push({ name: 'login' })
+  emit('close') // Close the main modal as well
+}
+
 const handleShare = () => {
   showDropdown.value = false
-  console.log('공유하기')
-  // TODO: 공유 기능 구현
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    showToast.value = true
+    setTimeout(() => (showToast.value = false), 2000)
+  })
 }
 
 const handleEdit = () => {
   showDropdown.value = false
   console.log('수정하기')
-  // TODO: 수정 기능 구현
 }
 
 const handleDelete = () => {
   showDropdown.value = false
   if (confirm('정말 삭제하시겠습니까?')) {
     console.log('삭제하기')
-    // TODO: 삭제 기능 구현
   }
 }
 
 const colors = ['#FFD60A', '#FF6B9D', '#98D8C8', '#B4E4FF', '#E88555']
 const getBadgeColor = (idx: number) => colors[idx % colors.length]
 
-// 👇 ESC 키 이벤트 핸들러
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     if (isTripDetailModalVisible.value) {
@@ -464,10 +542,9 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
-// 드롭다운 외부 클릭 시 닫기
 const handleClickOutside = (e: MouseEvent) => {
   const target = e.target as HTMLElement
-  if (!target.closest('.relative')) {
+  if (showDropdown.value && !target.closest('.relative')) {
     showDropdown.value = false
   }
 }
@@ -483,7 +560,6 @@ onUnmounted(() => {
 })
 
 const formatCommentDate = (dateString: string) => {
-  // 간단한 시간 차이 계산 (실제 프로덕션에서는 date-fns/formatDistanceToNow 등을 사용)
   const date = parseISO(dateString)
   const now = new Date()
   const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000)
@@ -499,6 +575,11 @@ const formatCommentDate = (dateString: string) => {
 <style scoped>
 .course-badge:hover {
   background-color: var(--hover-color);
+}
+
+.no-animation-enter-active,
+.no-animation-leave-active {
+  transition: none;
 }
 </style>
 

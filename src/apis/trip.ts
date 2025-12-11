@@ -8,6 +8,8 @@ import type {
   TripSummaryResponseDto, // Added
   TripStatus,
   TripLogDetail, // Added
+  TripLogCommentRequest,
+  TripLogCommentResponse,
 } from '@/types/trip'
 
 // API 호출 함수
@@ -95,6 +97,23 @@ export const getMyTripSummaries = async (): Promise<TripSummaryResponseDto[]> =>
  */
 export const getTripLogDetail = async (logId: number): Promise<TripLogDetail> => {
   const response = await apiClient.get<TripLogDetail>(`/trip-logs/${logId}`)
+  return response.data
+}
+
+/**
+ * 여행 기록(로그)에 댓글을 작성합니다.
+ * @param logId 댓글을 작성할 여행 기록의 ID
+ * @param commentData 댓글 내용
+ * @returns 생성된 댓글 정보
+ */
+export const postTripLogComment = async (
+  logId: number,
+  commentData: TripLogCommentRequest,
+): Promise<TripLogCommentResponse> => {
+  const response = await apiClient.post<TripLogCommentResponse>(
+    `/trip-logs/${logId}/comments`,
+    commentData,
+  )
   return response.data
 }
 
