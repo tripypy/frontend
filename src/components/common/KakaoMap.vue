@@ -179,8 +179,10 @@ const panTo = (lat: number, lng: number) => {
 watch(
   () => props.selectedMarkerId,
   (newId) => {
+    if (!mapLoaded.value) return // Add guard clause
+
     const kakao = (window as any).kakao
-    if (!kakao) return
+    if (!kakao || !kakao.maps) return
 
     const normalImage = new kakao.maps.MarkerImage(
       DEFAULT_MARKER_SRC,
@@ -242,16 +244,21 @@ const initMap = () => {
 }
 
 onMounted(() => {
-  const kakao = (window as any).kakao
-  if (kakao && kakao.maps) {
-    if (typeof kakao.maps.load === 'function') {
-      kakao.maps.load(() => {
+  const checkKakao = () => {
+    const kakao = (window as any).kakao
+    if (kakao && kakao.maps) {
+      if (typeof kakao.maps.load === 'function') {
+        kakao.maps.load(() => {
+          initMap()
+        })
+      } else {
         initMap()
-      })
+      }
     } else {
-      initMap()
+      setTimeout(checkKakao, 200) // Poll every 200ms
     }
   }
+  checkKakao()
 })
 
 onUnmounted(() => {
