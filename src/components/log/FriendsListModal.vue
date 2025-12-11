@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { X, MoreHorizontal } from 'lucide-vue-next'
 import { fetchFriends } from '@/services/user'
 import type { User } from '@/stores/auth'
+import ProfileImageModal from '@/components/log/ProfileImageModal.vue' // ProfileImageModal 임포트
 
 const props = defineProps<{
   show: boolean;
@@ -19,6 +20,10 @@ const friends = ref<User[]>([])
 const isLoading = ref(false)
 const lastFetchedUserId = ref<number | null>(null); // To prevent re-fetching if the same user is shown again
 const defaultProfileImage = '/default-profile.svg'
+
+// 친구 이미지 크게 보기 관련 상태
+const showImageViewerModal = ref(false);
+const selectedFriendImageUrl = ref<string | undefined>(undefined);
 
 watch(() => props.show, async (isVisible) => {
   if (isVisible && (friends.value.length === 0 || lastFetchedUserId.value !== props.userId)) {
@@ -36,6 +41,7 @@ watch(() => props.show, async (isVisible) => {
     // Reset friends list when modal closes to ensure fresh data next time
     friends.value = [];
     lastFetchedUserId.value = null;
+    closeImageViewerModal(); // 친구 목록 모달 닫을 때 이미지 뷰어도 닫기
   }
 })
 
@@ -49,6 +55,16 @@ function togglePopover(friendId: number) {
 
 function closePopover() {
     popoverOpenForFriendId.value = null
+}
+
+function openImageViewerModal(imageUrl: string) {
+  selectedFriendImageUrl.value = imageUrl;
+  showImageViewerModal.value = true;
+}
+
+function closeImageViewerModal() {
+  showImageViewerModal.value = false;
+  selectedFriendImageUrl.value = undefined;
 }
 </script>
 
@@ -83,8 +99,9 @@ function closePopover() {
           >
             <div class="flex items-center gap-4">
               <div
-                class="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200 cursor-not-allowed"
-                title="프로필 사진 크게 보기 (구현 예정)"
+                class="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200 cursor-pointer"
+                @click="openImageViewerModal(friend.profileImageUrl || defaultProfileImage)"
+                title="프로필 사진 크게 보기"
               >
                 <img :src="friend.profileImageUrl || defaultProfileImage" :alt="friend.nickname" class="w-full h-full object-cover" />
               </div>
@@ -127,5 +144,12 @@ function closePopover() {
     </div>
      <!-- Click outside to close popover -->
     <div v-if="popoverOpenForFriendId !== null" class="fixed inset-0" @click="closePopover" style="z-index: 5;"></div>
+
+    <!-- Friend Profile Image Viewer Modal -->
+    <ProfileImageModal 
+      :show="showImageViewerModal" 
+      :image-url="selectedFriendImageUrl"
+      @close="closeImageViewerModal"
+    />
   </div>
 </template>

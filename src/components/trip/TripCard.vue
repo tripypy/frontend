@@ -10,7 +10,7 @@
           <span>{{ displayDateRange }}</span>
         </div>
 
-        <div class="flex items-center gap-1.5">
+        <div v-if="isEditable" class="flex items-center gap-1.5">
           <button
             @click.stop="handleShare"
             class="w-7 h-7 bg-white border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none"
@@ -40,7 +40,7 @@
     </div>
 
     <div class="p-5 bg-white">
-      <div class="mb-5 h-[32px] flex items-center overflow-hidden">
+      <div v-if="trip.tags && trip.tags.length > 0 || isEditable" class="mb-5 flex items-center overflow-hidden">
         <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full">
           <template v-if="trip.tags && trip.tags.length > 0">
             <span
@@ -51,6 +51,7 @@
               #{{ tag }}
             </span>
             <button
+              v-if="isEditable"
               @click.stop
               class="w-7 h-7 rounded-full bg-white border-[2px] border-[#2C2C2C] flex items-center justify-center flex-shrink-0 hover:bg-gray-50 transition-colors focus:outline-none"
             >
@@ -58,7 +59,7 @@
             </button>
           </template>
           <button
-            v-else
+            v-else-if="isEditable"
             @click.stop
             class="px-3 py-1 bg-white rounded-full text-[11px] font-black border-[2px] border-[#2C2C2C] border-dashed whitespace-nowrap hover:bg-gray-50 transition-colors flex items-center gap-1.5 focus:outline-none"
           >
@@ -104,7 +105,11 @@ import { Calendar, Share2, Bookmark, MapPin } from 'lucide-vue-next'
 import { TripResponseDto, TripStatus } from '@/types/trip' // Import TripResponseDto and TripStatus
 
 const props = defineProps<{
-  trip: TripResponseDto // Use TripResponseDto type
+  trip: TripResponseDto, // Use TripResponseDto type
+  isEditable: {
+    type: Boolean,
+    default: true
+  }
 }>()
 
 const emit = defineEmits<{
