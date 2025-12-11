@@ -182,33 +182,33 @@
 
             <!-- Course Content -->
             <div class="pt-3">
-              <div
-                v-for="day in groupedCourse"
-                :key="day.dayNumber"
-                v-show="activeDay === day.dayNumber"
-              >
-                <div class="flex items-center flex-wrap gap-x-1.5 gap-y-2">
-                  <div
-                    v-for="(place, index) in day.places"
-                    :key="index"
-                    class="flex items-center gap-1.5"
-                  >
-                    <div
-                      @click.stop="handleCourseClick(place.id)"
-                      class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge cursor-pointer"
-                      :style="{ '--hover-color': getBadgeColor(index) }"
-                    >
-                      <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
-                      <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
-                        place.name
-                      }}</span>
+              <div v-for="day in groupedCourse" :key="day.dayNumber">
+                <Transition name="no-animation">
+                  <div v-show="activeDay === day.dayNumber">
+                    <div class="flex items-center flex-wrap gap-x-1.5 gap-y-2">
+                      <div
+                        v-for="(place, index) in day.places"
+                        :key="index"
+                        class="flex items-center gap-1.5"
+                      >
+                        <div
+                          @click.stop="handleCourseClick(place.id)"
+                          class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge cursor-pointer"
+                          :style="{ '--hover-color': getBadgeColor(index) }"
+                        >
+                          <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
+                          <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
+                            place.name
+                          }}</span>
+                        </div>
+                        <ChevronRight
+                          v-if="index < day.places.length - 1"
+                          class="w-3 h-3 text-gray-400 flex-shrink-0"
+                        />
+                      </div>
                     </div>
-                    <ChevronRight
-                      v-if="index < day.places.length - 1"
-                      class="w-3 h-3 text-gray-400 flex-shrink-0"
-                    />
                   </div>
-                </div>
+                </Transition>
               </div>
             </div>
           </div>
@@ -266,20 +266,52 @@
             </button>
           </div>
 
-          <form @submit.prevent="handleCommentSubmit" class="p-4 pt-0 flex items-center gap-2.5">
-            <input
-              v-model="newComment"
-              type="text"
-              placeholder="댓글을 입력하세요..."
-              class="flex-1 px-4 py-3 border-[2px] border-[#2C2C2C] rounded-lg text-sm font-medium bg-white focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(107,143,212,0.3)] transition-all placeholder:text-gray-400"
-            />
-            <button
-              type="submit"
-              class="px-5 py-3 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs bg-[#F9CA6B] text-[#2C2C2C] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase tracking-wide"
-            >
-              작성
-            </button>
-          </form>
+          <div class="p-4 pt-0">
+            <form @submit.prevent="handleCommentSubmit" class="flex items-center gap-2.5">
+              <div
+                class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
+              >
+                <img
+                  v-if="authStore.isLoggedIn && authStore.user?.profileImageUrl"
+                  :src="authStore.user.profileImageUrl"
+                  alt="My Profile"
+                  class="w-full h-full object-cover"
+                />
+                <img
+                  v-else
+                  src="/default-profile.svg"
+                  alt="Default Profile"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div class="relative flex-1">
+                <input
+                  v-model="newComment"
+                  :disabled="!authStore.isLoggedIn"
+                  type="text"
+                  :placeholder="
+                    authStore.isLoggedIn ? '댓글을 입력하세요...' : '로그인 후 댓글을 남길 수 있습니다.'
+                  "
+                  :class="[
+                    'w-full px-4 py-3 border-[2px] border-[#2C2C2C] rounded-lg text-sm font-medium bg-white focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(107,143,212,0.3)] transition-all placeholder:text-gray-400',
+                    !authStore.isLoggedIn ? 'bg-gray-100' : '',
+                  ]"
+                />
+                <div
+                  v-if="!authStore.isLoggedIn"
+                  @click="handleCommentInputClick"
+                  class="absolute inset-0 cursor-pointer"
+                ></div>
+              </div>
+              <button
+                type="submit"
+                :disabled="!authStore.isLoggedIn"
+                class="px-5 py-3 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs bg-[#F9CA6B] text-[#2C2C2C] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                작성
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -465,6 +497,12 @@ const handleCommentSubmit = async () => {
   }
 }
 
+const handleCommentInputClick = () => {
+  if (!authStore.isLoggedIn) {
+    isLoginAlertVisible.value = true
+  }
+}
+
 const handleLoginConfirm = () => {
   isLoginAlertVisible.value = false
   router.push({ name: 'login' })
@@ -537,6 +575,11 @@ const formatCommentDate = (dateString: string) => {
 <style scoped>
 .course-badge:hover {
   background-color: var(--hover-color);
+}
+
+.no-animation-enter-active,
+.no-animation-leave-active {
+  transition: none;
 }
 </style>
 
