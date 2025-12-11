@@ -1,7 +1,7 @@
 <template>
   <div
     class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-    @click="emit('close')"
+    @click.self="emit('close')"
   >
     <Transition
       enter-active-class="transition-all duration-300 ease-out"
@@ -162,7 +162,30 @@
         <div class="p-5 border-b border-gray-200">
           <h3 class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ logDetail.title }}</h3>
 
-          <!-- Course/Place 정보는 TripLogDetail에 없으므로 일단 제거 -->
+          <div
+            v-if="courseItems.length > 0"
+            @click="isTripDetailModalVisible = true"
+            class="mb-4 cursor-pointer"
+          >
+            <div class="flex items-center flex-wrap gap-1.5">
+              <div v-for="(place, index) in courseItems" :key="index" class="flex items-center gap-1.5">
+                <div
+                  class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge"
+                  :style="{ '--hover-color': getBadgeColor(index) }"
+                >
+                  <span class="text-xs font-black text-[#2C2C2C]">{{ place.number }}</span>
+                  <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
+                    place.name
+                  }}</span>
+                </div>
+                <ChevronRight
+                  v-if="index < courseItems.length - 1"
+                  class="w-3 h-3 text-gray-400 flex-shrink-0"
+                  stroke-width="3"
+                />
+              </div>
+            </div>
+          </div>
 
           <p class="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
             {{ formattedContent }}
@@ -233,12 +256,16 @@
       </div>
     </div>
 
-    <!-- <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" /> -->
+    <TripDetailModal
+      v-if="isTripDetailModalVisible && tripDetail"
+      :trip="tripDetail"
+      @close="isTripDetailModalVisible = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
 import {
   Heart,
   Bookmark,
@@ -250,10 +277,12 @@ import {
   Share,
   Edit,
   Trash2,
+  Link,
 } from 'lucide-vue-next'
-import { getTripLogDetail } from '@/apis/trip'
-import type { TripLogDetail, TripLogComment } from '@/types/trip'
+import { getTripLogDetail, getTripDetail } from '@/apis/trip'
+import type { TripLogDetail, TripLogComment, TripDetailResponseDto } from '@/types/trip'
 import { format, parseISO } from 'date-fns'
+import TripDetailModal from './TripDetailModal.vue'
 
 interface CourseItem {
   number: number
@@ -267,15 +296,16 @@ const props = defineProps<{
 const emit = defineEmits(['close'])
 
 const logDetail = ref<TripLogDetail | null>(null)
+const tripDetail = ref<TripDetailResponseDto | null>(null)
 const isLoading = ref(true)
 const error = ref<string | null>(null)
 
 const currentImageIndex = ref(0)
 const isLiked = ref(false)
 const isBookmarked = ref(false)
-const selectedPlace = ref<CourseItem | null>(null)
 const showDropdown = ref(false)
 const showToast = ref(false)
+const isTripDetailModalVisible = ref(false)
 
 // 데이터 로드
 onMounted(async () => {
@@ -287,6 +317,17 @@ onMounted(async () => {
     error.value = '데이터를 불러오는 데 실패했습니다.'
   } finally {
     isLoading.value = false
+  }
+})
+
+watchEffect(async () => {
+  if (logDetail.value?.tripId) {
+    try {
+      tripDetail.value = await getTripDetail(logDetail.value.tripId)
+    } catch (e) {
+      console.error('Failed to fetch trip detail:', e)
+      // tripDetail을 못가져와도 로그 자체는 보여줘야 하므로 에러를 크게 표시하지 않음
+    }
   }
 })
 
@@ -307,6 +348,18 @@ const formattedContent = computed(() => {
   if (!logDetail.value?.content) return ''
   // {{img_...}} 형식의 이미지 플레이스홀더가 포함된 줄 전체를 제거합니다.
   return logDetail.value.content.replace(/^[ \t]*{{\s*img_.*?\s*}}[ \t]*$\r?\n?/gm, '')
+})
+
+const courseItems = computed(() => {
+  if (!tripDetail.value?.tripItems || tripDetail.value.tripItems.length === 0) {
+    return []
+  }
+  return tripDetail.value.tripItems
+    .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
+    .map((item, index) => ({
+      number: index + 1,
+      name: item.spot.name,
+    }))
 })
 
 const handlePrevImage = () => {
@@ -355,7 +408,11 @@ const getBadgeColor = (idx: number) => colors[idx % colors.length]
 // 👇 ESC 키 이벤트 핸들러
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
-    emit('close')
+    if (isTripDetailModalVisible.value) {
+      isTripDetailModalVisible.value = false
+    } else {
+      emit('close')
+    }
   }
 }
 
