@@ -163,26 +163,55 @@
           <h3 class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ logDetail.title }}</h3>
 
           <div
-            v-if="courseItems.length > 0"
+            v-if="groupedCourse.length > 0"
             @click="isTripDetailModalVisible = true"
             class="mb-4 cursor-pointer"
           >
-            <div class="flex items-center flex-wrap gap-1.5">
-              <div v-for="(place, index) in courseItems" :key="index" class="flex items-center gap-1.5">
-                <div
-                  class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge"
-                  :style="{ '--hover-color': getBadgeColor(index) }"
-                >
-                  <span class="text-xs font-black text-[#2C2C2C]">{{ place.number }}</span>
-                  <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
-                    place.name
-                  }}</span>
+            <div class="flex items-center border-b-2 border-gray-200">
+              <button
+                v-for="day in groupedCourse"
+                :key="day.dayNumber"
+                @click.stop="activeDay = day.dayNumber"
+                :class="[
+                  'px-3 py-1 font-bold text-xs transition-all',
+                  activeDay === day.dayNumber
+                    ? 'text-[#2C2C2C] border-b-2 border-[#2C2C2C]'
+                    : 'text-gray-500 hover:text-gray-800',
+                ]"
+              >
+                DAY {{ day.dayNumber }}
+              </button>
+            </div>
+
+            <!-- Course Content -->
+            <div class="pt-3">
+              <div
+                v-for="day in groupedCourse"
+                :key="day.dayNumber"
+                v-show="activeDay === day.dayNumber"
+              >
+                <div class="flex items-center flex-wrap gap-x-1.5 gap-y-2">
+                  <div
+                    v-for="(place, index) in day.places"
+                    :key="index"
+                    class="flex items-center gap-1.5"
+                  >
+                    <div
+                      class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge"
+                      :style="{ '--hover-color': getBadgeColor(index) }"
+                    >
+                      <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
+                      <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
+                        place.name
+                      }}</span>
+                    </div>
+                    <ChevronRight
+                      v-if="index < day.places.length - 1"
+                      class="w-3 h-3 text-gray-400 flex-shrink-0"
+                      stroke-width="3"
+                    />
+                  </div>
                 </div>
-                <ChevronRight
-                  v-if="index < courseItems.length - 1"
-                  class="w-3 h-3 text-gray-400 flex-shrink-0"
-                  stroke-width="3"
-                />
               </div>
             </div>
           </div>
@@ -306,6 +335,7 @@ const isBookmarked = ref(false)
 const showDropdown = ref(false)
 const showToast = ref(false)
 const isTripDetailModalVisible = ref(false)
+const activeDay = ref(1)
 
 // 데이터 로드
 onMounted(async () => {
@@ -350,16 +380,28 @@ const formattedContent = computed(() => {
   return logDetail.value.content.replace(/^[ \t]*{{\s*img_.*?\s*}}[ \t]*$\r?\n?/gm, '')
 })
 
-const courseItems = computed(() => {
+const groupedCourse = computed(() => {
   if (!tripDetail.value?.tripItems || tripDetail.value.tripItems.length === 0) {
     return []
   }
-  return tripDetail.value.tripItems
-    .sort((a, b) => a.dayNumber - b.dayNumber || a.orderIndex - b.orderIndex)
-    .map((item, index) => ({
-      number: index + 1,
-      name: item.spot.name,
-    }))
+  const grouped = tripDetail.value.tripItems.reduce(
+    (acc, item) => {
+      const day = item.dayNumber
+      if (!acc[day]) {
+        acc[day] = { dayNumber: day, places: [] }
+      }
+      acc[day].places.push({ name: item.spot.name })
+      return acc
+    },
+    {} as Record<number, { dayNumber: number; places: { name: string }[] }>,
+  )
+  return Object.values(grouped).sort((a, b) => a.dayNumber - b.dayNumber)
+})
+
+watchEffect(() => {
+  if (groupedCourse.value.length > 0) {
+    activeDay.value = groupedCourse.value[0].dayNumber
+  }
 })
 
 const handlePrevImage = () => {
@@ -367,6 +409,7 @@ const handlePrevImage = () => {
   currentImageIndex.value =
     currentImageIndex.value > 0 ? currentImageIndex.value - 1 : logDetail.value.images.length - 1
 }
+
 
 const handleNextImage = () => {
   if (!logDetail.value) return
