@@ -10,6 +10,7 @@ import type {
   TripLogDetail, // Added
   TripLogCommentRequest,
   TripLogCommentResponse,
+  TripLogLikeResponse, // Added
 } from '@/types/trip'
 
 // API 호출 함수
@@ -114,6 +115,36 @@ export const postTripLogComment = async (
     `/trip-logs/${logId}/comments`,
     commentData,
   )
+  return response.data
+}
+
+/**
+ * 특정 여행 기록에 좋아요를 추가합니다.
+ * @param logId 좋아요를 누를 여행 기록의 ID
+ * @returns 업데이트된 좋아요 수 및 좋아요 상태 (TripLogLikeResponse)
+ */
+export const likeTripLog = async (logId: number): Promise<TripLogLikeResponse> => {
+  const response = await apiClient.post<TripLogLikeResponse>(`/trip-logs/${logId}/likes`)
+  return response.data
+}
+
+/**
+ * 특정 여행 기록의 좋아요를 취소합니다.
+ * @param logId 좋아요를 취소할 여행 기록의 ID
+ * @returns 업데이트된 좋아요 수 및 좋아요 상태 (TripLogLikeResponse)
+ */
+export const unlikeTripLog = async (logId: number): Promise<TripLogLikeResponse> => {
+  const response = await apiClient.delete<TripLogLikeResponse>(`/trip-logs/${logId}/likes`)
+  return response.data
+}
+
+/**
+ * 현재 사용자가 특정 여행 기록에 좋아요를 눌렀는지 여부와 총 좋아요 수를 조회합니다.
+ * @param logId 좋아요 상태를 조회할 여행 기록의 ID
+ * @returns 좋아요 상태 정보 (TripLogLikeResponse)
+ */
+export const getTripLogLikeStatus = async (logId: number): Promise<TripLogLikeResponse> => {
+  const response = await apiClient.get<TripLogLikeResponse>(`/trip-logs/${logId}/likes/status`)
   return response.data
 }
 

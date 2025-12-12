@@ -137,6 +137,11 @@ export interface TripPlanItem {
 // TripLog (여행 기록) 관련 타입
 // =================================================================
 
+export interface TripLogLikeResponse {
+  likeCount: number;
+  liked: boolean;
+}
+
 export interface TripLogImage {
   imageRefKey: string
   imageUrl: string
