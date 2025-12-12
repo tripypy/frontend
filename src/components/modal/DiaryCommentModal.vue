@@ -350,7 +350,7 @@ import {
   Edit,
   Trash2,
 } from 'lucide-vue-next'
-import { getTripLogDetail, getTripDetail, postTripLogComment } from '@/apis/trip'
+import { getTripLogDetail, getTripDetail, postTripLogComment, likeTripLog, unlikeTripLog, getTripLogLikeStatus } from '@/apis/trip'
 import type { TripLogDetail, TripDetailResponseDto } from '@/types/trip'
 import { format, parseISO } from 'date-fns'
 import TripDetailModal from './TripDetailModal.vue'
@@ -386,9 +386,18 @@ const isLoginAlertVisible = ref(false)
 const fetchLogDetail = async () => {
   try {
     isLoading.value = true
-    logDetail.value = await getTripLogDetail(props.logId)
+    const fetchedLogDetail = await getTripLogDetail(props.logId)
+    logDetail.value = fetchedLogDetail
+    currentLikes.value = fetchedLogDetail.likeCount
+
+    if (authStore.isLoggedIn) {
+      const likeStatus = await getTripLogLikeStatus(props.logId)
+      isLiked.value = likeStatus.liked
+    } else {
+      isLiked.value = false
+    }
   } catch (e) {
-    console.error('Failed to fetch trip log detail:', e)
+    console.error('Failed to fetch trip log detail or like status:', e)
     error.value = '데이터를 불러오는 데 실패했습니다.'
   } finally {
     isLoading.value = false
@@ -465,15 +474,26 @@ const handleNextImage = () => {
     currentImageIndex.value < sortedImages.value.length - 1 ? currentImageIndex.value + 1 : 0
 }
 
-const currentLikes = ref(logDetail.value?.likeCount ?? 0)
-const handleLike = () => {
+const currentLikes = ref(0) // Initialize with 0, will be updated by fetchLogDetail
+const handleLike = async () => {
   if (!authStore.isLoggedIn) {
     isLoginAlertVisible.value = true
     return
   }
-  if (isLiked.value) currentLikes.value--
-  else currentLikes.value++
-  isLiked.value = !isLiked.value
+
+  try {
+    let response
+    if (isLiked.value) {
+      response = await unlikeTripLog(props.logId)
+    } else {
+      response = await likeTripLog(props.logId)
+    }
+    currentLikes.value = response.likeCount
+    isLiked.value = response.liked
+  } catch (e) {
+    console.error('Failed to toggle like status:', e)
+    alert('좋아요 상태 변경에 실패했습니다.')
+  }
 }
 
 const handleCommentSubmit = async () => {
