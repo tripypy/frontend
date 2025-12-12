@@ -3,8 +3,8 @@ import { ref, computed, type PropType } from 'vue';
 import { useRouter } from 'vue-router';
 // TODO: TripDiaryResponseDto, TripPlanResponseDto를 trip.ts에 정의하고 사용해야 합니다.
 // 현재는 TripResponseDto로 대체하여 사용합니다.
-import type { TripResponseDto as TripDiaryResponseDto, TripResponseDto as TripPlanResponseDto } from '@/types/trip';
-import { createTrip } from '@/services/trip';
+import type { TripResponseDto as TripDiaryResponseDto, TripResponseDto as TripPlanResponseDto } from '@/apis/trip/types';
+import { createTrip } from '@/apis/trip/index';
 import { Heart, MessageCircle } from 'lucide-vue-next';
 import TripCard from '@/components/trip/TripCard.vue';
 

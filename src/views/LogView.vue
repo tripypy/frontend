@@ -2,8 +2,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
-import { useAuthStore, type User } from '@/stores/auth'
-import apiClient from '@/services/api'
+import { useAuthStore} from '@/stores/auth'
+import apiClient from '@/apis/http'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import FriendsListModal from '@/components/log/FriendsListModal.vue'
@@ -12,7 +12,8 @@ import LogMapWidget from '@/components/log/LogMapWidget.vue'
 import LogCalendarWidget from '@/components/log/LogCalendarWidget.vue'
 import LogAiAnalysis from '@/components/log/LogAiAnalysis.vue'
 import LogContentTabs from '@/components/log/LogContentTabs.vue'
-import type { TripDetailResponseDto, TripPlanResponseDto, TripDiaryResponseDto } from '@/types/trip'
+import type { TripDetailResponseDto, TripPlanResponseDto, TripDiaryResponseDto } from '@/apis/trip/types'
+import type { User } from '@/types/auth/user.model'
 
 // A more comprehensive user profile type, assuming this structure from the backend
 interface PublicUserProfile extends User {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, type PropType } from 'vue';
-import { useAuthStore, type User } from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth';
+import type { User } from '@/types/auth/user.model'
 import { Pencil } from 'lucide-vue-next';
 
 const props = defineProps({

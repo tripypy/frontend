@@ -145,7 +145,7 @@ import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
 import { Calendar, MapPin, Edit, ListChecks, Shield } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
-import { TripDetailResponseDto, SpotResponseDto } from '@/types/trip'
+import { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
 
 interface DayPlanDisplay {
   dayNumber: number

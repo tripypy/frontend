@@ -110,7 +110,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue' // [2] watch, nextTick 추가
 import { X, Plus, ExternalLink, Phone } from 'lucide-vue-next'
-import type { Place } from '@/types/trip'
+import type { Place } from '@/types/trip/place.model'
 import { getCategoryIcon } from '@/utils/placeCategory'
 
 const props = defineProps<{

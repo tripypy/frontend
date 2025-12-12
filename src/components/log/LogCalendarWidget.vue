@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect, type PropType } from 'vue';
-import type { TripDetailResponseDto } from '@/types/trip';
+import type { TripDetailResponseDto } from '@/apis/trip/types';
 
 const props = defineProps({
   completedTrips: {

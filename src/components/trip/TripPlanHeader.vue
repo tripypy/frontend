@@ -114,7 +114,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ArrowLeft, Calendar, Save, Edit, Trash2 } from 'lucide-vue-next'
-import { TripStatus, type TripVisibility } from '@/types/trip'
+import type { TripVisibility } from '@/types/trip/trip.model'
+import { TripStatus } from '@/types/common'
 
 defineProps<{
   tripTitle: string
@@ -141,4 +142,5 @@ const userSelectableStatuses = computed(() => {
   const statuses = Object.values(TripStatus)
   return statuses.filter((s) => s !== TripStatus.DRAFT)
 })
+
 </script>

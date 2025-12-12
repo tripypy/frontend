@@ -90,7 +90,8 @@ import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { useRouter } from 'vue-router'
 import { createTrip, getMyTrips, getTripDetail } from '@/services/trip' // Added getTripDetail
-import { TripResponseDto, TripStatus, TripDetailResponseDto } from '@/types/trip' // Added TripDetailResponseDto
+import { TripResponseDto, TripDetailResponseDto } from '@/apis/trip/types' // Added TripDetailResponseDto
+import { TripStatus } from '@/types/common'
 
 // TODO: TripCard에서 필요한 spots, tags, spotPreviews, completedDate 필드가 TripResponseDto에 없음.
 // 현재는 TripResponseDto를 기반으로 하되, TripCard의 props 타입을 TripResponseDto에 맞게 조정해야 합니다.

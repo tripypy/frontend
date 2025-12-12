@@ -1,29 +1,7 @@
-// src/types/trip.ts
+// 여행 관련 API 통신용 DTO
 
-export interface Place {
-  id?: number // 동기화 전에는 id가 없을 수 있음 (tripItemId)
-  kakaoPlaceId: string // 장소의 고유 카카오 ID
-  name: string
-  address: string
-  category: string
-  lat: number
-  lng: number
-  phone?: string
-  placeUrl?: string
-  memo?: string // 아이템 메모
-}
-
-export interface DayPlan {
-  dayNumber: number
-  places: Place[]
-}
-
-export enum TripStatus {
-  DRAFT = 'DRAFT',
-  PLANNED = 'PLANNED',
-  COMPLETED = 'COMPLETED',
-}
-export type TripVisibility = 'PUBLIC' | 'PRIVATE'
+import { TripStatus } from '@/types/common'; 
+import type { TripVisibility } from '@/types/trip/trip.model'
 
 // 장소 정보를 나타내는 인터페이스 (API 응답용) - SpotResponseDto에 해당
 export interface SpotResponseDto {
@@ -59,7 +37,7 @@ export interface TripItemResponseDto {
   spot: SpotResponseDto
 }
 
-// 여행 상세 응답 DTO 인터페이스
+// 여행 상세 응답 DTO 인터페이스 (GET /trips/{id})
 export interface TripDetailResponseDto {
   id: number
   title: string
@@ -70,6 +48,7 @@ export interface TripDetailResponseDto {
   isOwner: boolean
   tripItems: TripItemResponseDto[]
 }
+
 
 // 여행 목록 응답 DTO 인터페이스 (TripCard에서 필요한 필드 포함)
 export interface TripResponseDto {
@@ -84,6 +63,9 @@ export interface TripResponseDto {
   tags?: string[] // 추가됨, nullable
   spotPreviews: { name: string }[] // 추가됨
   completedDate?: string // 추가됨, nullable
+  thumbnailUrl?: string
+  likes: number
+  comments: number
 }
 
 // 여행 요약 응답 DTO 인터페이스 (새로 추가됨)
@@ -123,55 +105,25 @@ export interface TripItemsUpdateRequestDto_ItemSync {
 }
 
 
-
-// 여행 계획 패널에서 사용하는 타입
-export interface TripPlanItem {
-  id: number // tripItemId
-  day: number
-  order: number
-  place: Place
-  memo?: string
-}
-
-// =================================================================
-// TripLog (여행 기록) 관련 타입
-// =================================================================
+/**
+ * TripLog 관련 타입 
+ */
 
 export interface TripLogLikeResponse {
-  likeCount: number;
-  liked: boolean;
-}
-
-export interface TripLogImage {
-  imageRefKey: string
-  imageUrl: string
-  orderIndex: number
+    likeCount: number;
+    liked: boolean;
 }
 
 export interface TripLogCommentResponse {
-  commentId: number
-  authorNickname: string
-  authorImageUrl: string
-  content: string
-  createdAt: string
+    commentId: number
+    authorNickname: string
+    authorImageUrl: string
+    content: string
+    createdAt: string
 }
 
 export interface TripLogCommentRequest {
-  content: string
+    content: string
 }
-
-export interface TripLogDetail {
-  logId: number
-  title: string
-  content: string
-  locationSummary: string
-  likeCount: number
-  commentCount: number
-  createdAt: string
-  authorNickname: string
-  authorImageUrl: string
-  tripId: number
-  tripTitle: string
-  images: TripLogImage[]
-  comments: TripLogCommentResponse[]
-}
+  
+  

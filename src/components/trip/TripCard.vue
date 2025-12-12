@@ -102,16 +102,17 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Calendar, Share2, Bookmark, MapPin } from 'lucide-vue-next'
-import { TripResponseDto, TripStatus } from '@/types/trip' // Import TripResponseDto and TripStatus
+import type { TripResponseDto } from '@/apis/trip/types'
+import { TripStatus } from '@/types/common'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   trip: TripResponseDto, // Use TripResponseDto type
-  isEditable: {
-    type: Boolean,
-    default: true
+  isEditable?: boolean
+}>(),
+  {
+    isEditable: true
   }
-}>()
-
+)
 const emit = defineEmits<{
   (e: 'openModal', id: number): void
   (e: 'navigate', page: string, id?: number): void

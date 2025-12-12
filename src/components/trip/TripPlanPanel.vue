@@ -114,7 +114,7 @@
 import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import { Search, MapPin, Plus, GripVertical, X } from 'lucide-vue-next'
-import type { Place } from '@/types/trip'
+import type { Place } from '@/types/trip/place.model'
 
 interface DayPlan {
   dayNumber: number

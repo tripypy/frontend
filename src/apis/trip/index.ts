@@ -1,17 +1,19 @@
-import apiClient from '@/services/api'
+import apiClient from '@/apis/http'
 import type {
-  TripDetailResponseDto,
-  TripItemResponseDto,
-  TripItemsUpdateRequestDto, // Changed from TripItemSyncRequestDto
-  TripUpdateRequestDto,
-  TripResponseDto,
-  TripSummaryResponseDto, // Added
-  TripStatus,
-  TripLogDetail, // Added
-  TripLogCommentRequest,
-  TripLogCommentResponse,
-  TripLogLikeResponse, // Added
-} from '@/types/trip'
+    TripDetailResponseDto,
+    TripItemResponseDto,
+    TripItemsUpdateRequestDto, 
+    TripUpdateRequestDto,
+    TripResponseDto,
+    TripSummaryResponseDto, 
+    TripLogCommentRequest,
+    TripLogCommentResponse,
+    TripLogLikeResponse,
+  } from '@/apis/trip/types'
+  
+
+import type {TripLogDetail } from '@/types/trip/trip.model'
+import { TripStatus } from '@/types/common'; 
 
 // API 호출 함수
 /**
@@ -147,4 +149,3 @@ export const getTripLogLikeStatus = async (logId: number): Promise<TripLogLikeRe
   const response = await apiClient.get<TripLogLikeResponse>(`/trip-logs/${logId}/likes/status`)
   return response.data
 }
-

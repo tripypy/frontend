@@ -100,7 +100,7 @@ import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
 import TripSearchListPanel from '@/components/trip/TripSearchListPanel.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
-import type { Place } from '@/types/trip'
+import type { Place } from '@/types/trip/place.model'
 
 // Import Composables
 import { useResizablePanel } from '@/composables/common/useResizablePanel'
