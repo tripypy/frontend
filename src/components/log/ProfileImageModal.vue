@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, type PropType } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { Camera, X } from 'lucide-vue-next'
 
 const props = defineProps<{
-  show: boolean
+  show: boolean;
+  imageUrl?: string; // 새롭게 추가된 prop: 특정 이미지를 보여줄 때 사용
 }>()
 
 const emit = defineEmits<{
@@ -19,16 +20,31 @@ const selectedFile = ref<File | null>(null)
 const imagePreviewUrl = ref<string | null>(null)
 const isUploading = ref(false)
 
-// When the modal is shown, sync the preview URL with the user's current image
+// 이미지 뷰어 모드인지 판단 (imageUrl prop이 전달되면 뷰어 모드)
+const isViewerMode = computed(() => !!props.imageUrl);
+
+// 모달이 보여질 때 미리보기 URL을 설정
 watch(
   () => props.show,
   (newVal) => {
     if (newVal) {
-      imagePreviewUrl.value = user.value?.profileImageUrl || null
-      selectedFile.value = null
+      if (isViewerMode.value) {
+        imagePreviewUrl.value = props.imageUrl || null;
+      } else {
+        imagePreviewUrl.value = user.value?.profileImageUrl || null;
+      }
+      selectedFile.value = null; // 파일 선택 초기화
     }
   },
-)
+  { immediate: true } // 컴포넌트 마운트 시 한 번 실행
+);
+
+// imageUrl prop이 변경될 때마다 imagePreviewUrl 업데이트 (뷰어 모드일 경우)
+watch(() => props.imageUrl, (newUrl) => {
+  if (isViewerMode.value) {
+    imagePreviewUrl.value = newUrl || null;
+  }
+});
 
 function onFileSelectClick() {
   document.getElementById('modal-profile-image-input')?.click()
@@ -89,7 +105,9 @@ async function deleteProfileImage() {
       class="w-full max-w-md rounded-2xl border-2 border-[#2C2C2C] bg-white p-8 shadow-[6px_6px_0px_0px_rgba(44,44,44,0.15)]"
     >
       <div class="flex items-center justify-between border-b-2 border-gray-100 pb-6 mb-8">
-        <h2 class="text-2xl font-black text-gray-800">프로필 사진 변경</h2>
+        <h2 class="text-2xl font-black text-gray-800">
+          {{ isViewerMode ? '프로필 사진' : '프로필 사진 변경' }}
+        </h2>
         <button @click="emit('close')" class="p-2 rounded-full hover:bg-gray-100">
           <X class="w-6 h-6 text-gray-600" />
         </button>
@@ -103,6 +121,7 @@ async function deleteProfileImage() {
             class="h-48 w-48 rounded-full border-4 border-gray-200 object-cover shadow-md"
           />
           <div
+            v-if="!isViewerMode"
             class="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
             @click="onFileSelectClick"
           >
@@ -110,6 +129,7 @@ async function deleteProfileImage() {
           </div>
         </div>
         <input
+          v-if="!isViewerMode"
           type="file"
           id="modal-profile-image-input"
           class="hidden"
@@ -117,7 +137,7 @@ async function deleteProfileImage() {
           @change="onFileSelected"
         />
 
-        <div class="mt-6 flex min-h-[40px] items-center gap-3">
+        <div v-if="!isViewerMode" class="mt-6 flex min-h-[40px] items-center gap-3">
           <template v-if="selectedFile">
             <button
               @click="saveProfileImage"
