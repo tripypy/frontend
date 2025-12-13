@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, type PropType } from 'vue';
 import { useRouter } from 'vue-router';
-// TODO: TripDiaryResponseDto, TripPlanResponseDto를 trip.ts에 정의하고 사용해야 합니다.
-// 현재는 TripResponseDto로 대체하여 사용합니다.
-import type { TripResponseDto as TripDiaryResponseDto, TripResponseDto as TripPlanResponseDto } from '@/types/trip';
+import type { TripResponseDto, TripDetailResponseDto } from '@/types/trip';
 import { createTrip } from '@/services/trip';
+import apiClient from '@/services/api';
 import { Heart, MessageCircle } from 'lucide-vue-next';
 import TripCard from '@/components/trip/TripCard.vue';
+import TripDetailModal from '@/components/modal/TripDetailModal.vue';
 
 const props = defineProps({
   isMyProfile: {
@@ -14,17 +14,23 @@ const props = defineProps({
     required: true
   },
   userDiaries: {
-    type: Array as PropType<TripDiaryResponseDto[]>,
+    type: Array as PropType<any[]>, // Assuming TripDiaryResponseDto is not fully defined
     default: () => []
   },
   userPlans: {
-    type: Array as PropType<TripPlanResponseDto[]>,
+    type: Array as PropType<TripResponseDto[]>,
     default: () => []
   }
 });
 
 const router = useRouter();
 const activeTab = ref('diary'); // 'diary' or 'plan'
+
+// --- Modal State ---
+const isDetailModalOpen = ref(false);
+const selectedTrip = ref<TripDetailResponseDto | null>(null);
+const isLoadingDetail = ref(false);
+
 
 const filteredPlans = computed(() => {
   if (props.isMyProfile) {
@@ -43,8 +49,28 @@ const handleCreateNewPlan = async () => {
   }
 };
 
-const handlePlanClick = (tripId: number) => {
-  router.push(`/trips/${tripId}`);
+const handlePlanClick = async (tripId: number) => {
+  isLoadingDetail.value = true;
+  isDetailModalOpen.value = true;
+  try {
+    const response = await apiClient.get<TripDetailResponseDto>(`/trips/${tripId}`);
+    selectedTrip.value = response.data;
+  } catch (error) {
+    console.error(`Failed to fetch trip details for id ${tripId}:`, error);
+    alert('여행 상세 정보를 불러오는 데 실패했습니다.');
+    isDetailModalOpen.value = false; // 에러 발생 시 모달 닫기
+  } finally {
+    isLoadingDetail.value = false;
+  }
+};
+
+const handleCloseModal = () => {
+    isDetailModalOpen.value = false;
+    selectedTrip.value = null;
+}
+
+const handleEdit = (trip: TripDetailResponseDto) => {
+    router.push(`/trips/${trip.id}`);
 };
 
 const handleDiaryClick = (diaryId: number) => {
@@ -55,96 +81,111 @@ const handleDiaryClick = (diaryId: number) => {
 </script>
 
 <template>
-  <div class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[8px_8px_0px_0px_rgba(44,44,44,1)]">
-    <div class="flex border-b-2 border-gray-100 mb-6">
-      <button
-        @click="activeTab = 'diary'"
-        class="px-4 py-2 text-lg font-black"
-        :class="{
-          'border-b-4 border-[#2C2C2C] text-[#2C2C2C]': activeTab === 'diary',
-          'text-gray-600 hover:text-gray-800': activeTab !== 'diary'
-        }"
-      >
-        여행 일기 ({{ userDiaries.length }})
-      </button>
-      <button
-        @click="activeTab = 'plan'"
-        class="px-4 py-2 text-lg font-black"
-        :class="{
-          'border-b-4 border-[#2C2C2C] text-[#2C2C2C]': activeTab === 'plan',
-          'text-gray-600 hover:text-gray-800': activeTab !== 'plan'
-        }"
-      >
-        여행 계획 ({{ filteredPlans.length }})
-      </button>
-    </div>
-
-    <div>
-      <!-- 여행 계획 탭 -->
-      <div v-if="activeTab === 'plan'">
-        <div v-if="filteredPlans.length === 0" class="col-span-full text-center text-gray-500 py-10">
-          <p class="mb-4">아직 작성된 여행 계획이 없습니다.</p>
-          <button v-if="isMyProfile"
-                  @click="handleCreateNewPlan"
-                  class="px-5 py-2 border-[3px] rounded-xl font-bold text-xs transition-colors shadow-[4px_4px_0px_0px_rgba(150,150,150,1)] bg-[#9BCCC4] text-[#2C2C2C] border-[#2C2C2C] hover:bg-[#80B0A8]"
-          >
-            새 계획 세우기
-          </button>
-        </div>
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
-          <TripCard
-            v-for="plan in filteredPlans"
-            :key="plan.id"
-            :trip="plan"
-            :is-editable="isMyProfile"
-            @open-modal="handlePlanClick"
-          />
-        </div>
+  <div>
+    <div class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[8px_8px_0px_0px_rgba(44,44,44,1)]">
+      <div class="flex border-b-2 border-gray-100 mb-6">
+        <button
+          @click="activeTab = 'diary'"
+          class="px-4 py-2 text-lg font-black"
+          :class="{
+            'border-b-4 border-[#2C2C2C] text-[#2C2C2C]': activeTab === 'diary',
+            'text-gray-600 hover:text-gray-800': activeTab !== 'diary'
+          }"
+        >
+          여행 일기 ({{ userDiaries.length }})
+        </button>
+        <button
+          @click="activeTab = 'plan'"
+          class="px-4 py-2 text-lg font-black"
+          :class="{
+            'border-b-4 border-[#2C2C2C] text-[#2C2C2C]': activeTab === 'plan',
+            'text-gray-600 hover:text-gray-800': activeTab !== 'plan'
+          }"
+        >
+          여행 계획 ({{ filteredPlans.length }})
+        </button>
       </div>
 
-      <!-- 여행 일기 탭 -->
-      <div v-if="activeTab === 'diary'">
-        <div v-if="userDiaries.length === 0" class="col-span-full text-center text-gray-500 py-10">
-          <p class="mb-4">아직 작성된 여행 일기가 없습니다.</p>
-          <button v-if="isMyProfile"
-                  class="px-5 py-2 border-[3px] rounded-xl font-bold text-xs transition-colors shadow-[4px_4px_0px_0px_rgba(150,150,150,1)] bg-black text-white border-black hover:bg-[#2C2C2C]"
-          >
-            새 일기 쓰기
-          </button>
-        </div>
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-            <div v-for="card in userDiaries" :key="card.id"
-                @click="handleDiaryClick(card.id)"
-                class="cursor-pointer bg-white border-[2px] border-[#2C2C2C] rounded-2xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] flex flex-col overflow-hidden transition-transform hover:scale-105"
+      <div>
+        <!-- 여행 계획 탭 -->
+        <div v-if="activeTab === 'plan'">
+          <div v-if="filteredPlans.length === 0" class="col-span-full text-center text-gray-500 py-10">
+            <p class="mb-4">아직 작성된 여행 계획이 없습니다.</p>
+            <button v-if="isMyProfile"
+                    @click="handleCreateNewPlan"
+                    class="px-5 py-2 border-[3px] rounded-xl font-bold text-xs transition-colors shadow-[4px_4px_0px_0px_rgba(150,150,150,1)] bg-[#9BCCC4] text-[#2C2C2C] border-[#2C2C2C] hover:bg-[#80B0A8]"
             >
-              <div class="relative w-full h-40">
-                <img :src="card.thumbnailUrl || '/default-profile.svg'" :alt="card.title" class="w-full h-full object-cover">
-                 <span v-if="card.visibility === 'PRIVATE'" class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                  PRIVATE
-                </span>
-                <span class="absolute top-2 left-2 bg-[#9BCCC4] text-[#2C2C2C] text-xs font-bold px-2 py-1 rounded-full">
-                  DIARY
-                </span>
-              </div>
-              <div class="p-4 flex-1 flex flex-col">
-                <h3 class="font-black text-xl text-[#2C2C2C] mb-2 truncate">{{ card.title }}</h3>
-                <p class="text-sm text-gray-600 mb-3 line-clamp-2 h-10">{{ card.spotPreviews && card.spotPreviews.length > 0 ? card.spotPreviews.map(s => s.name).join(', ') : '아직 방문지가 없습니다.' }}</p>
-                <div class="flex flex-wrap gap-1 mb-3 h-5 overflow-hidden">
-                  <span v-for="tag in card.tags" :key="tag"
-                        class="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full"
-                  >#{{ tag }}</span>
+              새 계획 세우기
+            </button>
+          </div>
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+            <TripCard
+              v-for="plan in filteredPlans"
+              :key="plan.id"
+              :trip="plan"
+              :is-editable="isMyProfile"
+              @open-modal="handlePlanClick"
+            />
+          </div>
+        </div>
+
+        <!-- 여행 일기 탭 -->
+        <div v-if="activeTab === 'diary'">
+          <div v-if="userDiaries.length === 0" class="col-span-full text-center text-gray-500 py-10">
+            <p class="mb-4">아직 작성된 여행 일기가 없습니다.</p>
+            <button v-if="isMyProfile"
+                    class="px-5 py-2 border-[3px] rounded-xl font-bold text-xs transition-colors shadow-[4px_4px_0px_0px_rgba(150,150,150,1)] bg-black text-white border-black hover:bg-[#2C2C2C]"
+            >
+              새 일기 쓰기
+            </button>
+          </div>
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+              <div v-for="card in userDiaries" :key="card.id"
+                  @click="handleDiaryClick(card.id)"
+                  class="cursor-pointer bg-white border-[2px] border-[#2C2C2C] rounded-2xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] flex flex-col overflow-hidden transition-transform hover:scale-105"
+              >
+                <div class="relative w-full h-40">
+                  <img :src="card.thumbnailUrl || '/default-profile.svg'" :alt="card.title" class="w-full h-full object-cover">
+                   <span v-if="card.visibility === 'PRIVATE'" class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    PRIVATE
+                  </span>
+                  <span class="absolute top-2 left-2 bg-[#9BCCC4] text-[#2C2C2C] text-xs font-bold px-2 py-1 rounded-full">
+                    DIARY
+                  </span>
                 </div>
-                <div class="mt-auto text-xs text-gray-500 flex justify-between items-center">
-                  <span>{{ card.startDate && card.endDate ? `${card.startDate} ~ ${card.endDate}` : '날짜 미정' }}</span>
-                  <div class="flex items-center gap-2">
-                    <span class="flex items-center text-gray-600"><Heart class="w-4 h-4 mr-1" />{{ card.likes || 0 }}</span>
-                    <span class="flex items-center text-gray-600"><MessageCircle class="w-4 h-4 mr-1" />{{ card.comments || 0 }}</span>
+                <div class="p-4 flex-1 flex flex-col">
+                  <h3 class="font-black text-xl text-[#2C2C2C] mb-2 truncate">{{ card.title }}</h3>
+                  <p class="text-sm text-gray-600 mb-3 line-clamp-2 h-10">{{ card.spotPreviews && card.spotPreviews.length > 0 ? card.spotPreviews.map(s => s.name).join(', ') : '아직 방문지가 없습니다.' }}</p>
+                  <div class="flex flex-wrap gap-1 mb-3 h-5 overflow-hidden">
+                    <span v-for="tag in card.tags" :key="tag"
+                          class="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full"
+                    >#{{ tag }}</span>
+                  </div>
+                  <div class="mt-auto text-xs text-gray-500 flex justify-between items-center">
+                    <span>{{ card.startDate && card.endDate ? `${card.startDate} ~ ${card.endDate}` : '날짜 미정' }}</span>
+                    <div class="flex items-center gap-2">
+                      <span class="flex items-center text-gray-600"><Heart class="w-4 h-4 mr-1" />{{ card.likes || 0 }}</span>
+                      <span class="flex items-center text-gray-600"><MessageCircle class="w-4 h-4 mr-1" />{{ card.comments || 0 }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+          </div>
         </div>
       </div>
+    </div>
+    
+    <!-- Detail Modal -->
+    <TripDetailModal
+      v-if="isDetailModalOpen && selectedTrip"
+      :trip="selectedTrip"
+      @close="handleCloseModal"
+      @edit="handleEdit"
+    />
+    
+    <!-- Loading Overlay for Modal -->
+    <div v-if="isLoadingDetail" class="fixed inset-0 bg-white/70 flex items-center justify-center z-50">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2C2C2C]"></div>
     </div>
   </div>
 </template>
