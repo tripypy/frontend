@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watchEffect, type PropType } from 'vue';
 import KakaoMap from '@/components/common/KakaoMap.vue';
-import type { TripDetailResponseDto } from '@/types/trip';
+import type { TripDetailResponseDto } from '@/apis/trip/types';
 
 const props = defineProps({
   completedTrips: {

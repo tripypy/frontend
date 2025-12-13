@@ -2,8 +2,8 @@
 import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { X, MoreHorizontal } from 'lucide-vue-next'
-import { fetchFriends } from '@/services/user'
-import type { User } from '@/stores/auth'
+import { fetchFriends } from '@/apis/user'
+import type { User } from '@/types/auth/user.model'
 import ProfileImageModal from '@/components/log/ProfileImageModal.vue' // ProfileImageModal 임포트
 
 const props = defineProps<{
