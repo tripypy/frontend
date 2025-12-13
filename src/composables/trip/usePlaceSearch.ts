@@ -1,4 +1,4 @@
-import type { Place } from '@/types/trip'
+import type { Place } from '@/types/trip/place.model'
 import { ref } from 'vue'
 
 export function usePlaceSearch() {

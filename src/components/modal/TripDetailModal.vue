@@ -145,7 +145,7 @@ import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
 import { Calendar, MapPin, Edit, ListChecks, Shield } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
-import { TripDetailResponseDto, SpotResponseDto } from '@/types/trip'
+import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
 
 interface DayPlanDisplay {
   dayNumber: number
@@ -169,7 +169,7 @@ const days = computed<DayPlanDisplay[]>(() => {
     if (!acc[item.dayNumber]) {
       acc[item.dayNumber] = { dayNumber: item.dayNumber, places: [] }
     }
-    acc[item.dayNumber].places.push(item.spot)
+    acc[item.dayNumber]!.places.push(item.spot)
     return acc
   }, {} as Record<number, DayPlanDisplay>)
 
@@ -187,7 +187,7 @@ watchEffect(() => {
       }, 0)
     }
   } else if (days.value.length > 0) {
-    activeDay.value = days.value[0].dayNumber
+    activeDay.value = days.value[0]!.dayNumber
   }
 })
 

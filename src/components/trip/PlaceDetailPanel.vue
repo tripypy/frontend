@@ -107,7 +107,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { X, MapPin, Globe, Star, MessageSquare } from 'lucide-vue-next'
-import type { SpotResponseDto } from '@/types/trip'
+import type { SpotResponseDto } from '@/apis/trip/types'
 
 const props = defineProps<{
   place: SpotResponseDto | null

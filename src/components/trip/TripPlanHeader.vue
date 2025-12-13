@@ -113,8 +113,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ArrowLeft, Calendar, Save, Edit, Trash2 } from 'lucide-vue-next'
-import { TripStatus, type TripVisibility } from '@/types/trip'
+import { ArrowLeft, Save, Edit, Trash2 } from 'lucide-vue-next'
+import { TripStatus } from '@/types/common'
+import type { TripVisibility } from '@/types/trip/trip.model'
 
 defineProps<{
   tripTitle: string

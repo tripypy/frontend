@@ -1,20 +1,20 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type {
-  Place,
-  TripItemsUpdateRequestDto, // Changed from TripItemSyncRequestDto
+  TripItemsUpdateRequestDto, 
   TripItemsUpdateRequestDto_ItemSync,
   TripItemResponseDto,
-  TripStatus,
-  TripVisibility,
   TripUpdateRequestDto,
-} from '@/types/trip'
+} from '@/apis/trip/types'
+import type { TripVisibility } from '@/types/trip/trip.model'
+import type { Place } from '@/types/trip/place.model'
+import { TripStatus } from '@/types/common'
 import {
   getTripDetail,
   deleteTrip as apiDeleteTrip, // Added
   syncTripItems as apiSyncTripItems,
   updateTrip as apiUpdateTrip,
-} from '@/services/trip'
+} from '@/apis/trip/index'
 
 export interface DayPlan {
   dayNumber: number
@@ -26,8 +26,8 @@ const mapTripItemToPlace = (item: TripItemResponseDto): Place => ({
   id: item.id,
   kakaoPlaceId: item.spot.kakaoPlaceId,
   name: item.spot.name,
-  address: item.spot.address,
-  category: item.spot.category,
+  address: item.spot.address || '',
+  category: item.spot.category || '',
   lat: item.spot.lat,
   lng: item.spot.lng,
   placeUrl: item.spot.placeUrl,
@@ -144,7 +144,7 @@ export function useTripPlan() {
         title: tripTitle.value,
         startDate: tripDate.value || undefined,
         endDate: tripDate.value || undefined, // Assuming endDate is not managed by frontend yet
-        status: tripStatus.value || 'PLANNED',
+        status: tripStatus.value || TripStatus.PLANNED,
         visibility: tripVisibility.value || 'PRIVATE',
       }
       await apiUpdateTrip(tripId.value, updatePayload)

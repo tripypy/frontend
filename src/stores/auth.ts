@@ -1,30 +1,30 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
-import apiClient from '@/services/api'
-import type { LoginRequestDto, SignupRequestDto } from '@/types/auth'
+import apiClient from '@/apis/http'
+import type { LoginRequestDto, SignupRequestDto } from '@/apis/user/types'
+import type { User } from '@/types/auth/user.model'
 
-// This represents the full user profile object, including optional fields
-// This is what we store in `user.value` and localStorage
-export interface User {
-  id: number;
-  email?: string;
-  nickname: string;
-  profileImageUrl: string | null;
-  bio?: string;
-  friendsCount: number;
-}
+import { 
+  requestFetchUser,
+  requestUpdateUserProfile,
+  requestUploadProfileImage,
+  requestDeleteProfileImage
+} from '@/apis/user'
 
-// This represents the minimal data received from the /login endpoint
-interface LoggedInUser {
-    id: number;
-    nickname: string;
-    email: string;
-}
+import { 
+  requestLogin, 
+  requestLogout, 
+  requestRefreshAccessToken,
+  requestSignup, 
+  requestFindEmailByNickname, 
+  requestResetPassword 
+} from '@/apis/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(JSON.parse(localStorage.getItem('user') || 'null'))
   const accessToken = ref<string | null>(null)
+  const accessTokenExpiresAt = ref<number | null>(null)
   const isInitialized = ref(false)
 
   const isLoggedIn = computed(() => !!accessToken.value && !!user.value)
@@ -37,9 +37,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function setAuthenticated(token: string, userData: User) {
+  function setAuthenticated(token: string, expiresInMs: number, userData: User) {
     accessToken.value = token
     user.value = userData
+    accessTokenExpiresAt.value = Date.now() + expiresInMs;
+  
     localStorage.setItem('user', JSON.stringify(userData))
     setAuthorizationHeader(token)
   }
@@ -47,14 +49,15 @@ export const useAuthStore = defineStore('auth', () => {
   function clearAuthentication() {
     accessToken.value = null
     user.value = null
+    accessTokenExpiresAt.value = null;
+
     localStorage.removeItem('user')
     setAuthorizationHeader(null)
   }
 
   async function fetchUser(): Promise<User | null> {
     try {
-      const response = await apiClient.get<User>('/user/me');
-      return response.data;
+      return await requestFetchUser();
     } catch(error) {
       console.error("Failed to fetch user data:", error);
       return null;
@@ -64,8 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(loginRequest: LoginRequestDto): Promise<boolean> {
     try {
       // 1. Login to get the access token
-      const loginResponse = await apiClient.post('/auth/login', loginRequest)
-      const token = loginResponse.data.accessToken
+      const { accessToken: token, expiresIn } = await requestLogin(loginRequest) 
 
       // 2. Set token immediately for subsequent requests
       setAuthorizationHeader(token);
@@ -75,7 +77,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (fetchedUser) {
         // 4. Set the full authenticated state
-        setAuthenticated(token, fetchedUser);
+        setAuthenticated(token, expiresIn, fetchedUser);
         return true;
       } else {
         throw new Error("Failed to fetch user profile after login.");
@@ -90,7 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     try {
       if (accessToken.value) {
-        await apiClient.post('/auth/logout')
+        await requestLogout()
       }
     } catch (error) {
         console.error('An unexpected error occurred during logout:', error)
@@ -101,7 +103,7 @@ export const useAuthStore = defineStore('auth', () => {
   
   async function signup(signupRequest: SignupRequestDto): Promise<boolean> {
     try {
-      await apiClient.post('/auth/signup', signupRequest);
+      await requestSignup(signupRequest);
       return true;
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
@@ -115,8 +117,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function findEmailByNickname(nickname: string): Promise<string> {
     try {
-      const response = await apiClient.get<{ email: string }>(`/auth/find-email/${nickname}`);
-      return response.data.email;
+      const response = await requestFindEmailByNickname(nickname);
+      return response.email;
     } catch (error: any) {
       console.error('이메일 찾기 실패:', error);
       throw new Error(error.response?.data?.message || '이메일 찾기 중 알 수 없는 오류가 발생했습니다.');
@@ -125,7 +127,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function resetPassword(email: string): Promise<void> {
     try {
-      await apiClient.post('/auth/reset-password', { email });
+      await requestResetPassword(email);
     } catch (error: any) {
       console.error('비밀번호 재설정 요청 실패:', error);
       throw new Error(error.response?.data?.message || '비밀번호 재설정 중 알 수 없는 오류가 발생했습니다.');
@@ -134,7 +136,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function updateUserProfile(data: { nickname?: string; bio?: string }): Promise<boolean> {
     try {
-      await apiClient.patch('/user/me', data);
+      await requestUpdateUserProfile(data);
       await fetchUserAndUpdateStore(); // Custom helper to just update the store
       return true;
     } catch (error) {
@@ -157,9 +159,7 @@ export const useAuthStore = defineStore('auth', () => {
     const formData = new FormData();
     formData.append('image', imageFile);
     try {
-      await apiClient.post(`/user/profile-image`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await requestUploadProfileImage(imageFile);
       await fetchUserAndUpdateStore();
       return true;
     } catch (error) {
@@ -172,7 +172,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function deleteProfileImage(): Promise<boolean> {
     if (!user.value) return false;
     try {
-      await apiClient.delete(`/user/profile-image`);
+      await requestDeleteProfileImage();
       await fetchUserAndUpdateStore();
       return true;
     } catch (error) {
@@ -184,13 +184,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function refreshAccessToken() {
     try {
-      const response = await apiClient.post('/auth/refresh');
-      const token = response.data.accessToken;
+      const { accessToken: token, expiresIn } = await requestRefreshAccessToken()
+
       setAuthorizationHeader(token);
       
       const fetchedUser = await fetchUser();
       if (fetchedUser) {
-        setAuthenticated(token, fetchedUser);
+        setAuthenticated(token, expiresIn, fetchedUser);
       } else {
         throw new Error('Failed to fetch user data during token refresh.');
       }
@@ -205,6 +205,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     accessToken,
+    accessTokenExpiresAt,
     isLoggedIn,
     isInitialized,
     login,
