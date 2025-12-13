@@ -14,5 +14,7 @@ export interface SignupRequestDto {
 //임시 type 
 export interface TokenResponseDto {
     accessToken: string;
-    expiresIn: number; // 단위: 밀리초(ms)로 가정
+    expiresIn: number;
+    email: string;
+    nickname: string;
 }

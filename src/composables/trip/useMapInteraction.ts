@@ -1,6 +1,6 @@
 // src/composables/trip/useMapInteraction.ts
 import { ref, computed, type Ref } from 'vue'
-import type { Place, DayPlan } from '@/types/trip' // DayPlan 추가
+import type { Place, DayPlan } from '@/types/trip/place.model' 
 
 // 필요한 외부 데이터나 함수들의 타입을 정의
 interface UseMapInteractionProps {

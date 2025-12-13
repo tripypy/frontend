@@ -415,6 +415,7 @@
     <!-- Diary Modal -->
     <DiaryCommentModal
       v-if="selectedDiary"
+      :log-id="selectedDiary.id"
       :author="selectedDiary.author"
       :author-avatar="selectedDiary.authorAvatar"
       :location="selectedDiary.location"

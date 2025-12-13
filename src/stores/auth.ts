@@ -67,10 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(loginRequest: LoginRequestDto): Promise<boolean> {
     try {
       // 1. Login to get the access token
-      // const loginResponse = await apiClient.post('/auth/login', loginRequest)
-      // const token = loginResponse.data.accessToken
-
-      const { accessToken: token, expiresIn } = await requestLogin(loginRequest) // ⬅️ API 호출
+      const { accessToken: token, expiresIn } = await requestLogin(loginRequest) 
 
       // 2. Set token immediately for subsequent requests
       setAuthorizationHeader(token);

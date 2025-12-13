@@ -14,8 +14,7 @@
       <div class="flex-1">
         <input
           v-if="isEditMode"
-          :value="tripTitle"
-          @input="$emit('update:tripTitle', ($event.target as HTMLInputElement).value)"
+          v-model="tripTitle"
           type="text"
           placeholder="여행 이름을 입력하세요"
           class="w-full px-3 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9BCCC4]"
@@ -35,8 +34,7 @@
           <div class="flex items-center">
             <template v-if="isEditMode">
               <input
-                :value="tripDate"
-                @input="$emit('update:tripDate', ($event.target as HTMLInputElement).value)"
+                v-model="tripDate"
                 type="date"
                 class="px-3 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#9BCCC4] cursor-pointer bg-white"
               />
@@ -50,8 +48,7 @@
           <div class="flex items-center">
             <template v-if="isEditMode">
               <select
-                :value="tripStatus"
-                @change="$emit('update:tripStatus', $event.target.value)"
+                v-model="tripStatus" 
                 class="px-3 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#9BCCC4] cursor-pointer bg-white"
               >
                 <option v-for="s in userSelectableStatuses" :key="s" :value="s">{{ s }}</option>
@@ -66,8 +63,7 @@
           <div class="flex items-center">
             <template v-if="isEditMode">
               <select
-                :value="tripVisibility"
-                @change="$emit('update:tripVisibility', $event.target.value)"
+                v-model="tripVisibility"
                 class="px-3 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#9BCCC4] cursor-pointer bg-white"
               >
                 <option value="PUBLIC">PUBLIC</option>
@@ -113,7 +109,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ArrowLeft, Calendar, Save, Edit, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, Save, Edit, Trash2 } from 'lucide-vue-next'
 import type { TripVisibility } from '@/types/trip/trip.model'
 import { TripStatus } from '@/types/common'
 
@@ -127,7 +123,7 @@ defineProps<{
   tripVisibility: TripVisibility | null
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'back'): void
   (e: 'save'): void
   (e: 'delete'): void
@@ -138,7 +134,7 @@ defineEmits<{
   (e: 'update:tripVisibility', value: TripVisibility): void
 }>()
 
-const userSelectableStatuses = computed(() => {
+const userSelectableStatuses = computed<TripStatus[]>(() => {
   const statuses = Object.values(TripStatus)
   return statuses.filter((s) => s !== TripStatus.DRAFT)
 })

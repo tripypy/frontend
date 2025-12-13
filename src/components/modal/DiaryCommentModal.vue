@@ -351,7 +351,8 @@ import {
   Trash2,
 } from 'lucide-vue-next'
 import { getTripLogDetail, getTripDetail, postTripLogComment, likeTripLog, unlikeTripLog, getTripLogLikeStatus } from '@/apis/trip'
-import type { TripLogDetail, TripDetailResponseDto } from '@/types/trip'
+import type { TripDetailResponseDto } from '@/apis/trip/types'
+import type { TripLogDetail } from '@/types/trip/trip.model'
 import { format, parseISO } from 'date-fns'
 import TripDetailModal from './TripDetailModal.vue'
 import AlertDialog from '@/components/common/AlertDialog.vue'
@@ -443,7 +444,7 @@ const groupedCourse = computed(() => {
       if (!acc[day]) {
         acc[day] = { dayNumber: day, places: [] }
       }
-      acc[day].places.push({ id: item.spot.id, name: item.spot.name })
+      acc[day]!.places.push({ id: item.spot.id, name: item.spot.name })
       return acc
     },
     {} as Record<number, { dayNumber: number; places: { id: number; name: string }[] }>,
@@ -453,7 +454,7 @@ const groupedCourse = computed(() => {
 
 watchEffect(() => {
   if (groupedCourse.value.length > 0) {
-    activeDay.value = groupedCourse.value[0].dayNumber
+    activeDay.value = groupedCourse.value[0]!.dayNumber
   }
 })
 

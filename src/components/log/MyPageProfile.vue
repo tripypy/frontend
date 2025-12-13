@@ -1,23 +1,18 @@
 <script setup lang="ts">
-import { ref, watch, type PropType } from 'vue';
+import { ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import type { User } from '@/types/auth/user.model'
 import { Pencil } from 'lucide-vue-next';
 
-const props = defineProps({
-  profileData: {
-    type: Object as PropType<User | null>,
-    required: true
-  },
-  isMyProfile: {
-    type: Boolean,
-    required: true
-  },
-  diaryCount: {
-    type: Number,
-    default: 0
-  }
-});
+interface Props {
+  profileData: User | null;
+  isMyProfile: boolean;
+  diaryCount?: number;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  diaryCount: 0,
+})
 
 const emit = defineEmits(['open-friends-modal', 'profile-updated']);
 

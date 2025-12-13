@@ -5,8 +5,7 @@
     <div v-if="isEditMode" class="p-3 border-b-[2px] border-gray-200 relative">
       <div class="relative">
         <input
-          :value="searchQuery"
-          @input="$emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
+          v-model="localSearchQuery"
           @keyup.enter="$emit('search')"
           type="text"
           placeholder="장소를 검색하세요 (Enter)"
@@ -59,8 +58,7 @@
 
       <div v-if="currentDayPlaces.length > 0">
         <draggable
-          :model-value="currentDayPlaces"
-          @update:model-value="(newPlaces: Place[]) => $emit('update-places', newPlaces)"
+          v-model="currentDayPlaces"
           item-key="id"
           class="space-y-1.5 mb-4"
           ghost-class="opacity-50"
@@ -128,7 +126,7 @@ const props = defineProps<{
   searchQuery: string
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:searchQuery', val: string): void
   (e: 'update:activeDay', val: number): void
   (e: 'search'): void
@@ -139,10 +137,23 @@ defineEmits<{
   (e: 'click-place', place: Place): void
 }>()
 
-const currentDayPlaces = computed(() => {
-  const day = props.days.find((d) => d.dayNumber === props.activeDay)
-  return day ? day.places : []
+const localSearchQuery = computed({
+  get: () => props.searchQuery,
+  set: (newValue: string) => {
+    emit('update:searchQuery', newValue)
+  }
 })
+
+const currentDayPlaces = computed<Place[]>({ 
+    get: () => {
+        const day = props.days.find((d) => d.dayNumber === props.activeDay)
+        return day ? day.places : []
+    },
+    set: (newPlaces: Place[]) => {
+        emit('update-places', newPlaces) 
+    }
+})
+
 </script>
 
 <style scoped>

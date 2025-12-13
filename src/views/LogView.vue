@@ -30,9 +30,9 @@ const loggedInUser = computed(() => authStore.user)
 const profileData = ref<PublicUserProfile | null>(null)
 const isLoading = ref(true)
 
-const isMyProfile = computed(() => {
+const isMyProfile = computed<boolean>(() => {
   const routeUserId = route.params.userId
-  return !routeUserId || (loggedInUser.value && Number(routeUserId) === loggedInUser.value.id)
+  return !!(!routeUserId || (loggedInUser.value && Number(routeUserId) === loggedInUser.value.id))
 })
 
 const showFriendsModal = ref(false)

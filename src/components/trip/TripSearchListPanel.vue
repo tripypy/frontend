@@ -28,7 +28,7 @@
           :key="place.id"
           :ref="
             (el) => {
-              if (el) itemRefs[place.id] = el as HTMLElement
+              if (el && place.id) itemRefs[place.id] = el as HTMLElement
             }
           "
           class="mb-3 last:mb-0"

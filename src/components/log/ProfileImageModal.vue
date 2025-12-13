@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, type PropType } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { Camera, X } from 'lucide-vue-next'
 

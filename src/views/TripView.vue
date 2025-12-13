@@ -89,8 +89,8 @@ import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { useRouter } from 'vue-router'
-import { createTrip, getMyTrips, getTripDetail } from '@/services/trip' // Added getTripDetail
-import { TripResponseDto, TripDetailResponseDto } from '@/apis/trip/types' // Added TripDetailResponseDto
+import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index' // Added getTripDetail
+import type { TripResponseDto, TripDetailResponseDto } from '@/apis/trip/types' // Added TripDetailResponseDto
 import { TripStatus } from '@/types/common'
 
 // TODO: TripCard에서 필요한 spots, tags, spotPreviews, completedDate 필드가 TripResponseDto에 없음.
@@ -165,7 +165,7 @@ const groupedCompletedTrips = computed(() => {
     if (trip.startDate) {
       const monthKey = trip.startDate.substring(0, 7)
       if (!groups[monthKey]) groups[monthKey] = []
-      groups[monthKey].push(trip)
+      groups[monthKey]!.push(trip)
     }
   })
   return Object.keys(groups)
@@ -175,7 +175,7 @@ const groupedCompletedTrips = computed(() => {
         acc[key] = groups[key]
         return acc
       },
-      {} as Record<string, TripResponseDto[]>, // Changed to TripResponseDto[]
+      {} as Record<string, TripResponseDto[]>, 
     )
 })
 
@@ -196,7 +196,7 @@ const handleOpenModal = async (tripId: number) => {
       // description은 tripItems에서 파생
       description:
         detail.tripItems && detail.tripItems.length > 0
-          ? detail.tripItems.map((item) => item.spot.name).join(' → ')
+          ? detail.tripItems.map((item : any) => item.spot.name).join(' → ')
           : '장소 없음',
       // duration, views, imageUrl은 TripDetailResponseDto에 없으므로 mock data 유지 또는 제거
       duration: '반나절', // Mock Data
