@@ -2,6 +2,13 @@
 import { ref, computed, watchEffect, type PropType } from 'vue';
 import type { TripDetailResponseDto } from '@/apis/trip/types';
 
+interface LegendTrip {
+  title: string;
+  startDate?: string;
+  endDate?: string;
+  color: string;
+}
+
 const props = defineProps({
   completedTrips: {
     type: Array as PropType<TripDetailResponseDto[]>,
@@ -9,7 +16,14 @@ const props = defineProps({
   }
 });
 
+const colors = [
+  '#E6194B', '#3CB44B', '#FFE119', '#4363D8', '#F58231', 
+  '#911EB4', '#46F0F0', '#F032E6', '#BCF60C', '#FABEBE', 
+].reverse(); // Use reversed colors to have more distinct ones first for recent trips
+
 const currentMonth = ref(new Date());
+const dateColorMap = ref<Map<string, string>>(new Map());
+const tripsForLegend = ref<LegendTrip[]>([]);
 
 const formattedMonth = computed(() => {
   const year = currentMonth.value.getFullYear();
@@ -24,11 +38,11 @@ const daysInMonth = computed(() => {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const numDays = lastDay.getDate();
-  const startDay = firstDay.getDay(); // 0 for Sunday, 1 for Monday...
+  const startDay = firstDay.getDay();
 
   const days = [];
   for (let i = 0; i < startDay; i++) {
-    days.push(null); // Empty slots for days before the 1st
+    days.push(null);
   }
   for (let i = 1; i <= numDays; i++) {
     days.push(new Date(year, month, i));
@@ -36,26 +50,52 @@ const daysInMonth = computed(() => {
   return days;
 });
 
-const highlightedDates = ref<string[]>([]); // YYYY-MM-DD format
+// Date 객체를 'YYYY-MM-DD' 문자열로 변환 (로컬 시간 기준)
+const toYYYYMMDD = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 watchEffect(() => {
-  const dates: Set<string> = new Set();
-  props.completedTrips.forEach(trip => {
+  const newDateColorMap = new Map<string, string>();
+  const newTripsForLegend: LegendTrip[] = [];
+
+  const sortedTrips = [...props.completedTrips].sort((a, b) => {
+    const dateA = new Date(a.endDate || a.startDate || 0).getTime();
+    const dateB = new Date(b.endDate || b.startDate || 0).getTime();
+    return dateA - dateB; // 오래된 여행부터 순회하여 최신 여행 색상으로 덮어쓰게 함
+  });
+
+  sortedTrips.forEach((trip, index) => {
+    const tripColor = colors[index % colors.length];
+    
+    newTripsForLegend.push({
+      title: trip.title,
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      color: tripColor,
+    });
+
     if (trip.startDate && trip.endDate) {
-      let currentDate = new Date(trip.startDate);
-      let endDate = new Date(trip.endDate);
+      let currentDate = new Date(trip.startDate + 'T00:00:00');
+      let endDate = new Date(trip.endDate + 'T00:00:00');
+      
       while (currentDate <= endDate) {
-        dates.add(currentDate.toISOString().slice(0, 10)); // YYYY-MM-DD
+        newDateColorMap.set(toYYYYMMDD(currentDate), tripColor);
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
   });
-  highlightedDates.value = Array.from(dates);
+  
+  dateColorMap.value = newDateColorMap;
+  tripsForLegend.value = newTripsForLegend.reverse(); // 범례는 최신순으로 표시
 });
 
-function isDateHighlighted(date: Date | null) {
-  if (!date) return false;
-  return highlightedDates.value.includes(date.toISOString().slice(0, 10));
+function getColorForDate(date: Date | null): string | undefined {
+  if (!date) return undefined;
+  return dateColorMap.value.get(toYYYYMMDD(date));
 }
 
 function prevMonth() {
@@ -97,11 +137,11 @@ function nextMonth() {
       <div
         v-for="(day, index) in daysInMonth"
         :key="index"
-        class="flex items-center justify-center aspect-square rounded-md text-sm font-medium"
+        class="flex items-center justify-center aspect-square rounded-md text-sm font-medium transition-colors"
+        :style="{ backgroundColor: getColorForDate(day) }"
         :class="{
           'text-gray-400': !day,
-          'text-gray-800': day && !isDateHighlighted(day),
-          'bg-[#9BCCC4] text-[#2C2C2C] font-bold': day && isDateHighlighted(day),
+          'text-white font-bold': getColorForDate(day)
         }"
       >
         {{ day ? day.getDate() : '' }}
@@ -109,9 +149,9 @@ function nextMonth() {
     </div>
 
     <div class="mt-4 space-y-2 px-2 max-h-24 overflow-y-auto">
-        <div v-if="completedTrips.length > 0">
-          <div v-for="(trip, index) in completedTrips" :key="index" class="flex items-center text-sm text-[#2C2C2C]">
-            <div class="w-2 h-2 rounded-full bg-[#9BCCC4] mr-2 flex-shrink-0"></div>
+        <div v-if="tripsForLegend.length > 0">
+          <div v-for="trip in tripsForLegend" :key="trip.title" class="flex items-center text-sm text-[#2C2C2C]">
+            <div class="w-2 h-2 rounded-full mr-2 flex-shrink-0" :style="{ backgroundColor: trip.color }"></div>
             <span class="truncate" :title="trip.title">{{ trip.title }} ({{ trip.startDate }} ~ {{ trip.endDate }})</span>
           </div>
         </div>
