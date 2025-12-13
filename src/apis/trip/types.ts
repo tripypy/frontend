@@ -103,6 +103,20 @@ export interface TripItemsUpdateRequestDto_ItemSync {
   spot?: SpotRequestDto // nullable, 새로운 아이템인 경우 필수
   memo?: string // nullable
 }
+//==========================================================================
+
+/**
+ * TripPlan 관련 타입
+ */
+// TODO: 해당 타입이 사용된 코드를 보고 유츄한 코드이기 때문에 수정 필요
+export interface TripPlanResponseDto {
+  id: number; // 키 값
+  title: string; // 카드 제목
+  thumbnailUrl?: string; // 카드 썸네일
+  startDate: string; // 카드 날짜
+  endDate: string; // 카드 날짜
+  visibility: 'PUBLIC' | 'PRIVATE' | 'PROTECTED'; // 필터링에 사용됨
+}
 
 
 /**
@@ -126,4 +140,20 @@ export interface TripLogCommentRequest {
     content: string
 }
   
-  
+
+/**
+ * Diary 관련 타입
+ */
+
+export interface TripDiaryResponseDto {
+  id: number;
+  title: string;
+  thumbnailUrl: string | null;
+  visibility: 'PUBLIC' | 'PRIVATE';
+  spotPreviews?: { name: string }[] | null; 
+  tags: string[];
+  startDate: string | null;
+  endDate: string | null;
+  likes: number;
+  comments: number;
+}

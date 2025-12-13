@@ -1,34 +1,25 @@
 <script setup lang="ts">
-import { ref, computed, type PropType } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-<<<<<<< HEAD
-// TODO: TripDiaryResponseDto, TripPlanResponseDto를 trip.ts에 정의하고 사용해야 합니다.
-// 현재는 TripResponseDto로 대체하여 사용합니다.
-import type { TripResponseDto as TripDiaryResponseDto, TripResponseDto as TripPlanResponseDto } from '@/apis/trip/types';
+
+import type { TripResponseDto, TripDetailResponseDto, TripDiaryResponseDto, TripPlanResponseDto } from '@/apis/trip/types';
 import { createTrip } from '@/apis/trip/index';
-=======
-import type { TripResponseDto, TripDetailResponseDto } from '@/types/trip';
-import { createTrip } from '@/services/trip';
-import apiClient from '@/services/api';
->>>>>>> c29dbff9c22121ca9111c6d5462749e328146b9f
+import apiClient from '@/apis/http';
+
 import { Heart, MessageCircle } from 'lucide-vue-next';
 import TripCard from '@/components/trip/TripCard.vue';
 import TripDetailModal from '@/components/modal/TripDetailModal.vue';
 
-const props = defineProps({
-  isMyProfile: {
-    type: Boolean,
-    required: true
-  },
-  userDiaries: {
-    type: Array as PropType<any[]>, // Assuming TripDiaryResponseDto is not fully defined
-    default: () => []
-  },
-  userPlans: {
-    type: Array as PropType<TripResponseDto[]>,
-    default: () => []
-  }
-});
+interface Props {
+  isMyProfile: boolean;
+  userDiaries: TripDiaryResponseDto[]; 
+  userPlans: TripResponseDto[];
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  userDiaries: () => [],
+  userPlans: () => [],
+})
 
 const router = useRouter();
 const activeTab = ref('diary'); // 'diary' or 'plan'
@@ -162,7 +153,10 @@ const handleDiaryClick = (diaryId: number) => {
                 </div>
                 <div class="p-4 flex-1 flex flex-col">
                   <h3 class="font-black text-xl text-[#2C2C2C] mb-2 truncate">{{ card.title }}</h3>
-                  <p class="text-sm text-gray-600 mb-3 line-clamp-2 h-10">{{ card.spotPreviews && card.spotPreviews.length > 0 ? card.spotPreviews.map(s => s.name).join(', ') : '아직 방문지가 없습니다.' }}</p>
+                  <p class="text-sm text-gray-600 mb-3 line-clamp-2 h-10">
+                    {{ 
+                      card.spotPreviews && card.spotPreviews.length > 0 
+                      ? card.spotPreviews.map(s => s.name).join(', ') : '아직 방문지가 없습니다.' }}</p>
                   <div class="flex flex-wrap gap-1 mb-3 h-5 overflow-hidden">
                     <span v-for="tag in card.tags" :key="tag"
                           class="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full"

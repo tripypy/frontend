@@ -2,7 +2,7 @@
 
 import { ref, watch, type PropType } from 'vue'
 import KakaoMap from '@/components/common/KakaoMap.vue'
-import type { TripDetailResponseDto, TripItemResponseDto } from '@/types/trip'
+import type { TripDetailResponseDto, TripItemResponseDto } from '@/apis/trip/types'
 
 // --- TYPES ---
 interface LegendDay {
