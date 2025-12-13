@@ -31,12 +31,19 @@ interface MarkerOption extends LatLng {
   kakaoPlaceId?: string
   type?: 'plan' | 'search'
   order?: number
+  color?: string
+}
+
+interface PolylineOption {
+  path: LatLng[]
+  color: string
 }
 
 const props = defineProps<{
   center?: LatLng
   level?: number
   markers?: MarkerOption[]
+  polylines?: PolylineOption[]
   selectedMarkerId?: number | string | null
 }>()
 
@@ -50,7 +57,7 @@ const map = ref<any>(null)
 const mapLoaded = ref(false)
 
 let kakaoOverlays: any[] = []
-let kakaoPolyline: any = null
+let kakaoPolylines: any[] = []
 
 const DEFAULT_MARKER_SRC = markerImg
 const SELECTED_MARKER_SRC = yellowMarkerImg
@@ -58,14 +65,14 @@ const SELECTED_MARKER_SRC = yellowMarkerImg
 const NORMAL_SIZE = { width: 40, height: 40 }
 const BIG_SIZE = { width: 45, height: 45 }
 
-const clearMarkers = () => {
+const clearOverlays = () => {
   kakaoOverlays.forEach((m) => m.setMap(null))
   kakaoOverlays = []
+}
 
-  if (kakaoPolyline) {
-    kakaoPolyline.setMap(null)
-    kakaoPolyline = null
-  }
+const clearPolylines = () => {
+  kakaoPolylines.forEach((p) => p.setMap(null))
+  kakaoPolylines = []
 }
 
 const renderMarkers = (markers: MarkerOption[]) => {
@@ -73,7 +80,7 @@ const renderMarkers = (markers: MarkerOption[]) => {
   if (!rawMap) return
 
   const kakao = (window as any).kakao
-  clearMarkers()
+  clearOverlays()
 
   if (!markers || markers.length === 0) return
 
@@ -92,23 +99,26 @@ const renderMarkers = (markers: MarkerOption[]) => {
     const pos = new kakao.maps.LatLng(m.lat, m.lng)
     const isSelected = props.selectedMarkerId && String(m.id) === String(props.selectedMarkerId)
 
-    if (m.type === 'plan') {
-      const content = document.createElement('div')
-      content.className = `
-        flex items-center justify-center w-12 h-12 rounded-full font-black text-black border-[2px] border-[#2C2C2C]
-        transition-all duration-200 ease-in-out
-        ${isSelected ? 'bg-[#FF8A00] scale-110' : 'bg-[#9BCCC4]'}
-      `
-      content.innerHTML = String(m.order || '')
-
-      const customOverlay = new kakao.maps.CustomOverlay({
-        position: pos,
-        content: content,
-        map: rawMap,
-        yAnchor: 0.5,
-        zIndex: isSelected ? 999 : 50,
-      })
-
+          if (m.type === 'plan') {
+          const content = document.createElement('div')
+          const bgColor = m.color ? '' : 'bg-[#9BCCC4]'
+          content.className = `
+            flex items-center justify-center w-8 h-8 rounded-full font-black text-black border-[2px] border-[#2C2C2C] text-xs
+            transition-all duration-200 ease-in-out
+            ${isSelected ? 'bg-[#FF8A00] scale-125' : bgColor}
+          `
+          if (m.color && !isSelected) {
+            content.style.backgroundColor = m.color;
+          }
+          content.innerHTML = String(m.order || '')
+    
+          const customOverlay = new kakao.maps.CustomOverlay({
+            position: pos,
+            content: content,
+            map: rawMap,
+            yAnchor: 0.8, // Adjust yAnchor for smaller size
+            zIndex: isSelected ? 999 : 50,
+          })
       content.onclick = () => {
         if (m.id !== undefined && m.id !== null) {
           emits('marker-click', m.id)
@@ -118,6 +128,7 @@ const renderMarkers = (markers: MarkerOption[]) => {
       customOverlay.customId = m.id
       customOverlay.customType = m.type
       customOverlay.customOrder = m.order
+      customOverlay.customColor = m.color
       kakaoOverlays.push(customOverlay)
     } else {
       const marker = new kakao.maps.Marker({
@@ -141,32 +152,34 @@ const renderMarkers = (markers: MarkerOption[]) => {
     bounds.extend(pos)
   })
 
-  renderPolyline(markers)
-
   if (!props.selectedMarkerId) {
     rawMap.setBounds(bounds)
   }
 }
 
-const renderPolyline = (markers: MarkerOption[]) => {
+const renderPolylines = (polylines: PolylineOption[]) => {
   const rawMap = toRaw(map.value)
   if (!rawMap) return
   const kakao = (window as any).kakao
 
-  const linePath = markers
-    .filter((m) => m.type === 'plan')
-    .map((m) => new kakao.maps.LatLng(m.lat, m.lng))
+  clearPolylines()
 
-  if (linePath.length > 1) {
-    kakaoPolyline = new kakao.maps.Polyline({
-      path: linePath,
-      strokeWeight: 3,
-      strokeColor: '#2C2C2C',
-      strokeOpacity: 0.8,
-      strokeStyle: 'solid',
-    })
-    kakaoPolyline.setMap(rawMap)
-  }
+  if (!polylines || polylines.length === 0) return
+
+  polylines.forEach(poly => {
+    const linePath = poly.path.map(p => new kakao.maps.LatLng(p.lat, p.lng));
+    if (linePath.length > 1) {
+      const kakaoPolyline = new kakao.maps.Polyline({
+        path: linePath,
+        strokeWeight: 4,
+        strokeColor: poly.color,
+        strokeOpacity: 0.8,
+        strokeStyle: 'solid',
+      });
+      kakaoPolyline.setMap(rawMap);
+      kakaoPolylines.push(kakaoPolyline);
+    }
+  });
 }
 
 const panTo = (lat: number, lng: number) => {
@@ -200,10 +213,15 @@ watch(
         const content = overlay.getContent()
         if (isTarget) {
           content.classList.remove('bg-[#9BCCC4]')
+          content.style.backgroundColor = '';
           content.classList.add('bg-[#FF8A00]', 'scale-110')
         } else {
           content.classList.remove('bg-[#FF8A00]', 'scale-110')
-          content.classList.add('bg-[#9BCCC4]')
+          if (overlay.customColor) {
+            content.style.backgroundColor = overlay.customColor;
+          } else {
+            content.classList.add('bg-[#9BCCC4]')
+          }
         }
         overlay.setZIndex(isTarget ? 999 : 50)
       } else {
@@ -241,6 +259,9 @@ const initMap = () => {
   if (props.markers && props.markers.length > 0) {
     renderMarkers(props.markers)
   }
+  if (props.polylines && props.polylines.length > 0) {
+    renderPolylines(props.polylines);
+  }
 }
 
 onMounted(() => {
@@ -262,7 +283,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  clearMarkers()
+  clearOverlays()
+  clearPolylines()
   map.value = null
 })
 
@@ -274,6 +296,16 @@ watch(
   },
   { deep: true },
 )
+
+watch(
+  () => props.polylines,
+  (newVal) => {
+    if (!mapLoaded.value || !map.value) return;
+    renderPolylines(newVal ?? []);
+  },
+  { deep: true }
+);
+
 
 defineExpose({
   map,
