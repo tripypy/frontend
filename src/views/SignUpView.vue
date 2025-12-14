@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import TravelNavbar from '@/components/common/TravelNavbar.vue' // Import TravelNavbar
+import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -13,6 +14,12 @@ const passwordConfirm = ref('')
 const nickname = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
+
+const isPasswordVisible = ref(false)
+
+function togglePasswordVisibility() {
+  isPasswordVisible.value = !isPasswordVisible.value
+}
 
 const isPasswordMismatch = computed(() => {
   return password.value && passwordConfirm.value && password.value !== passwordConfirm.value
@@ -113,14 +120,25 @@ function goToFindAccount() {
 
           <div>
             <label for="password" class="sr-only">비밀번호</label>
-            <input
-              type="password"
-              id="password"
-              v-model="password"
-              placeholder="비밀번호"
-              required
-              class="w-full rounded-lg border-2 border-[#2C2C2C] bg-white p-3 text-sm font-medium transition-all placeholder:font-medium focus:border-[#E88555] focus:outline-none focus:ring-0"
-            />
+            <div class="relative">
+              <input
+                :type="isPasswordVisible ? 'text' : 'password'" 
+                id="password"
+                v-model="password"
+                placeholder="비밀번호"
+                required
+                class="w-full rounded-lg border-2 border-[#2C2C2C] bg-white p-3 text-sm font-medium transition-all placeholder:font-medium focus:border-[#E88555] focus:outline-none focus:ring-0"
+              />
+              <button
+                type="button"
+                @click="togglePasswordVisibility"
+                class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-[#E88555]"
+              >
+                <EyeIcon v-if="isPasswordVisible" class="h-5 w-5" />
+                <EyeSlashIcon v-else class="h-5 w-5" />
+              </button>
+            </div>
+            
           </div>
 
           <div>

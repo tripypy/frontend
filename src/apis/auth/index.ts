@@ -1,5 +1,6 @@
 // src/apis/auth/index.ts
 import apiClient from '@/apis/http';
+import refreshClient from '@/apis/http';
 import type { LoginRequestDto, SignupRequestDto, TokenResponseDto } from './types'; 
 
 /**
@@ -22,8 +23,8 @@ export const requestLogout = async (): Promise<void> => {
  * 토큰 갱신 API 요청
  */
 export const requestRefreshAccessToken = async (): Promise<TokenResponseDto> => {
-    const response = await apiClient.post<TokenResponseDto>('/auth/refresh');
-    return response.data;
+    const { data } = await refreshClient.post('/auth/refresh')
+    return data
 };
 
 /**

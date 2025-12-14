@@ -25,10 +25,14 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(JSON.parse(localStorage.getItem('user') || 'null'))
   const accessToken = ref<string | null>(null)
   const accessTokenExpiresAt = ref<number | null>(null)
+
   const isInitialized = ref(false)
 
-  const isLoggedIn = computed(() => !!accessToken.value && !!user.value)
-
+  const isLoggedIn = computed(() => {
+    if (!isInitialized.value) return false
+    return !!accessToken.value && !!user.value
+  })
+  
   function setAuthorizationHeader(token: string | null) {
     if (token) {
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -195,10 +199,26 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Failed to fetch user data during token refresh.');
       }
     } catch (error) {
-      console.error('Token refresh failed, logging out.', error);
+      // 기존: console.error('Token refresh failed, logging out.', error);
+      // 변경: 401 에러는 예상된 상황일 수 있으므로 로그를 Warning 정도로 낮춤
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        console.warn('Refresh Token missing or invalid, proceeding as unauthenticated.');
+      } else {
+        console.error('Token refresh failed with unexpected error, logging out.', error);
+      }
       clearAuthentication();
+      throw error // initializeAuth에서 catch하도록 에러는 던져줌
+    }
+  }
+
+  // 자동 로그인 초기화 함수
+  async function initializeAuth() {
+    try {
+      await refreshAccessToken()
+    } catch {
+      // refresh 실패 = 비로그인 상태
     } finally {
-      isInitialized.value = true;
+      isInitialized.value = true
     }
   }
 
@@ -216,6 +236,7 @@ export const useAuthStore = defineStore('auth', () => {
     updateUserProfile,
     uploadProfileImage,
     deleteProfileImage,
-    refreshAccessToken
+    refreshAccessToken,
+    initializeAuth
   }
 })
