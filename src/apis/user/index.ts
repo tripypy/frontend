@@ -31,7 +31,7 @@ export const fetchFriends = async (userId: number): Promise<User[]> => {
  * 현재 로그인된 사용자의 상세 정보를 조회합니다.
  */
 export const requestFetchUser = async (): Promise<User> => {
-  const response = await apiClient.get<User>('/user/me');
+  const response = await apiClient.get<User>('/users/me');
   return response.data;
 };
 
@@ -39,7 +39,7 @@ export const requestFetchUser = async (): Promise<User> => {
 * 프로필 정보 수정 API 요청
 */
 export const requestUpdateUserProfile = async (data: { nickname?: string; bio?: string }): Promise<void> => {
-  await apiClient.patch('/user/me', data);
+  await apiClient.patch('/users/me', data);
 };
 
 /**
@@ -48,7 +48,7 @@ export const requestUpdateUserProfile = async (data: { nickname?: string; bio?: 
 export const requestUploadProfileImage = async (imageFile: File): Promise<void> => {
   const formData = new FormData();
   formData.append('image', imageFile);
-  await apiClient.post(`/user/profile-image`, formData, {
+  await apiClient.post(`/users/profile-image`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
@@ -57,5 +57,5 @@ export const requestUploadProfileImage = async (imageFile: File): Promise<void> 
 * 프로필 이미지 삭제 API 요청
 */
 export const requestDeleteProfileImage = async (): Promise<void> => {
-  await apiClient.delete(`/user/profile-image`);
+  await apiClient.delete(`/users/profile-image`);
 };
