@@ -117,28 +117,6 @@ export interface TripPlanResponseDto {
   endDate: string; // 카드 날짜
   visibility: 'PUBLIC' | 'PRIVATE' | 'PROTECTED'; // 필터링에 사용됨
 }
-
-
-/**
- * TripLog 관련 타입 
- */
-
-export interface TripLogLikeResponse {
-    likeCount: number;
-    liked: boolean;
-}
-
-export interface TripLogCommentResponse {
-    commentId: number
-    authorNickname: string
-    authorImageUrl: string
-    content: string
-    createdAt: string
-}
-
-export interface TripLogCommentRequest {
-    content: string
-}
   
 
 /**
@@ -157,3 +135,4 @@ export interface TripDiaryResponseDto {
   likes: number;
   comments: number;
 }
+

@@ -28,16 +28,16 @@
           <div
             class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
           >
-            <img :src="authorAvatar" :alt="author" class="w-full h-full object-cover" />
+            <img :src="props.authorImageUrl" :alt="props.authorNickname" class="w-full h-full object-cover" />
           </div>
           <div class="flex-1 min-w-0">
-            <h4 class="font-black font-sans">{{ author }}</h4>
+            <h4 class="font-black font-sans">{{ props.authorNickname }}</h4>
             <div class="flex items-center gap-2 text-xs font-bold text-gray-600">
               <MapPin class="w-3 h-3 flex-shrink-0" stroke-width="2" />
-              <span class="truncate">{{ location }}</span>
+              <span class="truncate">{{ props.locationSummary }}</span>
               <span>•</span>
               <Calendar class="w-3 h-3 flex-shrink-0" stroke-width="2" />
-              <span>{{ date }}</span>
+              <span>{{ props.createdAt }}</span>
             </div>
           </div>
         </div>
@@ -68,7 +68,7 @@
 
       <h3 class="text-lg font-black mb-2.5 tracking-tight leading-tight font-sans">{{ title }}</h3>
 
-      <div v-if="course && course.length > 0" class="mb-4 flex items-center flex-wrap gap-1.5">
+      <!-- <div v-if="course && course.length > 0" class="mb-4 flex items-center flex-wrap gap-1.5">
         <div v-for="(place, index) in course" :key="index" class="flex items-center gap-1.5">
           <button
             class="course-badge flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] cursor-pointer hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all focus:outline-none"
@@ -86,7 +86,7 @@
             stroke-width="3"
           />
         </div>
-      </div>
+      </div> -->
 
       <div
         v-if="allImages.length > 0"
@@ -149,8 +149,8 @@
           class="text-sm leading-relaxed font-medium text-gray-800 whitespace-pre-line cursor-pointer hover:opacity-80 transition-opacity"
           :class="{ 'line-clamp-3': !isExpanded }"
           @click="isExpanded = !isExpanded"
+          v-html="processedContent"
         >
-          {{ content }}
         </p>
       </div>
 
@@ -173,7 +173,7 @@
           class="flex items-center gap-1.5 px-3.5 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px] focus:outline-none"
         >
           <MessageCircle class="w-3.5 h-3.5" stroke-width="2.5" />
-          <span>{{ comments }}</span>
+          <span>{{ props.commentCount }}</span>
         </button>
 
         <button
@@ -186,7 +186,7 @@
     <Teleport to="body">
       <DiaryCommentModal
         v-if="showCommentModal"
-        :log-id="id"
+        :log-id="props.logId"
         @close="showCommentModal = false"
       />
 
@@ -209,31 +209,18 @@ import {
 } from 'lucide-vue-next'
 import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
+import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 
 interface CourseItem {
   number: number
   name: string
 }
 
-const props = defineProps<{
-  id: number
-  author: string
-  authorAvatar: string
-  location: string
-  date: string
-  title: string
-  content: string
-  imageUrl?: string
-  images?: string[]
-  likes: number
-  comments: number
-  course?: CourseItem[]
-}>()
-
+const props = defineProps<TripLogFeedItemDto>();
 // State
-const isLiked = ref(false)
+const isLiked = ref(props.liked)
 const isBookmarked = ref(false)
-const currentLikes = ref(props.likes)
+const currentLikes = ref(props.likeCount)
 const isExpanded = ref(false)
 const currentImageIndex = ref(0)
 const showToast = ref(false)
@@ -243,7 +230,13 @@ const showCommentModal = ref(false)
 const selectedPlace = ref<CourseItem | null>(null)
 
 // Images Logic
-const allImages = computed(() => props.images || (props.imageUrl ? [props.imageUrl] : []))
+const allImages = computed(() => {
+  // props.images가 존재하면, .map을 사용하여 imageUrl 속성만 추출
+  if (props.images && props.images.length > 0) {
+    return props.images.map(img => img.imageUrl);
+  }
+  return [];
+});
 const prevImage = () => {
   currentImageIndex.value = Math.max(0, currentImageIndex.value - 2)
 }
@@ -260,7 +253,7 @@ const toggleLike = () => {
 
 // Share Action
 const handleShare = async () => {
-  const diaryUrl = `${window.location.origin}/diary/${props.id}`
+  const diaryUrl = `${window.location.origin}/diary/${props.logId}`
 
   try {
     await navigator.clipboard.writeText(diaryUrl)
@@ -277,6 +270,49 @@ const handleShare = async () => {
 // Course Badge Colors
 const colors = ['#FFD60A', '#FF6B9D', '#98D8C8', '#B4E4FF', '#E88555']
 const getBadgeColor = (idx: number) => colors[idx % colors.length]
+
+const imageMap = computed(() => {
+  const map = new Map<string, string>();
+  if (props.images) {
+    props.images.forEach(img => {
+      map.set(img.imageRefKey, img.imageUrl);
+    });
+  }
+  return map;
+});
+
+// 2. 본문 내용 처리: 플레이스홀더를 <img> 태그로 대체
+const processedContent = computed(() => {
+  let text = props.content || '';
+  const map = imageMap.value;
+
+  // 정규식을 사용하여 {{img_key_숫자}} 패턴을 찾고 대체합니다.
+  text = text.replace(/\{\{img_key_(\d+)\}\}/g, (match, keyIndex) => {
+    const refKey = `img_key_${keyIndex}`;
+    
+    // 맵에서 해당 키에 맞는 URL을 찾습니다.
+    const imageUrl = map.get(refKey);
+
+    if (imageUrl) {
+      // 찾았다면 <img> 태그로 대체 (Tailwind CSS 스타일링 적용)
+      return `
+        <div class="my-3 flex justify-center">
+          <img 
+            src="${imageUrl}" 
+            alt="첨부 이미지" 
+            class="w-full max-w-[400px] h-auto rounded-lg border-[2px] border-[#2C2C2C] object-cover" 
+          />
+        </div>
+      `;
+    }
+    // 이미지를 찾지 못했거나 키가 잘못된 경우, 빈 문자열로 대체 (제거)
+    return ''; 
+  });
+  
+  return text;
+});
+
+
 </script>
 
 <style scoped>
