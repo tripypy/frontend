@@ -350,7 +350,8 @@ import {
   Edit,
   Trash2,
 } from 'lucide-vue-next'
-import { getTripLogDetail, getTripDetail, postTripLogComment, likeTripLog, unlikeTripLog, getTripLogLikeStatus } from '@/apis/trip'
+import { getTripDetail } from '@/apis/trip/index'
+import { getTripLogDetail, postTripLogComment, likeTripLog, unlikeTripLog, getTripLogLikeStatus } from '@/apis/trip-log/index'
 import type { TripDetailResponseDto } from '@/apis/trip/types'
 import type { TripLogDetail } from '@/types/trip/trip.model'
 import { format, parseISO } from 'date-fns'

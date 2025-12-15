@@ -22,8 +22,7 @@ apiClient.interceptors.request.use(async (config) => {
 
   if (
     config.url?.startsWith('/auth/refresh') ||
-    config.url?.startsWith('/auth/login') ||
-    config.url?.startsWith('/auth/logout')
+    config.url?.startsWith('/auth/login')
   ) {
     delete config.headers?.Authorization
     return config;

@@ -6,7 +6,7 @@ import type { User } from '@/types/auth/user.model';
  */
 export const fetchUserProfile = async (userId: number): Promise<User | null> => {
     try {
-      const response = await apiClient.get<User>(`/user/${userId}/profile`);
+      const response = await apiClient.get<User>(`/users/${userId}/profile`);
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch profile for user ${userId}:`, error);
@@ -19,7 +19,7 @@ export const fetchUserProfile = async (userId: number): Promise<User | null> => 
  */
 export const fetchFriends = async (userId: number): Promise<User[]> => {
     try {
-        const response = await apiClient.get<User[]>(`/user/${userId}/friends`);
+        const response = await apiClient.get<User[]>(`/users/${userId}/friends`);
         return response.data;
     } catch (error) {
         console.error(`Failed to fetch friends list for user ${userId}:`, error);
