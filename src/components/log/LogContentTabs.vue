@@ -31,10 +31,15 @@ const isLoadingDetail = ref(false);
 
 
 const filteredPlans = computed(() => {
+  console.warn(props.userPlans)
   if (props.isMyProfile) {
     return props.userPlans;
   }
-  return props.userPlans.filter(plan => plan.visibility === 'PUBLIC');
+  return props.userPlans.filter(
+    plan =>
+      plan.visibility === 'PUBLIC' &&
+      ( plan.status === 'PLANNED' || plan.status === 'COMPLETED' )
+  );
 });
 
 const handleCreateNewPlan = async () => {

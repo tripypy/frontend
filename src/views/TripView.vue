@@ -107,7 +107,7 @@ onMounted(async () => {
   try {
     const response = await getMyTrips()
     tripsList.value = response
-    console.log('Fetched tripsList:', tripsList.value) // Added log
+    //console.log('Fetched tripsList:', tripsList.value) // Added log
   } catch (error) {
     console.error('내 여행 목록 조회 실패:', error)
     // 에러 처리 로직 추가 (예: 사용자에게 알림)
@@ -140,7 +140,7 @@ const displayTrips = computed(() => {
     if (activeTab.value === 'saved') return savedTrips.value
     return tripsList.value
   })()
-  console.log('displayTrips:', filteredTrips) // Added log
+  //console.log('displayTrips:', filteredTrips) // Added log
   return filteredTrips
 })
 

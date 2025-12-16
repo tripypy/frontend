@@ -2,8 +2,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
-import { useAuthStore} from '@/stores/auth'
-import apiClient from '@/apis/http'
+import { useAuthStore } from '@/stores/auth'
+import { fetchUserProfile } from '@/apis/user/index'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import FriendsListModal from '@/components/log/FriendsListModal.vue'
@@ -12,15 +12,7 @@ import LogMapWidget from '@/components/log/LogMapWidget.vue'
 import LogCalendarWidget from '@/components/log/LogCalendarWidget.vue'
 import LogAiAnalysis from '@/components/log/LogAiAnalysis.vue'
 import LogContentTabs from '@/components/log/LogContentTabs.vue'
-import type { TripDetailResponseDto, TripPlanResponseDto, TripDiaryResponseDto } from '@/apis/trip/types'
-import type { User } from '@/types/auth/user.model'
-
-// A more comprehensive user profile type, assuming this structure from the backend
-interface PublicUserProfile extends User {
-  completedTrips: TripDetailResponseDto[];
-  userPlans: TripPlanResponseDto[];
-  diaries: TripDiaryResponseDto[];
-}
+import type { PublicUserProfile } from '@/apis/user/types'
 
 const { handleNavigate } = useNavigate()
 const authStore = useAuthStore()
@@ -40,8 +32,10 @@ const showFriendsModal = ref(false)
 const fetchAndSetProfileData = async (userId: number) => {
   isLoading.value = true
   try {
-    const response = await apiClient.get<PublicUserProfile>(`/user/${userId}/profile`);
-    profileData.value = response.data
+    const response = await fetchUserProfile(userId);
+    if (response){
+      profileData.value = response
+    }
   } catch (error) {
     console.error(`Failed to fetch profile for user ${userId}:`, error);
     profileData.value = null
@@ -59,8 +53,10 @@ const setMyProfileData = async () => {
     };
 
     try {
-        const response = await apiClient.get<PublicUserProfile>(`/user/${loggedInUser.value.id}/profile`);
-        profileData.value = response.data;
+        const response = await fetchUserProfile(loggedInUser.value.id)
+        if (response){
+          profileData.value = response
+        }
     } catch (error) {
         console.error('내 프로필 정보를 가져오는 데 실패했습니다.', error);
         profileData.value = null;

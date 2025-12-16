@@ -6,7 +6,7 @@ interface LegendTrip {
   title: string;
   startDate?: string;
   endDate?: string;
-  color: string;
+  color?: string;
 }
 
 const props = defineProps({
@@ -83,7 +83,7 @@ watchEffect(() => {
       let endDate = new Date(trip.endDate + 'T00:00:00');
       
       while (currentDate <= endDate) {
-        newDateColorMap.set(toYYYYMMDD(currentDate), tripColor);
+        newDateColorMap.set(toYYYYMMDD(currentDate), tripColor!);
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
