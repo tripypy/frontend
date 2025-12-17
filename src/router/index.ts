@@ -60,13 +60,6 @@ const router = createRouter({
       name: 'settings',
       component: () => import('@/views/SettingsView.vue'),
     },
-    // 기존의 '/login' 경로가 '/'로 대체되었으므로, 별도로 중복하여 정의하지 않습니다.
-    // 만약 `/login`으로도 접근이 필요하다면, 아래와 같이 추가할 수 있습니다.
-    
-    {
-        path: '/login',
-        component: () => import('@/views/LoginView_before.vue'),
-    }
     
   ],
 })
