@@ -1,5 +1,5 @@
 import type { Place } from '@/types/trip/place.model'
-import type { TripLogCommentResponse } from '@/apis/trip/types'
+import type { TripLogCommentResponse } from '@/apis/trip-log/types'
 
 /**
  * 여행 가시성 상태 

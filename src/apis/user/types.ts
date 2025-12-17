@@ -2,9 +2,11 @@ import type { User } from '@/types/auth/user.model'
 import type {
     TripDetailResponseDto,
     TripResponseDto,
+    TripItemResponseDto,
     TripDiaryResponseDto
 } from '@/apis/trip/types'
-// 로그인/회원가입 관련 API 통신용 DTO
+import type { TripStatus } from '@/types/common'
+import type { TripVisibility } from '@/types/trip/trip.model'
 
 // 로그인 요청 DTO
 export interface LoginRequestDto {
@@ -19,8 +21,62 @@ export interface SignupRequestDto {
     nickname: string;
 }
 
-export interface PublicUserProfile extends User {
-    completedTrips: TripDetailResponseDto[];
-    userPlans: TripResponseDto[];
-    diaries: TripDiaryResponseDto[];
+export interface BaseUserProfileDto {
+    id: number
+    nickname: string
+    profileImageUrl: string | null
+    bio: string | null
+    intro: string | null
+    homeRegionId: number | null
+    travelStyleSummary: string | null
+    travelStyleId: number | null
+    profileBannerUrl: string | null
+    isProfilePublic: boolean
+    friendsCount: number
+
+    tripOverviews: UserTripOverviewDto[]
+    completedTripDetails: UserCompletedTripDetailDto[]
+    logs: UserLogSummaryDto[]
 }
+export interface UserTripOverviewDto {
+    id: number
+    title: string
+    startDate: string
+    endDate: string
+    status: TripStatus
+    visibility: TripVisibility
+    locationSummary: string
+    isOwner: boolean
+    spots: number
+    tags: string[]
+    spotPreviews: { name: string }[]
+    completedDate?: string
+}
+
+export interface UserCompletedTripDetailDto {
+    id: number
+    title: string
+    startDate: string
+    endDate: string
+    status: TripStatus
+    visibility: TripVisibility
+    locationSummary: string
+    tripItems: TripItemResponseDto[]
+}
+
+export interface UserLogSummaryDto {
+    logId: number
+    title: string
+    thumbnailUrl: string | null
+}
+
+export interface UserProfileResponseDto
+  extends BaseUserProfileDto {}
+
+export type UserFriendsResponseDto = BaseUserProfileDto[]
+
+export interface UserMeResponseDto
+  extends BaseUserProfileDto {
+  email: string
+}
+

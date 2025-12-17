@@ -21,7 +21,7 @@
       </div>
     </Transition>
     <div
-      class="bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-[3px_3px_0px_0px_rgba(44,44,44,0.1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all p-5"
+      class="bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all p-5"
     >
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity">

@@ -114,7 +114,7 @@ async function handleSave() {
 </script>
 
 <template>
-  <div v-if="profileData" class="w-full bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 text-center shadow-[8px_8px_0px_0px_rgba(44,44,44,1)]">
+  <div v-if="profileData" class="w-full bg-[#fae282] border-[4px] border-[#2C2C2C] rounded-[30px] p-6 text-center shadow-[0px_4px_0px_0px_rgba(44,44,44,1)]">
     <div 
       class="relative group w-28 h-28 mx-auto mb-4"
       :class="{ 'cursor-pointer': isEditMode }"

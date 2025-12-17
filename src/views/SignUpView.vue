@@ -2,7 +2,7 @@
     <AuthLayout>
       <div class="text-left h-full px-10 flex flex-col justify-center">
         <h2 class="text-5xl font-black mb-3">환영합니다!</h2>
-        <p class="text-lg font-base text-gray-500 mb-8">새로운 여행을 계획하고 기록해보세요.</p>
+        <p class="text-lg font-base text-gray-500 mb-8">여행을 기록하고, 새로운 영감을 발견하세요.</p>
   
         <form @submit.prevent="handleSignUp" class="space-y-6">
           <div>

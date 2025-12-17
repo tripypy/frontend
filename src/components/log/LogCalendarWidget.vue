@@ -108,7 +108,7 @@ function nextMonth() {
 </script>
 
 <template>
-  <div class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[8px_8px_0px_0px_rgba(44,44,44,1)]">
+  <div class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[0px_4px_0px_0px_rgba(44,44,44,1)]">
     <div class="flex justify-between items-center mb-3 px-2">
       <h2 class="font-black text-xl text-[#2C2C2C]">CALENDAR</h2>
     </div>

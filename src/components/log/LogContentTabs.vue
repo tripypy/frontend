@@ -31,7 +31,6 @@ const isLoadingDetail = ref(false);
 
 
 const filteredPlans = computed(() => {
-  console.warn(props.userPlans)
   if (props.isMyProfile) {
     return props.userPlans;
   }
@@ -85,7 +84,7 @@ const handleDiaryClick = (diaryId: number) => {
 
 <template>
   <div>
-    <div class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[8px_8px_0px_0px_rgba(44,44,44,1)]">
+    <div class="bg-white border-[3px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)]">
       <div class="flex border-b-2 border-gray-100 mb-6">
         <button
           @click="activeTab = 'diary'"

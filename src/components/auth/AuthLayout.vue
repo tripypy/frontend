@@ -9,10 +9,10 @@
       </h1>
     </div>
 
-    <div class="w-full border-4 border-gray-800 max-w-6xl min-h-[65vh] bg-white rounded-b-2xl rounded-tr-2xl shadow-black shadow-[8px_8px_12px_rgba(0,0,0,0.5)] overflow-hidden md:flex">
+    <div class="w-full border-4 border-gray-800 max-w-6xl min-h-[65vh] bg-white rounded-b-2xl rounded-tr-2xl shadow-black shadow-[8px_8px_0px_rgba(0,0,0,1)] overflow-hidden md:flex">
       
       <div class="md:w-1/2 p-8 relative"> 
-        <div class="w-full h-full border border-gray-500 shadow-black shadow-[4px_4px_8px_rgba(0,0,0,0.5)] rounded-xl relative">
+        <div class="w-full h-full border border-gray-500 shadow-black shadow-[4px_4px_0px_rgba(0,0,0,1)] rounded-xl relative">
           
           <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm">
             <AuthSlider :slides="slides" />
