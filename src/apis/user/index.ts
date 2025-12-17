@@ -1,12 +1,14 @@
 import apiClient from '@/apis/http';
 import type { User } from '@/types/auth/user.model'; 
+import type { PublicUserProfile } from '@/apis/user/types'
 
 /**
  * 특정 사용자의 프로필을 조회합니다.
  */
-export const fetchUserProfile = async (userId: number): Promise<User | null> => {
+export const fetchUserProfile = async (userId: number): Promise<PublicUserProfile | null> => {
     try {
-      const response = await apiClient.get<User>(`/users/${userId}/profile`);
+      const response = await apiClient.get<PublicUserProfile>(`/users/${userId}/profile`);
+      console.warn(response.data)
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch profile for user ${userId}:`, error);
@@ -17,9 +19,9 @@ export const fetchUserProfile = async (userId: number): Promise<User | null> => 
 /**
  * 특정 사용자의 친구 목록을 조회합니다.
  */
-export const fetchFriends = async (userId: number): Promise<User[]> => {
+export const fetchFriends = async (userId: number): Promise<PublicUserProfile[]> => {
     try {
-        const response = await apiClient.get<User[]>(`/users/${userId}/friends`);
+        const response = await apiClient.get<PublicUserProfile[]>(`/users/${userId}/friends`);
         return response.data;
     } catch (error) {
         console.error(`Failed to fetch friends list for user ${userId}:`, error);

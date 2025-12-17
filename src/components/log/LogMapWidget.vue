@@ -10,19 +10,19 @@ interface LegendDay {
   tripTitle: string
   dayNumber: number
   date: string
-  color: string
+  color?: string
 }
 
 interface TripPath {
   path: { lat: number; lng: number }[]
-  color: string
+  color?: string
 }
 
 interface TripMarker {
   lat: number
   lng: number
   name: string
-  color: string
+  color?: string
   type: 'plan' // 마커 타입을 plan으로 지정
 }
 
@@ -53,8 +53,16 @@ const legendDays = ref<LegendDay[]>([])
 const tripPaths = ref<TripPath[]>([])
 const tripMarkers = ref<TripMarker[]>([])
 const mapCenter = ref({ lat: 37.5665, lng: 126.9780 })
+const tripColorMap = new Map<number, string>()
 
 // --- LOGIC ---
+const getTripColor = (tripId: number) => {
+  if (!tripColorMap.has(tripId)) {
+    const color = colors[tripColorMap.size % colors.length]!
+    tripColorMap.set(tripId, color)
+  }
+  return tripColorMap.get(tripId)
+}
 // Date 객체를 'YYYY-MM-DD' 문자열로 변환
 const toYYYYMMDD = (date: Date): string => {
   const year = date.getFullYear();
@@ -97,7 +105,7 @@ watch(
           tripTitle: trip.title,
           dayNumber: dayNumber,
           date: dayDate,
-          items: dayItems.sort((a, b) => a.orderIndex - b.orderIndex)
+          items: dayItems!.sort((a, b) => a.orderIndex - b.orderIndex)
         });
       });
     });
@@ -111,8 +119,8 @@ watch(
     const newTripMarkers: TripMarker[] = [];
     const allDrawablePlaces: { lat: number, lng: number }[] = [];
     
-    daysToDisplay.forEach((day, index) => {
-      const dayColor = colors[index % colors.length];
+    daysToDisplay.forEach((day) => {
+      const dayColor = getTripColor(day.tripId);
 
       // 마커 생성
       day.items.forEach(item => {

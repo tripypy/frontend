@@ -5,8 +5,14 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'login', 
+      component: () => import('@/views/LoginView.vue'),
+    },
+    {
+      path: '/home', 
       name: 'home',
       component: () => import('@/views/HomeView.vue'),
+      meta: { requiresAuth: true } // 인증 필요 표시
     },
     {
       path: '/trips',
@@ -40,11 +46,6 @@ const router = createRouter({
       props: true
     },
     {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/views/LoginView.vue'),
-    },
-    {
       path: '/signup',
       name: 'signup',
       component: () => import('@/views/SignUpView.vue'),
@@ -59,6 +60,7 @@ const router = createRouter({
       name: 'settings',
       component: () => import('@/views/SettingsView.vue'),
     },
+    
   ],
 })
 

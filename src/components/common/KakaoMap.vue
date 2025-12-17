@@ -36,7 +36,7 @@ interface MarkerOption extends LatLng {
 
 interface PolylineOption {
   path: LatLng[]
-  color: string
+  color?: string
 }
 
 const props = defineProps<{
