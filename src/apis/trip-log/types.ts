@@ -14,7 +14,7 @@ export interface TripLogFeedItemDto {
   logId: number;
   authorId: number;
   authorNickname: string;
-  authorImageUrl: string;
+  authorImageUrl?: string;
   title: string;
   content: string;
   locationSummary: string;
@@ -31,9 +31,9 @@ export interface TripLogFeedResponseDto {
   nextCursor: number | null; // 다음 페이지를 요청할 때 사용할 커서 값
   hasNext: boolean; // 다음 페이지가 있는지 여부
 }
-  
+
 /**
- * TripLog 관련 타입 
+ * TripLog 관련 타입
  */
 
 export interface TripLogLikeResponse {
