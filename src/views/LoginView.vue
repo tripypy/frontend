@@ -2,7 +2,7 @@
   <AuthLayout>
     <div class="text-left h-full px-10 flex flex-col justify-center">
       <h2 class="text-5xl font-black mb-3">로그인</h2>
-      <p class="text-lg font-base text-gray-500 mb-8">여행을 기록하고 서로의 여행을 만나보세요</p>
+      <p class="text-lg font-base text-gray-500 mb-8">오늘은 어떤 여행을 남겨볼까요?</p>
 
       <form @submit.prevent="handleLogin" class="space-y-5">
           <div>

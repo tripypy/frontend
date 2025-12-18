@@ -6,3 +6,4 @@ export interface User {
     bio?: string;
     friendsCount: number;
 }
+

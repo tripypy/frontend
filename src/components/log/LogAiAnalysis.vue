@@ -29,7 +29,7 @@ const analysisData = computed(() => {
 </script>
 
 <template>
-  <div class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[8px_8px_0px_0px_rgba(44,44,44,1)] flex flex-col lg:flex-row gap-6 relative">
+  <div class="bg-white border-[3px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] flex flex-col lg:flex-row gap-6 relative">
     <div class="absolute top-3 right-4 text-xs font-semibold text-gray-500">AI_GENERATED</div>
     <!-- Left Section: Hashtags and Gauges -->
     <div class="flex-1 lg:w-1/2 mt-4">

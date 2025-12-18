@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect, type PropType } from 'vue';
-import type { TripDetailResponseDto } from '@/apis/trip/types';
+import type { UserCompletedTripDetailDto } from '@/apis/user/types';
 
 interface LegendTrip {
   title: string;
@@ -11,14 +11,14 @@ interface LegendTrip {
 
 const props = defineProps({
   completedTrips: {
-    type: Array as PropType<TripDetailResponseDto[]>,
+    type: Array as PropType<UserCompletedTripDetailDto[]>,
     required: true
   }
 });
 
 const colors = [
-  '#E6194B', '#3CB44B', '#FFE119', '#4363D8', '#F58231', 
-  '#911EB4', '#46F0F0', '#F032E6', '#BCF60C', '#FABEBE', 
+  '#E6194B', '#3CB44B', '#FFE119', '#4363D8', '#F58231',
+  '#911EB4', '#46F0F0', '#F032E6', '#BCF60C', '#FABEBE',
 ].reverse(); // Use reversed colors to have more distinct ones first for recent trips
 
 const currentMonth = ref(new Date());
@@ -70,7 +70,7 @@ watchEffect(() => {
 
   sortedTrips.forEach((trip, index) => {
     const tripColor = colors[index % colors.length];
-    
+
     newTripsForLegend.push({
       title: trip.title,
       startDate: trip.startDate,
@@ -79,16 +79,16 @@ watchEffect(() => {
     });
 
     if (trip.startDate && trip.endDate) {
-      let currentDate = new Date(trip.startDate + 'T00:00:00');
-      let endDate = new Date(trip.endDate + 'T00:00:00');
-      
+      const currentDate = new Date(trip.startDate + 'T00:00:00');
+      const endDate = new Date(trip.endDate + 'T00:00:00');
+
       while (currentDate <= endDate) {
         newDateColorMap.set(toYYYYMMDD(currentDate), tripColor!);
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
   });
-  
+
   dateColorMap.value = newDateColorMap;
   tripsForLegend.value = newTripsForLegend.reverse(); // 범례는 최신순으로 표시
 });
@@ -108,7 +108,7 @@ function nextMonth() {
 </script>
 
 <template>
-  <div class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[8px_8px_0px_0px_rgba(44,44,44,1)]">
+  <div class="bg-white border-[4px] border-[#2C2C2C] rounded-[30px] p-6 shadow-[0px_4px_0px_0px_rgba(44,44,44,1)]">
     <div class="flex justify-between items-center mb-3 px-2">
       <h2 class="font-black text-xl text-[#2C2C2C]">CALENDAR</h2>
     </div>

@@ -1,5 +1,5 @@
 <template>
-  <nav class="fixed top-0 left-0 right-0 bg-white border-b-[2px] border-[#2C2C2C] z-50">
+  <nav class="fixed top-0 left-0 right-0 bg-[#F5F5F5] border-b-[2px] border-[#2C2C2C] z-50">
     <div class="max-w-[1600px] mx-auto px-8 py-5">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-12">
@@ -135,14 +135,12 @@
             </div>
           </div>
         </div>
-        
-        <!-- Logged Out State -->
+
         <div v-else>
-            <router-link to="/login" class="flex items-center gap-2 px-5 py-2 bg-[#6A88E3] text-white border-2 border-[#2C2C2C] rounded-full font-black text-sm tracking-tight transition-all hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px]">
+            <router-link to="/" class="flex items-center gap-2 px-5 py-2 ...">
                 로그인
             </router-link>
         </div>
-
       </div>
     </div>
   </nav>

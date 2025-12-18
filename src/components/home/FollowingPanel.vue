@@ -1,12 +1,12 @@
 <template>
   <div class="sticky top-28 space-y-4">
     <div
-      class="relative bg-gradient-to-br from-[#F9CA6B] to-[#F4B860] border-[2px] border-[#2C2C2C] rounded-2xl p-5 shadow-[3px_3px_0px_0px_rgba(44,44,44,0.1)] overflow-hidden group hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all"
+      class="relative bg-gradient-to-br from-[#F9CA6B] to-[#CFF500] border-[2px] border-[#2C2C2C] rounded-2xl p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] overflow-hidden group hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all"
     >
       <div
         class="absolute top-3 right-3 opacity-20 transform group-hover:rotate-12 transition-transform duration-500"
       >
-        <MapPin class="w-12 h-12 text-white fill-white" stroke-width="3" />
+        <!-- <MapPin class="w-12 h-12 text-white fill-white" stroke-width="3" /> -->
       </div>
 
       <div class="relative z-10 flex flex-col items-center text-center mb-4">
@@ -28,8 +28,9 @@
       </button>
     </div>
 
+    <!-- Following -->
     <div
-      class="bg-white border-[2px] border-[#2C2C2C] rounded-2xl p-5 shadow-[3px_3px_0px_0px_rgba(44,44,44,0.1)]"
+      class="bg-white border-[2px] border-[#2C2C2C] rounded-2xl p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
     >
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-bold text-[#2C2C2C] text-base">Following</h3>
@@ -71,8 +72,9 @@
       </div>
     </div>
 
+    <!-- Follwers -->
     <div
-      class="bg-white border-[2px] border-[#2C2C2C] rounded-2xl p-5 shadow-[3px_3px_0px_0px_rgba(44,44,44,0.1)]"
+      class="bg-white border-[2px] border-[#2C2C2C] rounded-2xl p-5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
     >
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-bold text-[#2C2C2C] text-base">Followers</h3>
@@ -117,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { MapPin, PenTool, Plus } from 'lucide-vue-next'
+import { PenTool, Plus } from 'lucide-vue-next'
 
 interface Follower {
   id: number
