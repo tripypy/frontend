@@ -2,13 +2,13 @@ import apiClient from '@/apis/http'
 import type {
   TripDetailResponseDto,
   TripItemResponseDto,
-  TripItemsUpdateRequestDto, 
+  TripItemsReplaceRequestDto,
   TripUpdateRequestDto,
   TripResponseDto,
   TripSummaryResponseDto
 } from '@/apis/trip/types'
-  
-import { TripStatus } from '@/types/common'; 
+
+import { TripStatus } from '@/types/common';
 
 // API 호출 함수
 /**
@@ -47,7 +47,7 @@ export const deleteTrip = async (tripId: number): Promise<void> => {
  */
 export const syncTripItems = async (
   tripId: number,
-  syncData: TripItemsUpdateRequestDto, // Changed type
+  syncData: TripItemsReplaceRequestDto, // Changed type
 ): Promise<TripItemResponseDto[]> => {
   const response = await apiClient.put<TripItemResponseDto[]>(`/trips/${tripId}/items`, syncData)
   return response.data
@@ -63,7 +63,7 @@ export const updateTrip = async (
   tripId: number,
   updateData: TripUpdateRequestDto,
 ): Promise<TripDetailResponseDto> => {
-  const response = await apiClient.put<TripDetailResponseDto>(`/trips/${tripId}`, updateData)
+  const response = await apiClient.patch<TripDetailResponseDto>(`/trips/${tripId}`, updateData)
   return response.data
 }
 
