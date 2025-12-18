@@ -54,12 +54,12 @@
             :class="[
               'p-2 border-[2px] border-[#2C2C2C] rounded-lg transition-all focus:outline-none',
               isBookmarked
-                ? 'bg-[#D4A520] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
+                ? 'bg-[#CFF500] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
                 : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
             ]"
           >
             <Bookmark
-              :class="['w-3.5 h-3.5', isBookmarked ? 'text-white fill-white' : 'text-gray-600']"
+              :class="['w-3.5 h-3.5', isBookmarked ? 'text-black fill-black ' : 'text-gray-600']"
               stroke-width="2.5"
             />
           </button>
@@ -210,6 +210,7 @@ import {
 import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
+import { likeTripLog, unlikeTripLog } from '@/apis/trip-log/index'
 
 interface CourseItem {
   number: number
@@ -245,9 +246,14 @@ const nextImage = () => {
 }
 
 // Like Action
-const toggleLike = () => {
-  if (isLiked.value) currentLikes.value--
-  else currentLikes.value++
+const toggleLike = async() => {
+  let response
+  if (isLiked.value){
+    response = await unlikeTripLog(props.logId)
+  } else {
+    response = await likeTripLog(props.logId)
+  }
+  if(response.liked) currentLikes.value = response.likeCount
   isLiked.value = !isLiked.value
 }
 

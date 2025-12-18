@@ -13,7 +13,7 @@ import LogCalendarWidget from '@/components/log/LogCalendarWidget.vue'
 import LogAiAnalysis from '@/components/log/LogAiAnalysis.vue'
 import LogContentTabs from '@/components/log/LogContentTabs.vue'
 import { toLogViewProfile } from '@/mappers/userProfile.mapper'
-import type { LogViewProfile } from '@/types/trip/trip.model'
+import type { LogViewProfile } from '@/types/user/user.model'
 
 
 const { handleNavigate } = useNavigate()

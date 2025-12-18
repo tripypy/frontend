@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { Pencil } from 'lucide-vue-next';
-import type { LogViewProfile } from '@/types/trip/trip.model'
+import type { LogViewProfile } from '@/types/user/user.model'
 
 interface Props {
   profileData: LogViewProfile | null;

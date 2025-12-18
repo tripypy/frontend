@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { X, MoreHorizontal } from 'lucide-vue-next'
 import { fetchFriends } from '@/apis/user'
-import type { User } from '@/types/auth/user.model'
+import type { User } from '@/types/user/user.model'
 import ProfileImageModal from '@/components/log/ProfileImageModal.vue' // ProfileImageModal 임포트
 
 const props = defineProps<{
@@ -146,8 +146,8 @@ function closeImageViewerModal() {
     <div v-if="popoverOpenForFriendId !== null" class="fixed inset-0" @click="closePopover" style="z-index: 5;"></div>
 
     <!-- Friend Profile Image Viewer Modal -->
-    <ProfileImageModal 
-      :show="showImageViewerModal" 
+    <ProfileImageModal
+      :show="showImageViewerModal"
       :image-url="selectedFriendImageUrl"
       @close="closeImageViewerModal"
     />

@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 
 import { normalizeDiary } from '@/mappers/userProfile.mapper'
 import type { UserLogSummaryDto } from '@/apis/user/types'
+import type { TripPlanView } from '@/types/trip/trip.model'
 import type {
-  TripResponseDto,
   TripDetailResponseDto,
   TripDiaryResponseDto,
 } from '@/apis/trip/types'
@@ -20,7 +20,7 @@ import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 interface Props {
   isMyProfile: boolean
   userDiaries: (TripDiaryResponseDto | UserLogSummaryDto)[]
-  userPlans: TripResponseDto[]
+  userPlans: TripPlanView[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
