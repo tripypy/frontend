@@ -285,7 +285,7 @@ const toggleLike = async() => {
   } else {
     response = await likeTripLog(props.logId)
   }
-  if(response.liked) currentLikes.value = response.likeCount
+  currentLikes.value = response.likeCount
   isLiked.value = !isLiked.value
 }
 
