@@ -9,6 +9,10 @@ const router = createRouter({
       component: () => import('@/views/LoginView.vue'),
     },
     {
+      path: '/login', 
+      redirect: { path: '/' } // 루트 경로로 리디렉션
+    },
+    {
       path: '/home', 
       name: 'home',
       component: () => import('@/views/HomeView.vue'),

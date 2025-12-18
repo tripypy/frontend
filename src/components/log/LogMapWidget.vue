@@ -2,7 +2,8 @@
 
 import { ref, watch, type PropType } from 'vue'
 import KakaoMap from '@/components/common/KakaoMap.vue'
-import type { TripDetailResponseDto, TripItemResponseDto } from '@/apis/trip/types'
+import type { TripItemResponseDto } from '@/apis/trip/types'
+import type { UserCompletedTripDetailDto } from '@/apis/user/types'
 
 // --- TYPES ---
 interface LegendDay {
@@ -36,16 +37,16 @@ interface ProcessedDay {
 
 const props = defineProps({
   completedTrips: {
-    type: Array as PropType<TripDetailResponseDto[]>,
+    type: Array as PropType<UserCompletedTripDetailDto[]>,
     required: true
   }
 })
 
 // --- REFS ---
 const colors = [
-  '#E6194B', '#3CB44B', '#FFE119', '#4363D8', '#F58231', 
-  '#911EB4', '#46F0F0', '#F032E6', '#BCF60C', '#FABEBE', 
-  '#008080', '#E6BEFF', '#9A6324', '#FFFAC8', '#800000', 
+  '#E6194B', '#3CB44B', '#FFE119', '#4363D8', '#F58231',
+  '#911EB4', '#46F0F0', '#F032E6', '#BCF60C', '#FABEBE',
+  '#008080', '#E6BEFF', '#9A6324', '#FFFAC8', '#800000',
   '#AAFFC3', '#808000', '#FFD8B1', '#000075', '#808080'
 ];
 
@@ -99,7 +100,7 @@ watch(
         // Note: setDate mutates the date object. Create a new one to avoid issues.
         const dayDate = new Date(startDate.getTime());
         dayDate.setDate(dayDate.getDate() + dayNumber - 1);
-        
+
         allDays.push({
           tripId: trip.id,
           tripTitle: trip.title,
@@ -118,7 +119,7 @@ watch(
     const newTripPaths: TripPath[] = [];
     const newTripMarkers: TripMarker[] = [];
     const allDrawablePlaces: { lat: number, lng: number }[] = [];
-    
+
     daysToDisplay.forEach((day) => {
       const dayColor = getTripColor(day.tripId);
 
@@ -186,7 +187,7 @@ watch(
       <div v-for="day in legendDays" :key="`${day.tripId}-${day.dayNumber}`" class="flex items-center py-1">
         <div class="w-3 h-3 rounded-full mr-3 flex-shrink-0" :style="{ backgroundColor: day.color }"></div>
         <div class="flex items-center text-sm font-medium text-gray-700 overflow-hidden">
-          <span class="font-bold truncate" :title="day.tripTitle">{{ day.tripTitle }} - Day {{ day.dayNumber }}</span> 
+          <span class="font-bold truncate" :title="day.tripTitle">{{ day.tripTitle }} - Day {{ day.dayNumber }}</span>
           <span class="text-gray-500 ml-2 flex-shrink-0">- {{ day.date }}</span>
         </div>
       </div>

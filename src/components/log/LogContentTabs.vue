@@ -1,19 +1,26 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
-import type { TripResponseDto, TripDetailResponseDto, TripDiaryResponseDto, TripPlanResponseDto } from '@/apis/trip/types';
-import { createTrip } from '@/apis/trip/index';
-import apiClient from '@/apis/http';
+import { normalizeDiary } from '@/mappers/userProfile.mapper'
+import type { UserLogSummaryDto } from '@/apis/user/types'
+import type {
+  TripResponseDto,
+  TripDetailResponseDto,
+  TripDiaryResponseDto,
+} from '@/apis/trip/types'
 
-import { Heart, MessageCircle } from 'lucide-vue-next';
-import TripCard from '@/components/trip/TripCard.vue';
-import TripDetailModal from '@/components/modal/TripDetailModal.vue';
+import { createTrip } from '@/apis/trip'
+import apiClient from '@/apis/http'
+
+import { Heart, MessageCircle } from 'lucide-vue-next'
+import TripCard from '@/components/trip/TripCard.vue'
+import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 
 interface Props {
-  isMyProfile: boolean;
-  userDiaries: TripDiaryResponseDto[]; 
-  userPlans: TripResponseDto[];
+  isMyProfile: boolean
+  userDiaries: (TripDiaryResponseDto | UserLogSummaryDto)[]
+  userPlans: TripResponseDto[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -21,66 +28,61 @@ const props = withDefaults(defineProps<Props>(), {
   userPlans: () => [],
 })
 
-const router = useRouter();
-const activeTab = ref('diary'); // 'diary' or 'plan'
+const router = useRouter()
+const activeTab = ref<'diary' | 'plan'>('diary')
+
+// --------------------
+// 일기 목록 정규화
+// --------------------
+const normalizedDiaries = computed<TripDiaryResponseDto[]>(() =>
+  props.userDiaries.map(normalizeDiary),
+)
 
 // --- Modal State ---
-const isDetailModalOpen = ref(false);
-const selectedTrip = ref<TripDetailResponseDto | null>(null);
-const isLoadingDetail = ref(false);
+const isDetailModalOpen = ref(false)
+const selectedTrip = ref<TripDetailResponseDto | null>(null)
+const isLoadingDetail = ref(false)
 
-
+// --- Plans ---
 const filteredPlans = computed(() => {
-  if (props.isMyProfile) {
-    return props.userPlans;
-  }
+  if (props.isMyProfile) return props.userPlans
   return props.userPlans.filter(
     plan =>
       plan.visibility === 'PUBLIC' &&
-      ( plan.status === 'PLANNED' || plan.status === 'COMPLETED' )
-  );
-});
+      (plan.status === 'PLANNED' || plan.status === 'COMPLETED'),
+  )
+})
 
 const handleCreateNewPlan = async () => {
-  try {
-    const newTrip = await createTrip();
-    router.push(`/trips/${newTrip.id}`);
-  } catch (error) {
-    console.error('여행 계획 생성 실패:', error);
-    alert('여행 계획 생성에 실패했습니다. 로그인 상태를 확인해주세요.');
-  }
-};
+  const newTrip = await createTrip()
+  router.push(`/trips/${newTrip.id}`)
+}
 
 const handlePlanClick = async (tripId: number) => {
-  isLoadingDetail.value = true;
-  isDetailModalOpen.value = true;
+  isLoadingDetail.value = true
+  isDetailModalOpen.value = true
   try {
-    const response = await apiClient.get<TripDetailResponseDto>(`/trips/${tripId}`);
-    selectedTrip.value = response.data;
-  } catch (error) {
-    console.error(`Failed to fetch trip details for id ${tripId}:`, error);
-    alert('여행 상세 정보를 불러오는 데 실패했습니다.');
-    isDetailModalOpen.value = false; // 에러 발생 시 모달 닫기
+    const res = await apiClient.get<TripDetailResponseDto>(`/trips/${tripId}`)
+    selectedTrip.value = res.data
   } finally {
-    isLoadingDetail.value = false;
+    isLoadingDetail.value = false
   }
-};
+}
 
 const handleCloseModal = () => {
-    isDetailModalOpen.value = false;
-    selectedTrip.value = null;
+  isDetailModalOpen.value = false
+  selectedTrip.value = null
 }
 
 const handleEdit = (trip: TripDetailResponseDto) => {
-    router.push(`/trips/${trip.id}`);
-};
+  router.push(`/trips/${trip.id}`)
+}
 
 const handleDiaryClick = (diaryId: number) => {
-  // TODO: 일기 상세 페이지 라우팅 구현
-  // router.push(`/diaries/${diaryId}`);
-  console.log(`Diary ${diaryId} clicked, navigation not implemented yet.`);
-};
+  console.log(`Diary ${diaryId} clicked`)
+}
 </script>
+
 
 <template>
   <div>
@@ -94,7 +96,7 @@ const handleDiaryClick = (diaryId: number) => {
             'text-gray-600 hover:text-gray-800': activeTab !== 'diary'
           }"
         >
-          여행 일기 ({{ userDiaries.length }})
+          여행 일기 ({{ normalizedDiaries.length }})
         </button>
         <button
           @click="activeTab = 'plan'"
@@ -133,7 +135,7 @@ const handleDiaryClick = (diaryId: number) => {
 
         <!-- 여행 일기 탭 -->
         <div v-if="activeTab === 'diary'">
-          <div v-if="userDiaries.length === 0" class="col-span-full text-center text-gray-500 py-10">
+          <div v-if="normalizedDiaries.length === 0" class="col-span-full text-center text-gray-500 py-10">
             <p class="mb-4">아직 작성된 여행 일기가 없습니다.</p>
             <button v-if="isMyProfile"
                     class="px-5 py-2 border-[3px] rounded-xl font-bold text-xs transition-colors shadow-[4px_4px_0px_0px_rgba(150,150,150,1)] bg-black text-white border-black hover:bg-[#2C2C2C]"
@@ -142,7 +144,7 @@ const handleDiaryClick = (diaryId: number) => {
             </button>
           </div>
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-              <div v-for="card in userDiaries" :key="card.id"
+              <div v-for="card in normalizedDiaries" :key="card.id"
                   @click="handleDiaryClick(card.id)"
                   class="cursor-pointer bg-white border-[2px] border-[#2C2C2C] rounded-2xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] flex flex-col overflow-hidden transition-transform hover:scale-105"
               >
@@ -158,10 +160,10 @@ const handleDiaryClick = (diaryId: number) => {
                 <div class="p-4 flex-1 flex flex-col">
                   <h3 class="font-black text-xl text-[#2C2C2C] mb-2 truncate">{{ card.title }}</h3>
                   <p class="text-sm text-gray-600 mb-3 line-clamp-2 h-10">
-                    {{ 
-                      card.spotPreviews && card.spotPreviews.length > 0 
+                    {{
+                      card.spotPreviews && card.spotPreviews.length > 0
                       ? card.spotPreviews.map(s => s.name).join(', ') : '아직 방문지가 없습니다.' }}</p>
-                  <div class="flex flex-wrap gap-1 mb-3 h-5 overflow-hidden">
+                  <div v-if="card.tags" class="flex flex-wrap gap-1 mb-3 h-5 overflow-hidden">
                     <span v-for="tag in card.tags" :key="tag"
                           class="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full"
                     >#{{ tag }}</span>
@@ -179,7 +181,7 @@ const handleDiaryClick = (diaryId: number) => {
         </div>
       </div>
     </div>
-    
+
     <!-- Detail Modal -->
     <TripDetailModal
       v-if="isDetailModalOpen && selectedTrip"
@@ -187,7 +189,7 @@ const handleDiaryClick = (diaryId: number) => {
       @close="handleCloseModal"
       @edit="handleEdit"
     />
-    
+
     <!-- Loading Overlay for Modal -->
     <div v-if="isLoadingDetail" class="fixed inset-0 bg-white/70 flex items-center justify-center z-50">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2C2C2C]"></div>

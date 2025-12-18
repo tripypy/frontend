@@ -135,14 +135,12 @@
             </div>
           </div>
         </div>
-        
-        <!-- Logged Out State -->
+
         <div v-else>
-            <router-link to="/login" class="flex items-center gap-2 px-5 py-2 bg-[#6A88E3] text-white border-2 border-[#2C2C2C] rounded-full font-black text-sm tracking-tight transition-all hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px]">
+            <router-link to="/" class="flex items-center gap-2 px-5 py-2 ...">
                 로그인
             </router-link>
         </div>
-
       </div>
     </div>
   </nav>

@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import apiClient from '@/apis/http'
-import type { LoginRequestDto, SignupRequestDto } from '@/apis/user/types'
+import type { LoginRequestDto, SignupRequestDto, UserMeResponseDto } from '@/apis/user/types'
 import type { User } from '@/types/auth/user.model'
 
 import { 
@@ -22,7 +22,7 @@ import {
 } from '@/apis/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(JSON.parse(localStorage.getItem('user') || 'null'))
+  const user = ref<UserMeResponseDto | null>(JSON.parse(localStorage.getItem('user') || 'null'))
   const accessToken = ref<string | null>(null)
   const accessTokenExpiresAt = ref<number | null>(null)
 
@@ -41,7 +41,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function setAuthenticated(token: string, expiresInMs: number, userData: User) {
+  function setAuthenticated(token: string, expiresInMs: number, userData: UserMeResponseDto) {
     accessToken.value = token
     user.value = userData
     accessTokenExpiresAt.value = Date.now() + expiresInMs;
@@ -59,7 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
     setAuthorizationHeader(null)
   }
 
-  async function fetchUser(): Promise<User | null> {
+  async function fetchUser(): Promise<UserMeResponseDto | null> {
     try {
       return await requestFetchUser();
     } catch(error) {

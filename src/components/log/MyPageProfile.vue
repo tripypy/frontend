@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import type { User } from '@/types/auth/user.model'
 import { Pencil } from 'lucide-vue-next';
+import type { LogViewProfile } from '@/types/trip/trip.model'
 
 interface Props {
-  profileData: User | null;
+  profileData: LogViewProfile | null;
   isMyProfile: boolean;
   diaryCount?: number;
 }
@@ -101,7 +101,7 @@ async function handleSave() {
         alert('프로필 업데이트에 실패했습니다.');
     }
   }
-  
+
   if (imageUploadSuccess || profileUpdateSuccess) {
     alert('프로필이 성공적으로 업데이트되었습니다.');
     isEditMode.value = false;
@@ -115,7 +115,7 @@ async function handleSave() {
 
 <template>
   <div v-if="profileData" class="w-full bg-[#fae282] border-[4px] border-[#2C2C2C] rounded-[30px] p-6 text-center shadow-[0px_4px_0px_0px_rgba(44,44,44,1)]">
-    <div 
+    <div
       class="relative group w-28 h-28 mx-auto mb-4"
       :class="{ 'cursor-pointer': isEditMode }"
       @click="isEditMode ? triggerFileInput() : null"
@@ -150,7 +150,7 @@ async function handleSave() {
       <h1 class="text-2xl font-black text-[#2C2C2C]">{{ profileData.nickname }}</h1>
       <span class="text-sm text-gray-500">@{{ profileData.email?.split('@')[0] }}_traveler</span>
     </div>
-    
+
     <div v-if="isEditMode" class="mt-4 mb-4">
        <textarea
           v-model="editableBio"

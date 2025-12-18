@@ -1,9 +1,5 @@
-import type { User } from '@/types/auth/user.model'
 import type {
-    TripDetailResponseDto,
-    TripResponseDto,
     TripItemResponseDto,
-    TripDiaryResponseDto
 } from '@/apis/trip/types'
 import type { TripStatus } from '@/types/common'
 import type { TripVisibility } from '@/types/trip/trip.model'
@@ -13,7 +9,7 @@ export interface LoginRequestDto {
     email: string;
     password: string;
 }
-  
+
 // 회원가입 요청 DTO
 export interface SignupRequestDto {
     email: string;
@@ -70,8 +66,7 @@ export interface UserLogSummaryDto {
     thumbnailUrl: string | null
 }
 
-export interface UserProfileResponseDto
-  extends BaseUserProfileDto {}
+export type UserProfileResponseDto = BaseUserProfileDto
 
 export type UserFriendsResponseDto = BaseUserProfileDto[]
 

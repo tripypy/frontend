@@ -119,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { MapPin, PenTool, Plus } from 'lucide-vue-next'
+import { PenTool, Plus } from 'lucide-vue-next'
 
 interface Follower {
   id: number

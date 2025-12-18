@@ -1,8 +1,14 @@
 import type { Place } from '@/types/trip/place.model'
 import type { TripLogCommentResponse } from '@/apis/trip-log/types'
+import type {
+  UserTripOverviewDto,
+  UserCompletedTripDetailDto,
+} from '@/apis/user/types'
+import type { TripDiaryResponseDto } from '@/apis/trip/types'
+
 
 /**
- * 여행 가시성 상태 
+ * 여행 가시성 상태
  */
 export type TripVisibility = 'PUBLIC' | 'PRIVATE'
 
@@ -13,7 +19,7 @@ export interface TripPlanItem {
   id: number // tripItemId (서버와 매핑됨)
   day: number
   order: number
-  place: Place 
+  place: Place
   memo?: string
 }
 
@@ -42,4 +48,21 @@ tripId: number
 tripTitle: string
 images: TripLogImage[]
 comments: TripLogCommentResponse[]
+}
+
+export interface LogViewProfile {
+  // ===== 기본 사용자 정보 =====
+  id: number
+  nickname: string
+  profileImageUrl: string | null
+  bio: string | null
+  intro: string | null
+  friendsCount: number
+  isMyProfile: boolean
+  email?: string
+
+  // ===== View에서 쓰는 이름으로 변환 =====
+  completedTrips: UserCompletedTripDetailDto[]
+  userPlans: UserTripOverviewDto[]
+  diaries: TripDiaryResponseDto[]
 }

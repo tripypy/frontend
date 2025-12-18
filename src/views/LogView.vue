@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
 import { useAuthStore } from '@/stores/auth'
-import { fetchUserProfile } from '@/apis/user/index'
+import { fetchUserProfile, requestFetchUser } from '@/apis/user/index'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import FriendsListModal from '@/components/log/FriendsListModal.vue'
@@ -12,14 +12,16 @@ import LogMapWidget from '@/components/log/LogMapWidget.vue'
 import LogCalendarWidget from '@/components/log/LogCalendarWidget.vue'
 import LogAiAnalysis from '@/components/log/LogAiAnalysis.vue'
 import LogContentTabs from '@/components/log/LogContentTabs.vue'
-import type { PublicUserProfile } from '@/apis/user/types'
+import { toLogViewProfile } from '@/mappers/userProfile.mapper'
+import type { LogViewProfile } from '@/types/trip/trip.model'
+
 
 const { handleNavigate } = useNavigate()
 const authStore = useAuthStore()
 const route = useRoute()
 
 const loggedInUser = computed(() => authStore.user)
-const profileData = ref<PublicUserProfile | null>(null)
+const profileData = ref<LogViewProfile | null>(null)
 const isLoading = ref(true)
 
 const isMyProfile = computed<boolean>(() => {
@@ -34,7 +36,7 @@ const fetchAndSetProfileData = async (userId: number) => {
   try {
     const response = await fetchUserProfile(userId);
     if (response){
-      profileData.value = response
+      profileData.value = toLogViewProfile(response, false)
     }
   } catch (error) {
     console.error(`Failed to fetch profile for user ${userId}:`, error);
@@ -53,9 +55,9 @@ const setMyProfileData = async () => {
     };
 
     try {
-        const response = await fetchUserProfile(loggedInUser.value.id)
+        const response = await requestFetchUser()
         if (response){
-          profileData.value = response
+          profileData.value = toLogViewProfile(response, true)
         }
     } catch (error) {
         console.error('내 프로필 정보를 가져오는 데 실패했습니다.', error);
@@ -126,11 +128,11 @@ onMounted(() => {
     </div>
 
     <ScrollToTop />
-    <FriendsListModal 
+    <FriendsListModal
         v-if="profileData"
-        :show="showFriendsModal" 
-        :user-id="profileData.id" 
-        @close="showFriendsModal = false" 
+        :show="showFriendsModal"
+        :user-id="profileData.id"
+        @close="showFriendsModal = false"
     />
   </div>
 </template>
