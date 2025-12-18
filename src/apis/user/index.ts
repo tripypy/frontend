@@ -1,5 +1,5 @@
 import apiClient from '@/apis/http';
-import type { UserMeResponseDto, UserProfileResponseDto, UserFriendsResponseDto } from '@/apis/user/types'
+import type { UserAIAnalysisResponseDto, UserMeResponseDto, UserProfileResponseDto, UserFriendsResponseDto } from '@/apis/user/types'
 
 /**
  * 특정 사용자의 프로필을 조회합니다.
@@ -55,8 +55,16 @@ export const requestUploadProfileImage = async (imageFile: File): Promise<void> 
 };
 
 /**
-* 프로필 이미지 삭제 API 요청
+* 프로필 이미지 삭제를 요청합니다.
 */
 export const requestDeleteProfileImage = async (): Promise<void> => {
   await apiClient.delete(`/users/profile-image`);
 };
+
+/**
+ * 사용자의 AI 분석 결과를 조회합니다.
+ */
+export const requestFetchUserAIAnalysis = async (): Promise<UserAIAnalysisResponseDto> => {
+  const response = await apiClient.post<UserAIAnalysisResponseDto>('/users/me/analysis');
+  return response.data
+}
