@@ -3,22 +3,22 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import apiClient from '@/apis/http'
 import type { LoginRequestDto, SignupRequestDto, UserMeResponseDto } from '@/apis/user/types'
-import type { User } from '@/types/auth/user.model'
+import type { User } from '@/types/user/user.model'
 
-import { 
+import {
   requestFetchUser,
   requestUpdateUserProfile,
   requestUploadProfileImage,
   requestDeleteProfileImage
 } from '@/apis/user'
 
-import { 
-  requestLogin, 
-  requestLogout, 
+import {
+  requestLogin,
+  requestLogout,
   requestRefreshAccessToken,
-  requestSignup, 
-  requestFindEmailByNickname, 
-  requestResetPassword 
+  requestSignup,
+  requestFindEmailByNickname,
+  requestResetPassword
 } from '@/apis/auth'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -32,7 +32,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!isInitialized.value) return false
     return !!accessToken.value && !!user.value
   })
-  
+
   function setAuthorizationHeader(token: string | null) {
     if (token) {
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -45,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = token
     user.value = userData
     accessTokenExpiresAt.value = Date.now() + expiresInMs;
-  
+
     localStorage.setItem('user', JSON.stringify(userData))
     setAuthorizationHeader(token)
   }
@@ -71,7 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(loginRequest: LoginRequestDto): Promise<boolean> {
     try {
       // 1. Login to get the access token
-      const { accessToken: token, expiresIn } = await requestLogin(loginRequest) 
+      const { accessToken: token, expiresIn } = await requestLogin(loginRequest)
 
       // 2. Set token immediately for subsequent requests
       setAuthorizationHeader(token);
@@ -104,7 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
       clearAuthentication()
     }
   }
-  
+
   async function signup(signupRequest: SignupRequestDto): Promise<boolean> {
     try {
       await requestSignup(signupRequest);
@@ -191,7 +191,7 @@ export const useAuthStore = defineStore('auth', () => {
       const { accessToken: token, expiresIn } = await requestRefreshAccessToken()
 
       setAuthorizationHeader(token);
-      
+
       const fetchedUser = await fetchUser();
       if (fetchedUser) {
         setAuthenticated(token, expiresIn, fetchedUser);
