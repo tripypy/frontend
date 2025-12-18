@@ -3,7 +3,6 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import apiClient from '@/apis/http'
 import type { LoginRequestDto, SignupRequestDto, UserMeResponseDto } from '@/apis/user/types'
-import type { User } from '@/types/user/user.model'
 
 import {
   requestFetchUser,
@@ -123,18 +122,26 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await requestFindEmailByNickname(nickname);
       return response.email;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('이메일 찾기 실패:', error);
-      throw new Error(error.response?.data?.message || '이메일 찾기 중 알 수 없는 오류가 발생했습니다.');
+      let message = '이메일 찾기 중 알 수 없는 오류가 발생했습니다.';
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+      throw new Error(message);
     }
   }
 
   async function resetPassword(email: string): Promise<void> {
     try {
       await requestResetPassword(email);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('비밀번호 재설정 요청 실패:', error);
-      throw new Error(error.response?.data?.message || '비밀번호 재설정 중 알 수 없는 오류가 발생했습니다.');
+      let message = '비밀번호 재설정 중 알 수 없는 오류가 발생했습니다.';
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+      throw new Error(message);
     }
   }
 

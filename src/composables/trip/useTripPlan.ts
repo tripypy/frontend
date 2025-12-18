@@ -1,8 +1,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type {
-  TripItemsUpdateRequestDto, 
-  TripItemsUpdateRequestDto_ItemSync,
+  TripItemsReplaceRequestDto,
+  TripItemsReplaceRequestDto_Item,
   TripItemResponseDto,
   TripUpdateRequestDto,
 } from '@/apis/trip/types'
@@ -113,26 +113,23 @@ export function useTripPlan() {
     if (!tripTitle.value.trim()) return alert('제목을 입력해주세요.')
 
     try {
-      // 1. 여행 아이템 동기화
-      const itemPayload: TripItemsUpdateRequestDto = {
+      // 1. 여행 아이템 동기화 (전체 교체)
+      const itemPayload: TripItemsReplaceRequestDto = {
         days: days.value.map((day) => ({
           dayNumber: day.dayNumber,
-          items: day.places.map((place): TripItemsUpdateRequestDto_ItemSync => {
-            if (place.id !== undefined) {
-              return { tripItemId: place.id, memo: place.memo }
-            } else {
-              return {
-                spot: {
-                  kakaoPlaceId: place.kakaoPlaceId,
-                  name: place.name,
-                  address: place.address,
-                  category: place.category,
-                  lat: place.lat,
-                  lng: place.lng,
-                  placeUrl: place.placeUrl || '',
-                },
-                memo: place.memo,
-              }
+          items: day.places.map((place): TripItemsReplaceRequestDto_Item => {
+            // 모든 장소에 대해 spot 정보를 보냅니다. (DB에 있는 장소든 아니든)
+            // TripItem ID는 더 이상 보내지 않으며, backend가 전체를 교체합니다.
+            return {
+              spot: {
+                kakaoPlaceId: place.kakaoPlaceId,
+                name: place.name,
+                address: place.address,
+                category: place.category,
+                lat: place.lat,
+                lng: place.lng,
+                placeUrl: place.placeUrl || '',
+              },
             }
           }),
         })),
