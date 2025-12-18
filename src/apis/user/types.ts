@@ -75,3 +75,14 @@ export interface UserMeResponseDto
   email: string
 }
 
+export interface UserAIAnalysisResponseDto {
+  keywords : string[]
+  summary: string
+  scores: {
+    rest: number
+    exploration: number
+    activity: number
+    gourmet: number
+  }
+}
+

@@ -111,7 +111,7 @@ onMounted(() => {
 
         <!-- Right Content Area -->
         <section class="lg:col-span-2 flex flex-col gap-8">
-           <LogAiAnalysis v-if="profileData" :user-id="profileData.id" />
+          <LogAiAnalysis v-if="profileData" />
           <LogContentTabs
             :is-my-profile="isMyProfile"
             :user-diaries="profileData.diaries || []"
