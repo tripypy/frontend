@@ -57,15 +57,14 @@ export interface TripResponseDto {
   startDate?: string // nullable
   endDate?: string // nullable
   status: TripStatus
-  visibility: TripVisibility
+  visibility?: TripVisibility
   isOwner: boolean
   spots: number // 추가됨
   tags?: string[] // 추가됨, nullable
   spotPreviews: { name: string }[] // 추가됨
   completedDate?: string // 추가됨, nullable
-  thumbnailUrl?: string
-  likes: number
-  comments: number
+  likes?: number
+  comments?: number
 }
 
 // 여행 요약 응답 DTO 인터페이스 (새로 추가됨)
@@ -81,27 +80,27 @@ export interface TripSummaryResponseDto {
 
 // 여행 정보 수정 요청 DTO
 export interface TripUpdateRequestDto {
-  title: string
+  title?: string
   startDate?: string // nullable
   endDate?: string // nullable
-  status: TripStatus
-  visibility: TripVisibility
+  status?: TripStatus
+  visibility?: TripVisibility
 }
 
-// 여행 아이템 목록 전체 수정 요청 DTO (TripItemSyncRequestDto -> TripItemsUpdateRequestDto)
-export interface TripItemsUpdateRequestDto {
-  days: TripItemsUpdateRequestDto_Day[]
+// 여행 아이템 목록 전체 교체 요청 DTO (TripItemsReplaceRequestDto)
+export interface TripItemsReplaceRequestDto {
+  days: TripItemsReplaceRequestDto_Day[]
 }
 
-export interface TripItemsUpdateRequestDto_Day {
+export interface TripItemsReplaceRequestDto_Day {
   dayNumber: number
-  items: TripItemsUpdateRequestDto_ItemSync[]
+  items: TripItemsReplaceRequestDto_Item[]
 }
 
-export interface TripItemsUpdateRequestDto_ItemSync {
-  tripItemId?: number // nullable
-  spot?: SpotRequestDto // nullable, 새로운 아이템인 경우 필수
-  memo?: string // nullable
+export interface TripItemsReplaceRequestDto_Item {
+  spotId?: number // 기존에 등록된 여행지 ID
+  spot?: SpotRequestDto // 새로운 여행지
+  // memo: string  <-- 제거됨 (OpenAPI Spec에 없음)
 }
 //==========================================================================
 
