@@ -16,6 +16,7 @@ export interface TripLogFeedItemDto {
   authorId: number;
   authorNickname: string;
   authorImageUrl?: string;
+  authorImageUrl?: string;
   title: string;
   content: string;
   locationSummary: string;
