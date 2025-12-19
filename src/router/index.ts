@@ -5,15 +5,15 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'login', 
+      name: 'login',
       component: () => import('@/views/LoginView.vue'),
     },
     {
-      path: '/login', 
+      path: '/login',
       redirect: { path: '/' } // 루트 경로로 리디렉션
     },
     {
-      path: '/home', 
+      path: '/home',
       name: 'home',
       component: () => import('@/views/HomeView.vue'),
       meta: { requiresAuth: true } // 인증 필요 표시
@@ -64,7 +64,12 @@ const router = createRouter({
       name: 'settings',
       component: () => import('@/views/SettingsView.vue'),
     },
-    
+    {
+      path: '/post-write/:tripId',
+      name: 'post-write',
+      component: () => import('@/views/PostCreateView.vue'),
+      props:true
+    },
   ],
 })
 

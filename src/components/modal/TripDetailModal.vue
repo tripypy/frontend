@@ -38,6 +38,13 @@
             </div>
           </div>
           <button
+            v-if="trip.status === 'PLANNED'"
+            @click="handleWritePostClick"
+            class="flex items-center gap-2 px-5 py-2.5 bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
+          >
+            <BookPlus :size="18" :stroke-width="3" /> LOG
+          </button>
+          <button
             @click="handleEditClick"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
@@ -142,10 +149,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield } from 'lucide-vue-next'
+import { Calendar, MapPin, Edit, ListChecks, Shield, Pencil } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
+import { BookPlus } from 'lucide-vue-next';
 
 interface DayPlanDisplay {
   dayNumber: number
@@ -157,7 +165,7 @@ const props = defineProps<{
   initialPlaceId?: number | null
 }>()
 
-const emit = defineEmits(['close', 'edit'])
+const emit = defineEmits(['close', 'edit', 'write'])
 
 const kakaoMapRef = ref<any>(null)
 const activeDay = ref(1)
@@ -217,6 +225,10 @@ const mapCenter = computed(() => {
   }
   return { lat: 37.5665, lng: 126.978 }
 })
+
+const handleWritePostClick = () => {
+  emit('write', props.trip)
+}
 
 const handleEditClick = () => {
   emit('edit', props.trip)

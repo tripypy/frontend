@@ -74,6 +74,7 @@
       :trip="selectedTrip"
       @close="selectedTrip = null"
       @edit="handleEditFromModal"
+      @write="handleWritePostFromModal"
     />
 
     <ScrollToTop />
@@ -107,7 +108,6 @@ onMounted(async () => {
   try {
     const response = await getMyTrips()
     tripsList.value = response
-    console.log('Fetched tripsList:', tripsList.value[0]) // Added log
   } catch (error) {
     console.error('내 여행 목록 조회 실패:', error)
     // 에러 처리 로직 추가 (예: 사용자에게 알림)
@@ -140,7 +140,6 @@ const displayTrips = computed(() => {
     if (activeTab.value === 'saved') return savedTrips.value
     return tripsList.value
   })()
-  //console.log('displayTrips:', filteredTrips) // Added log
   return filteredTrips
 })
 
@@ -214,6 +213,19 @@ const handleOpenModal = async (tripId: number) => {
 const handleEditFromModal = (trip: any) => {
   selectedTrip.value = null
   handleNavigate('trip-edit', { id: trip.id })
+}
+
+const handleWritePostFromModal = (trip: any) => {
+  selectedTrip.value = null // 모달 닫기
+
+  // router.push 또는 handleNavigate를 사용하여 글 작성/수정 라우트로 이동
+  // 'post-write'는 글 작성 페이지의 라우트 이름이라고 가정합니다.
+  router.push({
+    name: 'post-write', // 라우터에 등록된 글 작성 페이지의 이름 (예: PostCreateView)
+    params: { tripId: trip.id } // 여행 ID를 파라미터로 넘김
+  })
+
+  console.log(`여행 ID ${trip.id}에 대한 글 작성 페이지로 이동합니다.`)
 }
 </script>
 
