@@ -230,7 +230,7 @@ const handleWritePostFromModal = (trip: any) => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+
 .font-sans {
   font-family: 'Outfit', sans-serif;
 }
