@@ -5,7 +5,8 @@ import type {
   TripItemsReplaceRequestDto,
   TripUpdateRequestDto,
   TripResponseDto,
-  TripSummaryResponseDto
+  TripSummaryResponseDto,
+  TripScrapResponseDto
 } from '@/apis/trip/types'
 
 import { TripStatus } from '@/types/common';
@@ -87,4 +88,13 @@ export const getMyTripSummaries = async (): Promise<TripSummaryResponseDto[]> =>
   const response = await apiClient.get<TripSummaryResponseDto[]>('/trips/summary')
   return response.data
 }
+
+/**
+ * 여행일지 스크랩을 요청합니다.
+ */
+export const requestScrapTrip = async (tripId: number): Promise<TripScrapResponseDto> => {
+  const response = await apiClient.post<TripScrapResponseDto>(`/trips/${tripId}/scrap`);
+  return response.data
+}
+
 

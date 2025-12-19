@@ -17,7 +17,9 @@
             <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#2C2C2C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <span class="font-black text-sm text-[#2C2C2C]">링크가 복사되었습니다!</span>
+        <span class="font-black text-sm text-[#2C2C2C]">
+          {{ toastMessage }}
+        </span>
       </div>
     </Transition>
     <div
@@ -48,12 +50,14 @@
             <Share2 class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
           </button>
           <button
-            @click="isBookmarked = !isBookmarked"
+            @click="handleScrap"
+            :disabled="isScrapping"
             :class="[
               'w-8 h-8 flex items-center justify-center border-[2px] border-[#2C2C2C] rounded-lg transition-all focus:outline-none',
               isBookmarked
                 ? 'bg-[#98D8C8] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
                 : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
+              isScrapping && 'opacity-50 cursor-not-allowed',
             ]"
           >
             <Bookmark
@@ -217,6 +221,7 @@ import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { likeTripLog, unlikeTripLog } from '@/apis/trip-log/index'
+import { requestScrapTrip } from '@/apis/trip/index'
 
 interface CourseItem {
   number: number
@@ -231,10 +236,37 @@ const currentLikes = ref(props.likeCount)
 const isExpanded = ref(false)
 const currentImageIndex = ref(0)
 const showToast = ref(false)
+const isScrapping = ref(false)
+const toastMessage = ref('')
 
 // Modal States
 const showCommentModal = ref(false)
 const selectedPlace = ref<CourseItem | null>(null)
+
+// Scrap Logic
+const handleScrap = async () => {
+  if (isScrapping.value || isBookmarked.value) return
+
+  try {
+    isScrapping.value = true
+    const response = await requestScrapTrip(props.logId)
+
+    if (response.tripId) {
+      isBookmarked.value = true
+      toastMessage.value = '내 여행에 추가되었습니다'
+      showToast.value = true
+
+      setTimeout(() => {
+        showToast.value = false
+      }, 2500)
+    }
+  } catch (err) {
+    console.error('스크랩 실패:', err)
+  } finally {
+    isScrapping.value = false
+  }
+}
+
 
 // Images Logic
 const allImages = computed(() => {
@@ -259,7 +291,7 @@ const toggleLike = async() => {
   } else {
     response = await likeTripLog(props.logId)
   }
-  if(response.liked) currentLikes.value = response.likeCount
+  currentLikes.value = response.likeCount
   isLiked.value = !isLiked.value
 }
 
@@ -269,6 +301,8 @@ const handleShare = async () => {
 
   try {
     await navigator.clipboard.writeText(diaryUrl)
+
+    toastMessage.value = '링크가 복사되었습니다!'
     showToast.value = true
 
     setTimeout(() => {

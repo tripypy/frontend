@@ -23,6 +23,7 @@ export interface LogViewProfile {
   friendsCount: number
   isMyProfile: boolean
   email?: string
+  travelStyleSummary: string | null
 
   // ===== View에서 쓰는 이름으로 변환 =====
   completedTrips: UserCompletedTripDetailDto[]

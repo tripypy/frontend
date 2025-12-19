@@ -1,6 +1,6 @@
 // 여행 관련 API 통신용 DTO
 
-import { TripStatus } from '@/types/common'; 
+import { TripStatus } from '@/types/common';
 import type { TripVisibility } from '@/types/trip/trip.model'
 
 // 장소 정보를 나타내는 인터페이스 (API 응답용) - SpotResponseDto에 해당
@@ -116,7 +116,7 @@ export interface TripPlanResponseDto {
   endDate: string; // 카드 날짜
   visibility: 'PUBLIC' | 'PRIVATE' | 'PROTECTED'; // 필터링에 사용됨
 }
-  
+
 
 /**
  * Diary 관련 타입
@@ -127,7 +127,7 @@ export interface TripDiaryResponseDto {
   title: string;
   thumbnailUrl: string | null;
   visibility: 'PUBLIC' | 'PRIVATE';
-  spotPreviews?: { name: string }[] | null; 
+  spotPreviews?: { name: string }[] | null;
   tags: string[];
   startDate: string | null;
   endDate: string | null;
@@ -135,3 +135,9 @@ export interface TripDiaryResponseDto {
   comments: number;
 }
 
+/**
+ * Scrap 관련 타입
+ */
+export interface TripScrapResponseDto {
+  tripId: number
+}

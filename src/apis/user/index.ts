@@ -1,5 +1,10 @@
 import apiClient from '@/apis/http';
-import type { UserAIAnalysisResponseDto, UserMeResponseDto, UserProfileResponseDto, UserFriendsResponseDto } from '@/apis/user/types'
+import type {
+  UserAIAnalysisResponseDto,
+  UserMeResponseDto,
+  UserProfileResponseDto,
+  UserFriendsResponseDto
+} from '@/apis/user/types'
 
 /**
  * 특정 사용자의 프로필을 조회합니다.
