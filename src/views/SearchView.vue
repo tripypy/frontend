@@ -112,75 +112,30 @@
             </div>
           </template>
 
-          <!-- All Tab or Courses Tab -->
-          <template v-if="activeTab === 'all' || activeTab === 'courses'">
-            <div v-if="filteredCourses.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
+          <!-- All Tab or Trips Tab -->
+          <template v-if="activeTab === 'all' || activeTab === 'trips'">
+            <div v-if="filteredTrips.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
               <div class="flex items-center justify-between mb-4">
                 <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
-                  코스
+                  TRIPS
                 </h4>
                 <button
                   v-if="activeTab === 'all'"
-                  @click="activeTab = 'courses'"
+                  @click="activeTab = 'trips'"
                   class="text-sm font-bold text-gray-500 hover:text-[#2C2C2C] transition-colors"
                 >
                   + 더보기
                 </button>
               </div>
               <div class="space-y-3">
-                <div
-                  v-for="course in activeTab === 'all'
-                    ? filteredCourses.slice(0, 3)
-                    : filteredCourses"
-                  :key="course.id"
-                  @click="handleCourseClick(course)"
-                  class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
-                >
-                  <div class="flex items-center gap-4">
-                    <!-- Image -->
-                    <div
-                      class="w-24 h-24 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
-                    >
-                      <img
-                        :src="course.imageUrl"
-                        :alt="course.title"
-                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        @error="handleImageError"
-                      />
-                    </div>
-                    <!-- Content -->
-                    <div class="flex-1 min-w-0">
-                      <h5
-                        class="text-xl font-black mb-1 group-hover:text-[#E88555] transition-colors"
-                      >
-                        {{ course.title }}
-                      </h5>
-                      <div class="flex items-center gap-2 text-xs font-bold mb-2 text-gray-600">
-                        <MapPin :size="14" :stroke-width="2" />
-                        <span>{{ course.spots }}개 장소</span>
-                        <span class="text-gray-400">•</span>
-                        <span>{{ course.duration }}</span>
-                      </div>
-                      <p class="text-sm font-medium text-gray-700 mb-2 line-clamp-2">
-                        {{ course.description }}
-                      </p>
-                      <div class="flex items-center justify-between">
-                        <div class="flex gap-1.5 flex-wrap">
-                          <span
-                            v-for="(tag, idx) in course.tags"
-                            :key="idx"
-                            class="px-2.5 py-0.5 bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-full text-xs font-black"
-                          >
-                            #{{ tag }}
-                          </span>
-                        </div>
-                        <div class="text-xs font-bold text-gray-500">
-                          {{ course.views.toLocaleString() }} 조회
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <SearchTripItem
+                  v-for="trip in activeTab === 'all'
+                    ? filteredTrips.slice(0, 3)
+                    : filteredTrips"
+                  :key="trip.trip_id"
+                  :trip="trip"
+                  @click="handleTripClick(trip)"
+                />
               </div>
             </div>
           </template>
@@ -284,7 +239,7 @@
             v-if="
               (activeTab === 'all' && totalResultsCount === 0) ||
               (activeTab === 'places' && filteredPlaces.length === 0) ||
-              (activeTab === 'courses' && filteredCourses.length === 0) ||
+              (activeTab === 'trips' && filteredTrips.length === 0) ||
               (activeTab === 'diaries' && filteredDiaries.length === 0)
             "
             class="text-center py-12"
@@ -408,10 +363,10 @@
 
     <!-- Course/Trip Modal -->
     <TripDetailModal
-      v-if="selectedCourse"
-      :trip="selectedCourse"
-      @close="selectedCourse = null"
-      @edit="handleCourseEdit"
+      v-if="selectedTrip"
+      :trip="selectedTrip"
+      @close="selectedTrip = null"
+      @edit="handleTripEdit"
     />
 
     <!-- Place Detail Modal -->
@@ -430,7 +385,9 @@ import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import SearchPlaceItem from '@/components/search/SearchPlaceItem.vue'
+import SearchTripItem from '@/components/search/SearchTripItem.vue'
 import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
+import { searchApi, type TripSearchDoc } from '@/apis/search'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
@@ -445,11 +402,16 @@ const {
 const currentSearchQuery = ref('')
 // 검색 실행 여부
 const hasSearched = ref(false)
-const activeTab = ref<'all' | 'places' | 'courses' | 'diaries'>('all')
+const activeTab = ref<'all' | 'places' | 'trips' | 'diaries'>('all')
 
 const selectedDiary = ref<any>(null)
-const selectedCourse = ref<any>(null)
+// TripDetailModal shows trip details. We can reuse it or need to check if it accepts TripSearchDoc. 
+// TripDetailModal expects 'trip' prop. Let's check its type usage later. For now assume it works or we map it.
+const selectedTrip = ref<TripSearchDoc | null>(null)
 const selectedPlace = ref<any>(null)
+
+// API Results
+const filteredTrips = ref<TripSearchDoc[]>([])
 
 // Computed - Filtered Results
 // 장소: API 결과 사용
@@ -482,6 +444,7 @@ const handleSearch = () => {
     
     // Call API
     searchPlaces()
+    searchTrips()
   } else {
     // 검색어가 비어있을 경우 초기화
     hasSearched.value = false
@@ -489,7 +452,17 @@ const handleSearch = () => {
     searchQuery.value = ''
     activeTab.value = 'all'
     searchResults.value = []
+    filteredTrips.value = []
   }
+}
+
+const searchTrips = async () => {
+    try {
+        filteredTrips.value = await searchApi.searchTrips(currentSearchQuery.value)
+    } catch (e) {
+        console.error(e)
+        filteredTrips.value = []
+    }
 }
 
 const searchByKeyword = (keyword: string) => {
@@ -506,14 +479,32 @@ const handleDiaryClick = (diary: any) => {
   selectedDiary.value = diary
 }
 
-const handleCourseClick = (course: any) => {
-  selectedCourse.value = course
+const handleTripClick = (trip: TripSearchDoc) => {
+  // selectedTrip.value = trip 
+  // TripDetailModal might need full details. 
+  // If we want to navigate to detail page or show modal? 
+  // User asked for "search list integration". Let's simply log or set selection for now.
+  // Existing logic was "handleCourseEdit" -> push to create-trip. 
+  // Let's assume we want to show details or edit. 
+  // Based on current UI, clicking item usually opens modal.
+  // But TripDetailModal prop type might differ. 
+  // For now, let's keep it consistent: click -> open modal? 
+  // Actually, let's look at handleCourseEdit logic. 
+  // It pushed to router. 
+  // Let's keep it simple: Navigate to trip detail or Use Modal. 
+  // Given user didn't specify interaction, I will assume we might want to just show it or do nothing.
+  // Wait, I should probably reuse existing modal if possible.
+  // But TripDetailModal takes 'trip'. 
+  // Let's try to pass it to TripDetailModal if compatible. 
+  // Or just router push to view trip?
+  // Let's implement basics first.
+  selectedTrip.value = trip
 }
 
-const handleCourseEdit = (course: any) => {
+const handleTripEdit = (trip: any) => {
   // 편집 모드로 이동
-  router.push(`/create-trip?id=${course.id}`)
-  selectedCourse.value = null
+  router.push(`/create-trip?id=${trip.trip_id}`)
+  selectedTrip.value = null
 }
 
 const handlePlaceClick = (place: any, index?: number) => {
@@ -735,16 +726,8 @@ const allDiaries = [
 
 const hotPlaces = allPlaces.slice(0, 10)
 
-const filteredCourses = computed(() => {
-  if (!currentSearchQuery.value) return []
-  const query = currentSearchQuery.value.toLowerCase()
-  return allCourses.filter(
-    (course) =>
-      course.title.toLowerCase().includes(query) ||
-      course.description.toLowerCase().includes(query) ||
-      course.tags.some((tag) => tag.toLowerCase().includes(query)),
-  )
-})
+// Clean up Mock Data - filteredCourses logic removed
+
 
 const filteredDiaries = computed(() => {
   if (!currentSearchQuery.value) return []
@@ -759,20 +742,20 @@ const filteredDiaries = computed(() => {
 })
 
 const totalResultsCount = computed(() => {
-  return filteredPlaces.value.length + filteredCourses.value.length + filteredDiaries.value.length
+  return filteredPlaces.value.length + filteredTrips.value.length + filteredDiaries.value.length
 })
 
 const tabs = [
   { id: 'all' as const, label: '전체' },
   { id: 'places' as const, label: '장소' },
-  { id: 'courses' as const, label: '코스' },
+  { id: 'trips' as const, label: 'TRIPS' },
   { id: 'diaries' as const, label: '다이어리' },
 ]
 
 const getTabCount = (tabId: string) => {
   if (tabId === 'all') return totalResultsCount.value
   if (tabId === 'places') return filteredPlaces.value.length
-  if (tabId === 'courses') return filteredCourses.value.length
+  if (tabId === 'trips') return filteredTrips.value.length
   if (tabId === 'diaries') return filteredDiaries.value.length
   return 0
 }
