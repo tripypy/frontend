@@ -89,7 +89,7 @@
             <div v-if="filteredPlaces.length > 0 || (activeTab === 'all' && totalResultsCount > 0)">
               <div class="flex items-center justify-between mb-4">
                 <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
-                  장소
+                  PLACES
                 </h4>
                 <button
                   v-if="activeTab === 'all'"
@@ -697,7 +697,7 @@ const totalResultsCount = computed(() => {
 
 const tabs = [
   { id: 'all' as const, label: '전체' },
-  { id: 'places' as const, label: '장소' },
+  { id: 'places' as const, label: 'PLACES' },
   { id: 'trips' as const, label: 'TRIPS' },
   { id: 'logs' as const, label: 'LOGS' },
 ]
