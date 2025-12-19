@@ -140,96 +140,30 @@
             </div>
           </template>
 
-          <!-- All Tab or Diaries Tab -->
-          <template v-if="activeTab === 'all' || activeTab === 'diaries'">
-            <div v-if="filteredDiaries.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
+          <!-- All Tab or Logs Tab -->
+          <template v-if="activeTab === 'all' || activeTab === 'logs'">
+            <div v-if="filteredLogs.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
               <div class="flex items-center justify-between mb-4">
                 <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
-                  다이어리
+                  LOGS
                 </h4>
                 <button
                   v-if="activeTab === 'all'"
-                  @click="activeTab = 'diaries'"
+                  @click="activeTab = 'logs'"
                   class="text-sm font-bold text-gray-500 hover:text-[#2C2C2C] transition-colors"
                 >
                   + 더보기
                 </button>
               </div>
               <div class="space-y-3">
-                <div
-                  v-for="diary in activeTab === 'all'
-                    ? filteredDiaries.slice(0, 3)
-                    : filteredDiaries"
-                  :key="diary.id"
-                  @click="handleDiaryClick(diary)"
-                  class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
-                >
-                  <div class="flex gap-4">
-                    <!-- Images Grid -->
-                    <div class="w-32 h-32 flex-shrink-0">
-                      <div
-                        v-if="diary.images && diary.images.length === 1"
-                        class="w-full h-full border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
-                      >
-                        <img
-                          :src="diary.images[0]"
-                          :alt="diary.title"
-                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          @error="handleImageError"
-                        />
-                      </div>
-                      <div
-                        v-else-if="diary.images && diary.images.length > 1"
-                        class="grid grid-cols-2 gap-1 w-full h-full"
-                      >
-                        <div
-                          v-for="(img, idx) in diary.images.slice(0, 4)"
-                          :key="idx"
-                          class="border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
-                        >
-                          <img
-                            :src="img"
-                            :alt="`${diary.title} ${idx + 1}`"
-                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            @error="handleImageError"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Content -->
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2 mb-2">
-                        <div
-                          class="w-6 h-6 rounded-full bg-[#9BCCC4] border-[2px] border-[#2C2C2C]"
-                        ></div>
-                        <span class="text-sm font-black">{{ diary.author }}</span>
-                        <span class="text-xs font-bold text-gray-500">{{ diary.date }}</span>
-                      </div>
-                      <h5
-                        class="text-lg font-black mb-1 group-hover:text-[#9BCCC4] transition-colors"
-                      >
-                        {{ diary.title }}
-                      </h5>
-                      <div class="flex items-center gap-2 text-xs font-bold mb-2 text-gray-600">
-                        <MapPin :size="14" :stroke-width="2" />
-                        <span>{{ diary.location }}</span>
-                      </div>
-                      <p class="text-sm font-medium text-gray-700 mb-3 line-clamp-2">
-                        {{ diary.content }}
-                      </p>
-                      <div class="flex items-center gap-4 text-xs font-bold text-gray-600">
-                        <div class="flex items-center gap-1">
-                          <Heart :size="14" :stroke-width="2" />
-                          <span>{{ diary.likes }}</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                          <MessageCircle :size="14" :stroke-width="2" />
-                          <span>{{ diary.comments }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <SearchLogItem
+                  v-for="log in activeTab === 'all'
+                    ? filteredLogs.slice(0, 3)
+                    : filteredLogs"
+                  :key="log.log_id"
+                  :log="log"
+                  @click="handleLogClick(log)"
+                />
               </div>
             </div>
           </template>
@@ -240,7 +174,7 @@
               (activeTab === 'all' && totalResultsCount === 0) ||
               (activeTab === 'places' && filteredPlaces.length === 0) ||
               (activeTab === 'trips' && filteredTrips.length === 0) ||
-              (activeTab === 'diaries' && filteredDiaries.length === 0)
+              (activeTab === 'logs' && filteredLogs.length === 0)
             "
             class="text-center py-12"
           >
@@ -345,21 +279,23 @@
     <ScrollToTop />
 
     <!-- Diary Modal -->
+    <!-- Diary Modal (Needs update if reuse is desired, or use new Log Detail Modal) -->
+    <!-- For now, disable modal loop or adapt if needed. 
+         DiaryCommentModal expects specific props. 
+         Let's assume we might just want to view it for now or skipping detail integration as not requested explicitly?
+         Actually, let's keep it commented out or remove if not compatible. 
+         User only asked for "Card Integration". Detail view wasn't specifying LOGS Detail Modal update.
+         I'll leave it but using selectedLog which might not match props. 
+         Safest is to not render it or implement a placeholder if user clicks. 
+         But wait, DiaryCommentModal is for existing Diary. 
+         TripLog data is different. I'll comment it out to avoid type errors.
+    -->
+    <!-- 
     <DiaryCommentModal
-      v-if="selectedDiary"
-      :log-id="selectedDiary.id"
-      :author="selectedDiary.author"
-      :author-avatar="selectedDiary.authorAvatar"
-      :location="selectedDiary.location"
-      :date="selectedDiary.date"
-      :title="selectedDiary.title"
-      :content="selectedDiary.content"
-      :images="selectedDiary.images"
-      :likes="selectedDiary.likes"
-      :comments="selectedDiary.comments"
-      :course="selectedDiary.course"
-      @close="selectedDiary = null"
-    />
+      v-if="selectedLog"
+      ...
+    /> 
+    -->
 
     <!-- Course/Trip Modal -->
     <TripDetailModal
@@ -386,8 +322,9 @@ import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import SearchPlaceItem from '@/components/search/SearchPlaceItem.vue'
 import SearchTripItem from '@/components/search/SearchTripItem.vue'
+import SearchLogItem from '@/components/search/SearchLogItem.vue'
 import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
-import { searchApi, type TripSearchDoc } from '@/apis/search'
+import { searchApi, type TripSearchDoc, type TripLogSearchDoc } from '@/apis/search'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
@@ -402,16 +339,15 @@ const {
 const currentSearchQuery = ref('')
 // 검색 실행 여부
 const hasSearched = ref(false)
-const activeTab = ref<'all' | 'places' | 'trips' | 'diaries'>('all')
+const activeTab = ref<'all' | 'places' | 'trips' | 'logs'>('all')
 
-const selectedDiary = ref<any>(null)
-// TripDetailModal shows trip details. We can reuse it or need to check if it accepts TripSearchDoc. 
-// TripDetailModal expects 'trip' prop. Let's check its type usage later. For now assume it works or we map it.
+const selectedLog = ref<TripLogSearchDoc | null>(null)
 const selectedTrip = ref<TripSearchDoc | null>(null)
 const selectedPlace = ref<any>(null)
 
 // API Results
 const filteredTrips = ref<TripSearchDoc[]>([])
+const filteredLogs = ref<TripLogSearchDoc[]>([])
 
 // Computed - Filtered Results
 // 장소: API 결과 사용
@@ -445,6 +381,7 @@ const handleSearch = () => {
     // Call API
     searchPlaces()
     searchTrips()
+    searchLogs()
   } else {
     // 검색어가 비어있을 경우 초기화
     hasSearched.value = false
@@ -453,7 +390,17 @@ const handleSearch = () => {
     activeTab.value = 'all'
     searchResults.value = []
     filteredTrips.value = []
+    filteredLogs.value = []
   }
+}
+
+const searchLogs = async () => {
+    try {
+        filteredLogs.value = await searchApi.searchTripLogs(currentSearchQuery.value)
+    } catch (e) {
+        console.error(e)
+        filteredLogs.value = []
+    }
 }
 
 const searchTrips = async () => {
@@ -475,8 +422,11 @@ const handleImageError = (event: Event) => {
   target.src = '/images/no-image.jpg'
 }
 
-const handleDiaryClick = (diary: any) => {
-  selectedDiary.value = diary
+const handleLogClick = (log: TripLogSearchDoc) => {
+  // selectedLog.value = log 
+  // Need to implement Log detail view/modal or navigation
+  // For now just set select for potential modal use
+  selectedLog.value = log
 }
 
 const handleTripClick = (trip: TripSearchDoc) => {
@@ -729,34 +679,25 @@ const hotPlaces = allPlaces.slice(0, 10)
 // Clean up Mock Data - filteredCourses logic removed
 
 
-const filteredDiaries = computed(() => {
-  if (!currentSearchQuery.value) return []
-  const query = currentSearchQuery.value.toLowerCase()
-  return allDiaries.filter(
-    (diary) =>
-      diary.title.toLowerCase().includes(query) ||
-      diary.content.toLowerCase().includes(query) ||
-      diary.location.toLowerCase().includes(query) ||
-      diary.author.toLowerCase().includes(query),
-  )
-})
+// Clean up Mock Data - filteredDiaries logic removed
+
 
 const totalResultsCount = computed(() => {
-  return filteredPlaces.value.length + filteredTrips.value.length + filteredDiaries.value.length
+  return filteredPlaces.value.length + filteredTrips.value.length + filteredLogs.value.length
 })
 
 const tabs = [
   { id: 'all' as const, label: '전체' },
   { id: 'places' as const, label: '장소' },
   { id: 'trips' as const, label: 'TRIPS' },
-  { id: 'diaries' as const, label: '다이어리' },
+  { id: 'logs' as const, label: 'LOGS' },
 ]
 
 const getTabCount = (tabId: string) => {
   if (tabId === 'all') return totalResultsCount.value
   if (tabId === 'places') return filteredPlaces.value.length
   if (tabId === 'trips') return filteredTrips.value.length
-  if (tabId === 'diaries') return filteredDiaries.value.length
+  if (tabId === 'logs') return filteredLogs.value.length
   return 0
 }
 </script>

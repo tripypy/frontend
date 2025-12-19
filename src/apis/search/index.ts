@@ -32,6 +32,19 @@ export interface TripSearchDoc {
     spots_preview: SpotPreview[]
 }
 
+export interface TripLogSearchDoc {
+    log_id: number
+    trip_id: number
+    user_id: number
+    title: string
+    content: string
+    trip_location_summary: string
+    trip_start_date: string
+    trip_end_date: string
+    created_at: string
+    image_urls: string[]
+}
+
 export const searchApi = {
     searchPlaces: async (keyword: string): Promise<SpotResponseDto[]> => {
         const response = await http.get<SpotResponseDto[]>('/search/place', {
@@ -42,6 +55,13 @@ export const searchApi = {
 
     searchTrips: async (q: string): Promise<TripSearchDoc[]> => {
         const response = await http.get<TripSearchDoc[]>('/search/trips', {
+            params: { q }
+        })
+        return response.data
+    },
+
+    searchTripLogs: async (q: string): Promise<TripLogSearchDoc[]> => {
+        const response = await http.get<TripLogSearchDoc[]>('/search/trip-logs', {
             params: { q }
         })
         return response.data
