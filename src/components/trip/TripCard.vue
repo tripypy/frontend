@@ -34,9 +34,16 @@
         </div>
       </div>
 
-      <h3 class="font-black text-2xl tracking-tight leading-tight text-[#2C2C2C] font-sans">
-        {{ trip.title }}
-      </h3>
+      <div class="overflow-hidden relative group/text w-full">
+        <h3 
+          ref="titleRef"
+          class="font-black text-2xl tracking-tight leading-tight text-[#2C2C2C] font-sans whitespace-nowrap block transition-none group-hover/text:transition-transform group-hover/text:ease-linear"
+          :class="{ 'group-hover/text:-translate-x-[var(--scroll-amount)]': isOverflowing }"
+          :style="{ '--scroll-amount': scrollAmount + 'px', transitionDuration: duration + 's' }"
+        >
+          {{ trip.title }}
+        </h3>
+      </div>
     </div>
 
     <div class="p-5 bg-white">
@@ -100,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { Calendar, Share2, Bookmark, MapPin } from 'lucide-vue-next'
 import type { TripResponseDto } from '@/apis/trip/types'
 import { TripStatus } from '@/types/common'
@@ -147,6 +154,31 @@ const displayDateRange = computed(() => {
     return '날짜 미정'
   }
 })
+
+const titleRef = ref<HTMLElement | null>(null)
+const isOverflowing = ref(false)
+const scrollAmount = ref(0)
+const duration = ref(0)
+
+const checkOverflow = async () => {
+  await nextTick()
+  const el = titleRef.value
+  if (el) {
+    if (el.scrollWidth > el.clientWidth) {
+      isOverflowing.value = true
+      scrollAmount.value = el.scrollWidth - el.clientWidth
+      // Adjust speed: 0.01s per pixel (faster)
+      duration.value = scrollAmount.value * 0.01
+    } else {
+      isOverflowing.value = false
+      scrollAmount.value = 0
+      duration.value = 0
+    }
+  }
+}
+
+onMounted(checkOverflow)
+watch(() => props.trip.title, checkOverflow)
 </script>
 
 <style scoped>
