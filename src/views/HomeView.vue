@@ -13,7 +13,7 @@
             <h3 class="text-xl font-black mb-4 uppercase flex items-center gap-2" style="font-family: 'Bebas Neue', sans-serif">
               <span class="text-[#E88555]">#</span> Trending Now
             </h3>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2 max-h-[66px] overflow-hidden">
               <button
                 v-for="keyword in keywords"
                 :key="keyword"
@@ -147,13 +147,20 @@
             </div>
           </div>
 
-          <!-- Ad / Banner Area -->
-          <div class="bg-[#2C2C2C] rounded-xl p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] text-center text-white relative overflow-hidden group cursor-pointer">
+          <!-- Daily Mission (Premium Log Style) -->
+          <div class="bg-[#2C2C2C] rounded-xl p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] text-center text-white relative overflow-hidden group cursor-pointer min-h-[140px] flex flex-col justify-center items-center">
             <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-            <h3 class="text-xl font-black mb-2 relative z-10" style="font-family: 'Bebas Neue'">PREMIUM LOG</h3>
-            <p class="text-xs font-bold text-gray-400 relative z-10">더 많은 기능을 경험해보세요</p>
-            <div class="mt-4 inline-block px-4 py-1.5 border border-white/30 rounded-full text-xs font-bold group-hover:bg-white group-hover:text-[#2C2C2C] transition-all relative z-10">
-              Upgrade Now
+            
+            <h3 class="text-xl font-black mb-3 relative z-10 text-[#F9CA6B]" style="font-family: 'Bebas Neue'">
+              DAILY MISSION
+            </h3>
+            
+            <p class="text-sm font-bold text-gray-200 relative z-10 mb-4 break-keep leading-snug">
+              {{ currentMission }}
+            </p>
+            
+            <div class="inline-block px-4 py-1.5 border border-white/30 rounded-full text-[10px] font-bold group-hover:bg-white group-hover:text-[#2C2C2C] transition-all relative z-10 uppercase tracking-wider">
+              Accept Challenge
             </div>
           </div>
 
@@ -174,6 +181,7 @@ import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
 import { Plus, MapPin, Calendar, ExternalLink, TrendingUp, TrendingDown, Minus } from 'lucide-vue-next'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { getTripLogFeed } from '@/apis/trip-log/index';
+import { allPlaces, dailyMissions } from '@/data/mockData'
 
 const { handleNavigate } = useNavigate()
 
@@ -184,9 +192,11 @@ const observerTarget = ref<HTMLElement | null>(null)
 const nextCursor = ref<number | null>(null)
 const hasNext = ref(true)
 
+// Daily Mission Logic
+const currentMission = ref(dailyMissions[Math.floor(Math.random() * dailyMissions.length)])
+
 // Mock Data for Sidebars
 const keywords = ['성수동','반려견동반','오션뷰','캠핑로그','제주맛집','호캉스','파리올림픽']
-import { allPlaces } from '@/data/mockData'
 
 const hotPlaces = allPlaces.slice(0, 10) // Show Top 10
 

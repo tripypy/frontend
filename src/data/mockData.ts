@@ -99,3 +99,14 @@ export const allPlaces: Place[] = [
             'https://images.unsplash.com/photo-1726649819338-a3258bf46fe2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     },
 ]
+
+export const dailyMissions = [
+    "동네의 새로운 카페 발견하기 ☕️",
+    "퇴근길에 하늘 사진 찍기 📸",
+    "안 가본 골목길로 산책하기 🚶",
+    "주말 당일치기 여행 계획 짜기 🗺️",
+    "편의점에서 이국적인 간식 사먹기 🍪",
+    "버스 타고 창밖 풍경 멍하니 보기 🚌",
+    "나만의 숨겨진 명소 찾기 🤫",
+    "여행지에서 들을 플레이리스트 만들기 🎵",
+]
