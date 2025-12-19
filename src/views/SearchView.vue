@@ -100,71 +100,14 @@
                 </button>
               </div>
               <div class="space-y-3">
-                <div
+                <SearchPlaceItem
                   v-for="(place, index) in activeTab === 'all'
                     ? filteredPlaces.slice(0, 3)
                     : filteredPlaces"
                   :key="place.id"
+                  :place="place"
                   @click="handlePlaceClick(place, index)"
-                  class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
-                >
-                  <div class="flex items-center gap-4">
-                    <!-- Image -->
-                    <!-- Image -->
-                    <div
-                      class="w-24 h-24 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
-                    >
-                      <img
-                        v-if="place.imageUrl"
-                        :src="place.imageUrl"
-                        :alt="place.name"
-                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        @error="handleImageError"
-                      />
-                      <div
-                        v-else
-                        class="w-full h-full bg-[#FFF8ED] flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                      >
-                        <Map :size="32" :stroke-width="2" class="text-[#2C2C2C]" />
-                      </div>
-                    </div>
-                    <!-- Content -->
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-start justify-between mb-1">
-                        <h5 class="text-xl font-black group-hover:text-[#9BCCC4] transition-colors">
-                          {{ place.name }}
-                        </h5>
-                        <div
-                          class="flex items-center gap-1 px-2.5 py-1 bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-full flex-shrink-0 ml-2"
-                        >
-                          <Star :size="14" :stroke-width="2" class="fill-current text-[#2C2C2C]" />
-                          <span class="text-xs font-black">{{ place.rating }}</span>
-                        </div>
-                      </div>
-                      <div class="flex items-center gap-2 text-xs font-bold mb-2 text-gray-600">
-                        <MapPin :size="14" :stroke-width="2" />
-                        <span>{{ place.location }}</span>
-                      </div>
-                      <p class="text-sm font-medium text-gray-700 mb-2 line-clamp-2">
-                        {{ place.description }}
-                      </p>
-                      <div class="flex items-center justify-between">
-                        <div class="flex gap-1.5 flex-wrap">
-                          <span
-                            v-for="(tag, idx) in place.tags"
-                            :key="idx"
-                            class="px-2.5 py-0.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-full text-xs font-black"
-                          >
-                            #{{ tag }}
-                          </span>
-                        </div>
-                        <div class="text-xs font-bold text-gray-500">
-                          {{ place.views.toLocaleString() }} 조회
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                />
               </div>
             </div>
           </template>
@@ -486,6 +429,7 @@ import { Search, MapPin, Star, Heart, MessageCircle, Map, BookOpen } from 'lucid
 import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
+import SearchPlaceItem from '@/components/search/SearchPlaceItem.vue'
 import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 
 const router = useRouter()
@@ -524,7 +468,9 @@ const filteredPlaces = computed(() => {
     views: 0, // 조회수 정보 없음
     phone: place.phone,
     website: place.placeUrl,
-    kakaoPlaceId: place.kakaoPlaceId
+    kakaoPlaceId: place.kakaoPlaceId,
+    lat: place.lat,
+    lng: place.lng
   }))
 })
 
