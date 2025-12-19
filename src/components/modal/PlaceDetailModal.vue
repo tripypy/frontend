@@ -44,7 +44,7 @@
              <div v-if="localPlace.website" class="flex items-center gap-1.5">
                <Globe class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
                <a :href="localPlace.website" target="_blank" class="hover:text-[#E88555] hover:underline truncate max-w-[150px]">
-                 웹사이트
+                 {{ truncateUrl(localPlace.website) }}
                </a>
              </div>
            </div>
@@ -68,7 +68,9 @@
                  
                  <!-- Write Review Prompt -->
                  <div class="flex-1 w-full">
-                    <p class="text-sm font-black text-gray-800 mb-2">이 장소에서의 경험은 어떠셨나요?</p>
+                    <p class="text-sm font-black text-gray-800 mb-2">
+                        {{ myReview ? '이미 작성한 리뷰가 있습니다. 수정하시겠습니까?' : '이 장소에서의 경험은 어떠셨나요?' }}
+                    </p>
                     <div class="flex items-center gap-1 cursor-pointer mb-3" @mouseleave="handleStarLeave">
                       <div
                         v-for="star in 5"
@@ -97,7 +99,7 @@
                     <div class="relative">
                       <textarea
                         v-model="reviewContent"
-                        placeholder="솔직한 리뷰를 남겨주세요. (선택사항)"
+                        placeholder="솔직한 리뷰를 남겨주세요."
                         class="w-full p-3 border-[2px] border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:border-[#2C2C2C] resize-none h-24 placeholder:text-gray-400"
                       ></textarea>
                       <button 
@@ -105,7 +107,7 @@
                         :disabled="userRating === 0"
                         class="absolute bottom-3 right-3 px-4 py-1.5 bg-[#2C2C2C] text-white text-xs font-black rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-[#404040] transition-colors"
                       >
-                        등록하기
+                        {{ myReview ? '수정하기' : '등록하기' }}
                       </button>
                     </div>
                  </div>
@@ -123,26 +125,28 @@
 
             <!-- Review List -->
             <div class="space-y-4">
-               <div v-for="i in 3" :key="i" class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4">
+               <div v-if="reviews.length === 0" class="bg-white border-[2px] border-dashed border-gray-300 rounded-xl p-8 text-center">
+                    <p class="text-gray-500 font-bold">아직 작성된 리뷰가 없습니다.<br/>첫 번째 리뷰를 남겨보세요!</p>
+               </div>
+               <div v-for="review in reviews" :key="review.id" class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4">
                   <div class="flex justify-between items-start mb-3">
                      <div class="flex items-center gap-3">
                         <!-- Avatar -->
                         <div class="w-10 h-10 rounded-full bg-[#FFF8ED] border-[2px] border-[#2C2C2C] flex items-center justify-center overflow-hidden">
-                           <img :src="`https://i.pravatar.cc/150?u=${i}`" class="w-full h-full object-cover" />
+                           <img :src="review.userProfileImage || `https://i.pravatar.cc/150?u=${review.userNickname}`" class="w-full h-full object-cover" />
                         </div>
                         <div>
-                           <div class="font-black text-sm text-[#2C2C2C]">Traveler_{{i}}</div>
-                           <div class="text-xs font-bold text-gray-400">2024.12.{{11-i}}</div>
+                           <div class="font-black text-sm text-[#2C2C2C]">{{ review.userNickname }}</div>
+                           <div class="text-xs font-bold text-gray-400">{{ formatDate(review.createdAt) }}</div>
                         </div>
                      </div>
                      <div class="flex items-center gap-1 px-2 py-1 bg-[#FFF8ED] rounded-lg border border-[#2C2C2C]">
                         <Star class="w-3 h-3 fill-[#FFD60A] text-[#2C2C2C]" stroke-width="2" />
-                        <span class="text-xs font-black">5.0</span>
+                        <span class="text-xs font-black">{{ review.rating.toFixed(1) }}</span>
                      </div>
                   </div>
                   <p class="text-sm font-medium text-gray-700 leading-relaxed">
-                    분위기가 너무 좋았습니다. 주말에는 사람이 좀 많지만 평일 오후에 가면 여유롭게 즐길 수 있어요. 
-                    특히 {{ localPlace.name }}의 시그니처 메뉴는 꼭 드셔보세요! 재방문 의사 100% 입니다.
+                    {{ review.content }}
                   </p>
                </div>
             </div>
@@ -159,38 +163,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { X, MapPin, Phone, Globe, Star } from 'lucide-vue-next'
+import { spotApi, type SpotRequestDto, type SpotResponseDto } from '@/apis/spot'
+import { spotReviewApi, type SpotReviewResponseDto } from '@/apis/spot-review'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{
   place: any
 }>()
 
 const emit = defineEmits(['close'])
+const authStore = useAuthStore()
 
-const localPlace = computed(() => ({
+const spotId = ref<number | null>(null)
+const spotResponse = ref<SpotResponseDto | null>(null)
+const reviews = ref<SpotReviewResponseDto[]>([])
+const reviewStats = ref<{ averageRating: number; reviewCount: number }>({
+  averageRating: 0,
+  reviewCount: 0,
+})
+
+const myReview = ref<SpotReviewResponseDto | null>(null)
+
+const localPlace = computed(() => {
+  const base = {
     name: props.place.name,
     tags: props.place.tags || [],
-    address: props.place.location || props.place.address, // SearchView maps address -> location
+    address: props.place.location || props.place.address,
     phone: props.place.phone,
     website: props.place.website || props.place.placeUrl,
-    rating: props.place.rating || 0,
-    reviews: props.place.reviews || 0
-}))
+  }
+
+  // API 응답이 있으면 덮어쓰기 (실제 DB 데이터 우선)
+  if (spotResponse.value) {
+      if (spotResponse.value.name) base.name = spotResponse.value.name
+  }
+
+  return {
+    ...base,
+    rating: reviewStats.value.averageRating,
+    reviews: reviewStats.value.reviewCount
+  }
+})
 
 
 // 사용자 평가 state
 const userRating = ref<number>(0)
 const hoverRating = ref<number>(0)
 const reviewContent = ref<string>('')
-
-const submitReview = () => {
-    if (userRating.value === 0) return
-    console.log('Submit review:', { rating: userRating.value, content: reviewContent.value })
-    alert('리뷰가 등록되었습니다! (Mock)')
-    reviewContent.value = ''
-    userRating.value = 0
-}
 
 const getAverageRatingRounded = () => {
   return Math.floor(localPlace.value.rating * 2) / 2
@@ -235,6 +256,101 @@ const getStarFillPercent = (starIndex: number) => {
     return 0
   }
 }
+
+const fetchSpotData = async () => {
+    try {
+        // 1. 해당 장소가 이미 등록되어 있는지 조회
+        let spot = await spotApi.getSpotByKakaoPlaceId(props.place.kakaoPlaceId)
+
+        // 2. 등록되어 있지 않다면 생성
+        if (!spot) {
+             const createData: SpotRequestDto = {
+                kakaoPlaceId: props.place.kakaoPlaceId,
+                name: props.place.name,
+                address: props.place.location || props.place.address || '',
+                category: props.place.category || '기타',
+                lat: props.place.lat || 0,
+                lng: props.place.lng || 0,
+                placeUrl: props.place.placeUrl || '',
+                thumbnailUrl: ''
+            }
+            spot = await spotApi.createSpot(createData)
+        }
+
+        if (spot) {
+            spotId.value = spot.id
+            spotResponse.value = spot
+            
+            // 3. 리뷰 및 통계 조회
+            const [reviewsData, statsData] = await Promise.all([
+                spotReviewApi.getSpotReviews(spot.id),
+                spotReviewApi.getSpotReviewStats(spot.id)
+            ])
+            reviews.value = reviewsData
+            reviewStats.value = statsData
+
+            // 4. 내 리뷰 찾기
+            if (authStore.user) {
+                const found = reviewsData.find(r => r.userNickname === authStore.user?.nickname)
+                if (found) {
+                    myReview.value = found
+                    userRating.value = found.rating
+                    reviewContent.value = found.content
+                }
+            }
+        }
+
+    } catch (e) {
+        console.error('Failed to fetch spot data:', e)
+    }
+}
+
+const submitReview = async () => {
+    if (userRating.value === 0 || !spotId.value) return
+    
+    try {
+        if (myReview.value) {
+            // Update existig review
+             await spotReviewApi.updateSpotReview({
+                reviewId: myReview.value.id,
+                rating: userRating.value,
+                content: reviewContent.value
+            })
+            alert('리뷰가 수정되었습니다!')
+        } else {
+            // Create new review
+            await spotReviewApi.postSpotReview({
+                spotId: spotId.value,
+                rating: userRating.value,
+                content: reviewContent.value
+            })
+            alert('리뷰가 등록되었습니다!')
+        }
+        
+        // Refresh reviews
+        fetchSpotData()
+
+    } catch (e) {
+        console.error('Failed to submit review:', e)
+        alert('리뷰 저장에 실패했습니다.')
+    }
+}
+
+// Helper to format date
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    return new Date(dateStr).toLocaleDateString()
+}
+
+// Helper to truncate URL
+const truncateUrl = (url: string) => {
+  if (!url) return ''
+  return url.length > 30 ? url.substring(0, 30) + '...' : url
+}
+
+onMounted(() => {
+    fetchSpotData()
+})
 </script>
 
 <style scoped>

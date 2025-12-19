@@ -523,7 +523,8 @@ const filteredPlaces = computed(() => {
     tags: place.category ? place.category.split(' > ').slice(-1) : ['장소'],
     views: 0, // 조회수 정보 없음
     phone: place.phone,
-    website: place.placeUrl
+    website: place.placeUrl,
+    kakaoPlaceId: place.kakaoPlaceId
   }))
 })
 
