@@ -87,15 +87,23 @@
           <!-- All Tab or Places Tab -->
           <template v-if="activeTab === 'all' || activeTab === 'places'">
             <div v-if="filteredPlaces.length > 0">
-              <h4
-                v-if="activeTab === 'all'"
-                class="text-xl font-black mb-4 uppercase tracking-tight"
-              >
-                장소
-              </h4>
+              <div class="flex items-center justify-between mb-4">
+                <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
+                  장소
+                </h4>
+                <button
+                  v-if="activeTab === 'all'" (
+                  @click="activeTab = 'places'"
+                  class="text-sm font-bold text-gray-500 hover:text-[#2C2C2C] transition-colors"
+                >
+                  + 더보기
+                </button>
+              </div>
               <div class="space-y-3">
                 <div
-                  v-for="(place, index) in filteredPlaces"
+                  v-for="(place, index) in activeTab === 'all'
+                    ? filteredPlaces.slice(0, 3)
+                    : filteredPlaces"
                   :key="place.id"
                   @click="handlePlaceClick(place, index)"
                   class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
@@ -156,15 +164,23 @@
           <!-- All Tab or Courses Tab -->
           <template v-if="activeTab === 'all' || activeTab === 'courses'">
             <div v-if="filteredCourses.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
-              <h4
-                v-if="activeTab === 'all'"
-                class="text-xl font-black mb-4 uppercase tracking-tight"
-              >
-                코스
-              </h4>
+              <div class="flex items-center justify-between mb-4">
+                <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
+                  코스
+                </h4>
+                <button
+                  v-if="activeTab === 'all'"
+                  @click="activeTab = 'courses'"
+                  class="text-sm font-bold text-gray-500 hover:text-[#2C2C2C] transition-colors"
+                >
+                  + 더보기
+                </button>
+              </div>
               <div class="space-y-3">
                 <div
-                  v-for="course in filteredCourses"
+                  v-for="course in activeTab === 'all'
+                    ? filteredCourses.slice(0, 3)
+                    : filteredCourses"
                   :key="course.id"
                   @click="handleCourseClick(course)"
                   class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
@@ -221,15 +237,23 @@
           <!-- All Tab or Diaries Tab -->
           <template v-if="activeTab === 'all' || activeTab === 'diaries'">
             <div v-if="filteredDiaries.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
-              <h4
-                v-if="activeTab === 'all'"
-                class="text-xl font-black mb-4 uppercase tracking-tight"
-              >
-                다이어리
-              </h4>
+              <div class="flex items-center justify-between mb-4">
+                <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
+                  다이어리
+                </h4>
+                <button
+                  v-if="activeTab === 'all'"
+                  @click="activeTab = 'diaries'"
+                  class="text-sm font-bold text-gray-500 hover:text-[#2C2C2C] transition-colors"
+                >
+                  + 더보기
+                </button>
+              </div>
               <div class="space-y-3">
                 <div
-                  v-for="diary in filteredDiaries"
+                  v-for="diary in activeTab === 'all'
+                    ? filteredDiaries.slice(0, 3)
+                    : filteredDiaries"
                   :key="diary.id"
                   @click="handleDiaryClick(diary)"
                   class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
