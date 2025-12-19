@@ -89,7 +89,7 @@
             <div v-if="filteredPlaces.length > 0 || (activeTab === 'all' && totalResultsCount > 0)">
               <div class="flex items-center justify-between mb-4">
                 <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
-                  PLACES
+                  PLACE
                 </h4>
                 <button
                   v-if="activeTab === 'all'"
@@ -120,7 +120,7 @@
             <div v-if="filteredTrips.length > 0 || (activeTab === 'all' && totalResultsCount > 0)" :class="{ 'mt-8': activeTab === 'all' }">
               <div class="flex items-center justify-between mb-4">
                 <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
-                  TRIPS
+                  TRIP
                 </h4>
                 <button
                   v-if="activeTab === 'all'"
@@ -151,7 +151,7 @@
             <div v-if="filteredLogs.length > 0 || (activeTab === 'all' && totalResultsCount > 0)" :class="{ 'mt-8': activeTab === 'all' }">
               <div class="flex items-center justify-between mb-4">
                 <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
-                  LOGS
+                  LOG
                 </h4>
                 <button
                   v-if="activeTab === 'all'"
@@ -706,10 +706,10 @@ const totalResultsCount = computed(() => {
 })
 
 const tabs = [
-  { id: 'all' as const, label: '전체' },
-  { id: 'places' as const, label: 'PLACES' },
-  { id: 'trips' as const, label: 'TRIPS' },
-  { id: 'logs' as const, label: 'LOGS' },
+  { id: 'all' as const, label: 'ALL' },
+  { id: 'places' as const, label: 'PLACE' },
+  { id: 'trips' as const, label: 'TRIP' },
+  { id: 'logs' as const, label: 'LOG' },
 ]
 
 const getTabCount = (tabId: string) => {
