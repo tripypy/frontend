@@ -15,7 +15,9 @@ export interface SpotRequestDto {
 export const spotApi = {
     getSpotByKakaoPlaceId: async (kakaoPlaceId: string): Promise<SpotResponseDto | null> => {
         try {
-            const response = await http.get<SpotResponseDto>(`/spots/kakao/${kakaoPlaceId}`)
+            const response = await http.get<SpotResponseDto>(`/spots`, {
+                params: { kakaoPlaceId }
+            })
             return response.data
         } catch (error: any) {
             if (error.response && error.response.status === 404) {

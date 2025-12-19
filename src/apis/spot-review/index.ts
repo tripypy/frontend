@@ -14,6 +14,12 @@ export interface SpotReviewStatsResponseDto {
     reviewCount: number
 }
 
+export interface SpotReviewRequestDto {
+    spotId: number
+    rating: number
+    content: string
+}
+
 export const spotReviewApi = {
     getSpotReviews: async (spotId: number): Promise<SpotReviewResponseDto[]> => {
         const response = await http.get<SpotReviewResponseDto[]>(`/spot-reviews`, {

@@ -521,7 +521,9 @@ const filteredPlaces = computed(() => {
     description: place.address, // 상세 설명이 없으므로 주소로 대체
     // 카테고리를 태그로 사용
     tags: place.category ? place.category.split(' > ').slice(-1) : ['장소'],
-    views: 0 // 조회수 정보 없음
+    views: 0, // 조회수 정보 없음
+    phone: place.phone,
+    website: place.placeUrl
   }))
 })
 
