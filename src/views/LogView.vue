@@ -111,7 +111,12 @@ onMounted(() => {
 
         <!-- Right Content Area -->
         <section class="lg:col-span-2 flex flex-col gap-8">
-          <LogAiAnalysis v-if="profileData" />
+          <LogAiAnalysis
+            v-if="profileData"
+            :initial-summary="profileData?.travelStyleSummary"
+            :is-my-profile="isMyProfile"
+            @analysis-completed="setMyProfileData"
+          />
           <LogContentTabs
             :is-my-profile="isMyProfile"
             :user-diaries="profileData.diaries || []"

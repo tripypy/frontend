@@ -107,7 +107,7 @@ onMounted(async () => {
   try {
     const response = await getMyTrips()
     tripsList.value = response
-    //console.log('Fetched tripsList:', tripsList.value) // Added log
+    console.log('Fetched tripsList:', tripsList.value[0]) // Added log
   } catch (error) {
     console.error('내 여행 목록 조회 실패:', error)
     // 에러 처리 로직 추가 (예: 사용자에게 알림)
@@ -175,7 +175,7 @@ const groupedCompletedTrips = computed(() => {
         acc[key] = groups[key]
         return acc
       },
-      {} as Record<string, TripResponseDto[]>, 
+      {} as Record<string, TripResponseDto[]>,
     )
 })
 

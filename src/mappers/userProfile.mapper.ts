@@ -17,6 +17,7 @@ export function toLogViewProfile(
         friendsCount: data.friendsCount,
         isMyProfile,
         email,
+        travelStyleSummary: data.travelStyleSummary,
         completedTrips: data.completedTripDetails,
         userPlans: data.tripOverviews.map(plan => ({
           ...plan,
