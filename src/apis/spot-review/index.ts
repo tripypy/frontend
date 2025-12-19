@@ -20,15 +20,19 @@ export interface SpotReviewRequestDto {
     content: string
 }
 
+export interface SpotReviewListResponseDto {
+    myReview: SpotReviewResponseDto | null
+    reviews: SpotReviewResponseDto[]
+}
+
 export interface SpotReviewUpdateRequestDto {
-    reviewId: number
-    rating: number
-    content: string
+    rating?: number
+    content?: string
 }
 
 export const spotReviewApi = {
-    getSpotReviews: async (spotId: number): Promise<SpotReviewResponseDto[]> => {
-        const response = await http.get<SpotReviewResponseDto[]>(`/spot-reviews`, {
+    getSpotReviews: async (spotId: number): Promise<SpotReviewListResponseDto> => {
+        const response = await http.get<SpotReviewListResponseDto>(`/spot-reviews`, {
             params: { spotId },
         })
         return response.data
@@ -45,7 +49,7 @@ export const spotReviewApi = {
         await http.post(`/spot-reviews`, data)
     },
 
-    updateSpotReview: async (data: SpotReviewUpdateRequestDto): Promise<void> => {
-        await http.put(`/spot-reviews`, data)
+    updateSpotReview: async (reviewId: number, data: SpotReviewUpdateRequestDto): Promise<void> => {
+        await http.patch(`/spot-reviews/${reviewId}`, data)
     },
 }

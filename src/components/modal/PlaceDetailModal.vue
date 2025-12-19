@@ -59,19 +59,23 @@
                  <div class="flex flex-col items-center justify-center min-w-[120px] pt-2">
                     <span class="text-5xl font-black text-[#2C2C2C] tracking-tighter">{{ localPlace.rating.toFixed(1) }}</span>
                     <div class="flex gap-0.5 my-1">
-                      <Star v-for="i in 5" :key="i" class="w-4 h-4 fill-[#FFD60A] text-[#2C2C2C]" stroke-width="1.5" />
+                      <div v-for="i in 5" :key="i" class="relative w-4 h-4">
+                        <Star class="absolute inset-0 w-4 h-4 text-gray-200 fill-gray-200" stroke-width="1.5" />
+                        <div class="absolute inset-0 overflow-hidden" :style="{ width: `${Math.max(0, Math.min(100, (localPlace.rating - (i - 1)) * 100))}%` }">
+                            <Star class="absolute left-0 w-4 h-4 fill-[#FFD60A] text-[#2C2C2C]" stroke-width="1.5" />
+                        </div>
+                      </div>
                     </div>
                     <span class="text-xs font-bold text-gray-500">{{ localPlace.reviews.toLocaleString() }} Reviews</span>
                  </div>
                  
                  <div class="hidden sm:block w-[2px] self-stretch bg-gray-100"></div>
                  
-                 <!-- Write Review Prompt -->
-                 <div class="flex-1 w-full">
-                    <p class="text-sm font-black text-gray-800 mb-2">
-                        {{ myReview ? '이미 작성한 리뷰가 있습니다. 수정하시겠습니까?' : '이 장소에서의 경험은 어떠셨나요?' }}
+                 <div class="flex-1 w-full flex flex-col items-end">
+                    <p class="text-sm font-black text-gray-800 mb-2 w-full text-left">
+                        이 장소는 나에게 어떤 곳이었나요? 기록을 남겨주세요!
                     </p>
-                    <div class="flex items-center gap-1 cursor-pointer mb-3" @mouseleave="handleStarLeave">
+                    <div class="flex items-center gap-1 cursor-pointer mb-3 w-full" @mouseleave="handleStarLeave">
                       <div
                         v-for="star in 5"
                         :key="star"
@@ -96,7 +100,7 @@
                     </div>
 
                     <!-- Review Text Input -->
-                    <div class="relative">
+                    <div class="relative w-full">
                       <textarea
                         v-model="reviewContent"
                         placeholder="솔직한 리뷰를 남겨주세요."
@@ -216,7 +220,6 @@ const reviewContent = ref<string>('')
 const getAverageRatingRounded = () => {
   return Math.floor(localPlace.value.rating * 2) / 2
 }
-
 const handleStarHover = (starIndex: number, event: MouseEvent) => {
   const target = event.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
@@ -286,17 +289,28 @@ const fetchSpotData = async () => {
                 spotReviewApi.getSpotReviews(spot.id),
                 spotReviewApi.getSpotReviewStats(spot.id)
             ])
-            reviews.value = reviewsData
-            reviewStats.value = statsData
 
-            // 4. 내 리뷰 찾기
-            if (authStore.user) {
-                const found = reviewsData.find(r => r.userNickname === authStore.user?.nickname)
-                if (found) {
-                    myReview.value = found
-                    userRating.value = found.rating
-                    reviewContent.value = found.content
+            // New API response structure: { myReview, reviews }
+            reviews.value = reviewsData.reviews || []
+            myReview.value = reviewsData.myReview
+            reviewStats.value = statsData
+            
+            // If myReview exists but is not in reviews list, add it (so user sees it in the list too)
+            if (myReview.value) {
+                const exists = reviews.value.find(r => r.id === myReview.value?.id)
+                if (!exists) {
+                    reviews.value.unshift(myReview.value)
                 }
+            }
+
+            // Populate input if myReview exists
+            if (myReview.value) {
+                userRating.value = myReview.value.rating
+                reviewContent.value = myReview.value.content
+            } else {
+                // Reset inputs if no review
+                userRating.value = 0
+                reviewContent.value = ''
             }
         }
 
@@ -310,9 +324,8 @@ const submitReview = async () => {
     
     try {
         if (myReview.value) {
-            // Update existig review
-             await spotReviewApi.updateSpotReview({
-                reviewId: myReview.value.id,
+            // Update existig review using PATCH
+             await spotReviewApi.updateSpotReview(myReview.value.id, {
                 rating: userRating.value,
                 content: reviewContent.value
             })
@@ -327,8 +340,14 @@ const submitReview = async () => {
             alert('리뷰가 등록되었습니다!')
         }
         
-        // Refresh reviews
-        fetchSpotData()
+        // Refresh
+        if (!myReview.value) {
+            // Clear inputs if it was a new review
+            reviewContent.value = ''
+            userRating.value = 0
+        }
+        
+        await fetchSpotData()
 
     } catch (e) {
         console.error('Failed to submit review:', e)
