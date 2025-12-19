@@ -128,7 +128,7 @@
               </div>
             </div>
           </div>
-          
+
           <div v-if="allImages.length > 1" class="absolute inset-0 flex items-center justify-between px-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             <button
               v-if="currentImageIndex > 0"
@@ -138,7 +138,7 @@
               <ChevronLeft class="w-5 h-5" stroke-width="3" />
             </button>
             <div v-else class="w-9"></div>
-            
+
              <button
               v-if="currentImageIndex < allImages.length - 1"
               @click.stop="nextImage"
@@ -148,7 +148,7 @@
             </button>
              <div v-else class="w-9"></div>
           </div>
-          
+
            <div class="absolute bottom-3 right-3 bg-[#2C2C2C] text-white text-xs font-black px-2.5 py-1 rounded-md border-[2px] border-white pointer-events-none shadow-md">
             {{ currentImageIndex + 1 }} / {{ allImages.length }}
           </div>
@@ -211,8 +211,6 @@ import {
   Heart,
   MessageCircle,
   Bookmark,
-  MapPin,
-  Calendar,
   Share2,
   ChevronRight,
   ChevronLeft,

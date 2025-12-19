@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6"
+    class="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-50 p-6"
     @click="emit('close')"
   >
     <button
@@ -11,14 +11,45 @@
     </button>
 
     <div
-      class="relative w-full max-w-4xl h-[80vh] bg-white border-[4px] border-[#2C2C2C] rounded-3xl shadow-[12px_12px_0px_0px_rgba(44,44,44,1)] flex flex-col overflow-hidden"
+      class="relative w-full max-w-4xl h-[85vh] flex flex-col"
       @click.stop
     >
-      <div class="bg-white border-b-[3px] border-[#2C2C2C] px-6 py-4 flex-shrink-0">
+        <div class="flex-shrink-0 self-end">
+        <div class="flex items-center justify-end">
+          <div class="flex relative top-[3px]">
+            <button
+              @click="handleTabClick('map')"
+              :class="[
+                'px-4 py-2 text-base font-black border-[4px] border-[#2C2C2C] rounded-t-lg transition-all focus:outline-none',
+                'border-b-0',
+                activeTab === 'map'
+                  ? 'bg-[#9BCCC4] translate-y-[-3px] shadow-[0_0_0_0_rgba(44,44,44,1)]'
+                  : 'bg-[#9BCCC4]/50 translate-y-0 border-b-[3px] border-[#2C2C2C] shadow-[0_3px_0_0_rgba(44,44,44,0.4)]',
+              ]"
+            >
+              MAP
+            </button>
+            <button
+              @click="handleTabClick('log')"
+              :class="[
+                'px-4 py-2 text-base font-black border-[4px] border-[#2C2C2C] rounded-t-lg transition-all focus:outline-none mr-2 ml-1',
+                'border-b-0',
+                activeTab === 'log'
+                  ? 'bg-[#F9CA6B] translate-y-[-3px] shadow-[0_0_0_0_rgba(44,44,44,1)]'
+                  : 'bg-[#F9CA6B]/50 translate-y-0 border-b-[3px] border-[#2C2C2C] shadow-[0_3px_0_0_rgba(44,44,44,0.4)]',
+              ]"
+            >
+              LOG
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white border-b-[3px] border-t-[3px] border-[#2C2C2C] px-6 py-5 flex-shrink-0 rounded-t-xl z-10">
         <div class="flex items-center justify-between gap-6">
           <div class="flex-1">
             <h2 class="text-2xl font-black mb-2">{{ trip.title }}</h2>
-            <div class="flex items-center gap-4 text-sm font-bold text-gray-600">
+            <div v-if="activeTab === 'map'" class="flex items-center gap-4 text-sm font-bold text-gray-600">
               <div class="flex items-center gap-2">
                 <Calendar :size="18" :stroke-width="2.5" />
                 <span>{{ displayDuration }}</span>
@@ -36,124 +67,168 @@
                 <span>{{ trip.visibility }}</span>
               </div>
             </div>
+            <div v-if="activeTab === 'log' && tripLog" class="flex items-center gap-4 text-sm font-bold text-gray-600">
+              <div class="flex text-base font-bold text-black items-center gap-2">
+                <User :size="18" :stroke-width="2.5" />
+                <span>{{ tripLog!.authorNickname }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <Calendar :size="18" :stroke-width="2.5" />
+                <span>{{ tripLog.createdAt.substring(0, 10) }}</span>
+              </div>
+              <div class="flex items-center gap-2 border-2 border-black rounded-full px-[7px] py-[2px]">
+                <Heart :size="18" :stroke-width="2.5" />
+                <span> {{ tripLog.likeCount }}</span>
+              </div>
+              <div class="flex items-center gap-2 border-2 border-black rounded-full px-[7px] py-[2px]">
+                <Bubbles :size="18" :stroke-width="2.5" />
+                <span> {{ tripLog.commentCount }}</span>
+              </div>
+            </div>
           </div>
+
           <button
-            v-if="trip.status === 'PLANNED'"
-            @click="handleWritePostClick"
-            class="flex items-center gap-2 px-5 py-2.5 bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
-          >
-            <BookPlus :size="18" :stroke-width="3" /> LOG
-          </button>
-          <button
+            v-if="activeTab === 'map'"
             @click="handleEditClick"
+            class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
+          >
+            <Edit :size="16" :stroke-width="3" /> EDIT
+          </button>
+
+          <button
+            v-if="activeTab === 'log' && !logLoading && tripLog"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
             <Edit :size="16" :stroke-width="3" /> EDIT
           </button>
         </div>
       </div>
-
-      <div class="flex-1 flex overflow-hidden">
-        <div
-          class="w-[320px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0"
-        >
-          <div class="p-4 border-b-[2px] border-gray-200">
-            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
-              <button
-                v-for="day in days"
-                :key="day.dayNumber"
-                @click="activeDay = day.dayNumber"
-                :class="[
-                  'px-4 py-2 rounded-lg font-black text-sm uppercase tracking-wide transition-all flex-shrink-0 border-[2px]',
-                  activeDay === day.dayNumber
-                    ? 'bg-[#2C2C2C] text-white border-[#2C2C2C]'
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-[#2C2C2C]',
-                ]"
-              >
-                Day {{ day.dayNumber }}
-              </button>
+      <div class="flex-1 flex overflow-hidden ">
+        <div v-if="activeTab === 'map'" class="flex-1 flex overflow-hidden">
+          <div
+            class="w-[320px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0"
+          >
+            <div class="p-4 border-b-[2px] border-gray-200">
+              <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <button
+                  v-for="day in days"
+                  :key="day.dayNumber"
+                  @click="activeDay = day.dayNumber"
+                  :class="[
+                    'px-4 py-2 rounded-lg font-black text-sm uppercase tracking-wide transition-all flex-shrink-0 border-[2px]',
+                    activeDay === day.dayNumber
+                      ? 'bg-[#2C2C2C] text-white border-[#2C2C2C]'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-[#2C2C2C]',
+                  ]"
+                >
+                  Day {{ day.dayNumber }}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
-            <h3 class="font-black text-sm uppercase tracking-wide text-gray-700 mb-3">
-              선택된 장소 ({{ currentDayPlaces.length }})
-            </h3>
+            <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
+              <h3 class="font-black text-sm uppercase tracking-wide text-gray-700 mb-3">
+                선택된 장소 ({{ currentDayPlaces.length }})
+              </h3>
 
-            <div v-if="currentDayPlaces.length > 0" class="space-y-2">
-              <div
-                v-for="(place, index) in currentDayPlaces"
-                :key="place.id"
-                class="p-3 bg-white border-[2px] border-[#2C2C2C] rounded-lg hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] transition-all cursor-pointer group"
-                @click="handlePlaceClick(place)"
-              >
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-8 h-8 rounded-lg border-[2px] border-[#2C2C2C] flex items-center justify-center font-black text-sm flex-shrink-0 bg-[#9BCCC4]"
-                  >
-                    {{ index + 1 }}
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <h4 class="font-black text-sm truncate leading-tight">{{ place.name }}</h4>
-                    <p class="text-xs font-bold text-gray-600 truncate">{{ place.category }}</p>
+              <div v-if="currentDayPlaces.length > 0" class="space-y-2">
+                <div
+                  v-for="(place, index) in currentDayPlaces"
+                  :key="place.id"
+                  class="p-3 bg-white border-[2px] border-[#2C2C2C] rounded-lg hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] transition-all cursor-pointer group"
+                  @click="handlePlaceClick(place)"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-lg border-[2px] border-[#2C2C2C] flex items-center justify-center font-black text-sm flex-shrink-0 bg-[#9BCCC4]"
+                    >
+                      {{ index + 1 }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h4 class="font-black text-sm truncate leading-tight">{{ place.name }}</h4>
+                      <p class="text-xs font-bold text-gray-600 truncate">{{ place.category }}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div v-else class="text-center py-8">
-              <div
-                class="w-12 h-12 bg-gray-100 border-[2px] border-gray-300 rounded-lg mx-auto mb-3 flex items-center justify-center"
-              >
-                <MapPin :size="24" :stroke-width="2" class="text-gray-400" />
+              <div v-else class="text-center py-8">
+                <div
+                  class="w-12 h-12 bg-gray-100 border-[2px] border-gray-300 rounded-lg mx-auto mb-3 flex items-center justify-center"
+                >
+                  <MapPin :size="24" :stroke-width="2" class="text-gray-400" />
+                </div>
+                <p class="text-sm font-bold text-gray-500">선택된 장소가 없습니다</p>
               </div>
-              <p class="text-sm font-bold text-gray-500">선택된 장소가 없습니다</p>
             </div>
+          </div>
+
+          <div class="flex-1 flex flex-col bg-gray-100">
+            <!-- Map Container -->
+            <div class="flex-1 relative">
+              <KakaoMap
+                ref="kakaoMapRef"
+                class="absolute inset-0 w-full h-full"
+                :center="mapCenter"
+                :level="7"
+                :markers="markerPositions"
+                :selected-marker-id="selectedMarkerId"
+                @marker-click="handleMarkerClick"
+              />
+              <div
+                v-if="markerPositions.length === 0"
+                class="absolute inset-0 flex items-center justify-center pointer-events-none"
+              >
+                <div class="text-center">
+                  <div
+                    class="w-14 h-14 bg-white border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center mx-auto mb-3 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.4)]"
+                  >
+                    <MapPin :size="26" :stroke-width="2.5" class="text-[#2C2C2C]" />
+                  </div>
+                  <p class="font-bold text-gray-700">코스에 담긴 장소가 지도에 표시됩니다</p>
+                </div>
+              </div>
+            </div>
+            <!-- Place Detail Panel -->
+            <PlaceDetailPanel :place="selectedPlace" @close="selectedPlace = null" />
           </div>
         </div>
-
-        <div class="flex-1 flex flex-col bg-gray-100">
-          <!-- Map Container -->
-          <div class="flex-1 relative">
-            <KakaoMap
-              ref="kakaoMapRef"
-              class="absolute inset-0 w-full h-full"
-              :center="mapCenter"
-              :level="7"
-              :markers="markerPositions"
-              :selected-marker-id="selectedMarkerId"
-              @marker-click="handleMarkerClick"
-            />
-            <div
-              v-if="markerPositions.length === 0"
-              class="absolute inset-0 flex items-center justify-center pointer-events-none"
-            >
-              <div class="text-center">
-                <div
-                  class="w-14 h-14 bg-white border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center mx-auto mb-3 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.4)]"
-                >
-                  <MapPin :size="26" :stroke-width="2.5" class="text-[#2C2C2C]" />
-                </div>
-                <p class="font-bold text-gray-700">코스에 담긴 장소가 지도에 표시됩니다</p>
-              </div>
-            </div>
+        <!-- log content -->
+        <div v-if="activeTab === 'log'" class="flex-1 overflow-y-auto flex items-center justify-center bg-gray-50">
+          <div v-if="logLoading" class="text-center text-lg font-bold text-gray-600">
+            로그를 불러오는 중...
           </div>
 
-          <!-- Place Detail Panel -->
-          <PlaceDetailPanel :place="selectedPlace" @close="selectedPlace = null" />
+          <div v-else-if="tripLog">
+              <div class="w-full max-w-3xl p-6 bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-lg">
+                  <div class="prose max-w-none" v-html="tripLog.content"></div>
+                  </div>
+          </div>
+
+          <div v-else class="text-center mb-20 p-12 flex flex-col justify-center items-center">
+              <p class="text-lg font-bold text-gray-700 mb-6">아직 로그를 작성하지 않았어요!</p>
+              <button
+                  @click="handleWritePostClick"
+                  class="flex items-center gap-2 px-6 py-3 bg-white border-[2px] border-[#2C2C2C] rounded-full font-bold shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase focus:outline-none"
+              >
+                  <Pencil :size="16" :stroke-width="3" /> 글 쓰기
+              </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield, Pencil } from 'lucide-vue-next'
+import { Calendar, MapPin, Edit, ListChecks, Shield, Pencil, User, Heart, Bubbles } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
-import { BookPlus } from 'lucide-vue-next';
+import type { TripLogDetail } from '@/types/trip/trip.model'
+import { getTripLogDetail } from '@/apis/trip-log/index'
 
 interface DayPlanDisplay {
   dayNumber: number
@@ -166,11 +241,13 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['close', 'edit', 'write'])
-
+const activeTab = ref<'map' | 'log'>('map')  // 탭 상태(기본은 'map'으로 설정)
+const tripLog = ref<TripLogDetail | null>(null) // 로그 데이터 상태
 const kakaoMapRef = ref<any>(null)
 const activeDay = ref(1)
 const selectedPlace = ref<SpotResponseDto | null>(null)
 const selectedMarkerId = ref<number | string | null>(null)
+const tripLogId = ref<number | null>(null)
 
 const days = computed<DayPlanDisplay[]>(() => {
   const grouped = props.trip.tripItems.reduce((acc, item) => {
@@ -225,6 +302,32 @@ const mapCenter = computed(() => {
   }
   return { lat: 37.5665, lng: 126.978 }
 })
+
+const logLoading = ref(false)
+// 로그 데이터 조회 함수
+const fetchTripLog = async (tripId: number) => {
+    logLoading.value = true;
+    tripLog.value = null;
+    try {
+        // 실제 API 호출 (가정)
+        // 백엔드에서 TripId로 로그를 조회하고, 없으면 404 또는 null 응답을 준다고 가정
+        const response = await getTripLogDetail(tripId);
+        tripLog.value = response; // 로그 데이터 저장
+    } catch {
+    } finally {
+        logLoading.value = false;
+    }
+}
+
+// 탭 클릭 핸들러
+const handleTabClick = (tab: 'map' | 'log') => {
+    activeTab.value = tab;
+    // Log 탭을 클릭했을 때만 로그 데이터를 불러옵니다.
+    if (tab === 'log' && !tripLog.value && !logLoading.value) {
+        fetchTripLog(props.trip.id);
+    }
+}
+
 
 const handleWritePostClick = () => {
   emit('write', props.trip)
