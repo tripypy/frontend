@@ -24,11 +24,14 @@
             </div>
           </div>
 
+          <!-- Real-time Ranking Component -->
+          <div class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-5 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)]">
             <h3 class="text-xl font-black mb-4 uppercase flex items-center gap-2" style="font-family: 'Bebas Neue', sans-serif">
               <span class="text-[#9BCCC4]">★</span> Real-time Ranking
             </h3>
+            
             <div class="space-y-3">
-              <div v-for="(place, idx) in hotPlaces" :key="idx" class="flex items-center gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2 transition-colors">
+              <div v-for="(place, idx) in hotPlaces" :key="idx" class="flex items-center gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
                 <!-- Rank -->
                 <span class="text-lg font-black italic text-[#2C2C2C] w-6 text-center shadow-[2px_2px_0px_0px_rgba(207,245,0,0.5)] bg-white border border-[#2C2C2C] rounded flex-shrink-0">
                   {{ idx + 1 }}
@@ -45,9 +48,11 @@
                 </div>
               </div>
             </div>
+
             <button class="w-full mt-4 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs uppercase hover:bg-[#F5F5F5] transition-colors">
               View Full Chart
             </button>
+          </div>
         </div>
 
         <!-- Center: Feed -->
