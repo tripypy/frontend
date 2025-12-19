@@ -54,9 +54,9 @@
           <div class="p-6">
             <!-- Reviews Highlight -->
             <div class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-5 mb-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)]">
-               <div class="flex flex-col sm:flex-row gap-6 items-center">
+               <div class="flex flex-col sm:flex-row gap-6 items-start">
                  <!-- Rating Stats -->
-                 <div class="flex flex-col items-center justify-center min-w-[120px]">
+                 <div class="flex flex-col items-center justify-center min-w-[120px] pt-2">
                     <span class="text-5xl font-black text-[#2C2C2C] tracking-tighter">{{ localPlace.rating.toFixed(1) }}</span>
                     <div class="flex gap-0.5 my-1">
                       <Star v-for="i in 5" :key="i" class="w-4 h-4 fill-[#FFD60A] text-[#2C2C2C]" stroke-width="1.5" />
@@ -64,16 +64,16 @@
                     <span class="text-xs font-bold text-gray-500">{{ localPlace.reviews.toLocaleString() }} Reviews</span>
                  </div>
                  
-                 <div class="hidden sm:block w-[2px] h-16 bg-gray-100"></div>
+                 <div class="hidden sm:block w-[2px] self-stretch bg-gray-100"></div>
                  
                  <!-- Write Review Prompt -->
-                 <div class="flex-1 w-full text-center sm:text-left">
+                 <div class="flex-1 w-full">
                     <p class="text-sm font-black text-gray-800 mb-2">이 장소에서의 경험은 어떠셨나요?</p>
-                    <div class="flex items-center justify-center sm:justify-start gap-1 cursor-pointer" @mouseleave="handleStarLeave">
+                    <div class="flex items-center gap-1 cursor-pointer mb-3" @mouseleave="handleStarLeave">
                       <div
                         v-for="star in 5"
                         :key="star"
-                        class="relative w-8 h-8 transition-transform hover:scale-110"
+                        class="relative w-8 h-8"
                         @mousemove="(e) => handleStarHover(star - 1, e)"
                         @click="(e) => handleStarClick(star - 1, e)"
                       >
@@ -88,11 +88,25 @@
                           />
                         </div>
                       </div>
+                      <span v-if="userRating > 0" class="ml-2 text-sm font-bold text-[#E88555]">
+                        {{ userRating.toFixed(1) }}점
+                      </span>
                     </div>
-                    <div class="h-6 mt-1">
-                        <p v-if="userRating > 0" class="text-sm font-bold text-[#E88555] animate-pulse">
-                            {{ userRating.toFixed(1) }}점! 리뷰를 남겨보세요.
-                        </p>
+
+                    <!-- Review Text Input -->
+                    <div class="relative">
+                      <textarea
+                        v-model="reviewContent"
+                        placeholder="솔직한 리뷰를 남겨주세요. (선택사항)"
+                        class="w-full p-3 border-[2px] border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:border-[#2C2C2C] resize-none h-24 placeholder:text-gray-400"
+                      ></textarea>
+                      <button 
+                        @click="submitReview"
+                        :disabled="userRating === 0"
+                        class="absolute bottom-3 right-3 px-4 py-1.5 bg-[#2C2C2C] text-white text-xs font-black rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-[#404040] transition-colors"
+                      >
+                        등록하기
+                      </button>
                     </div>
                  </div>
                </div>
@@ -109,7 +123,7 @@
 
             <!-- Review List -->
             <div class="space-y-4">
-               <div v-for="i in 3" :key="i" class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:translate-x-1 transition-transform cursor-default">
+               <div v-for="i in 3" :key="i" class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4">
                   <div class="flex justify-between items-start mb-3">
                      <div class="flex items-center gap-3">
                         <!-- Avatar -->
@@ -168,6 +182,15 @@ const localPlace = computed(() => ({
 // 사용자 평가 state
 const userRating = ref<number>(0)
 const hoverRating = ref<number>(0)
+const reviewContent = ref<string>('')
+
+const submitReview = () => {
+    if (userRating.value === 0) return
+    console.log('Submit review:', { rating: userRating.value, content: reviewContent.value })
+    alert('리뷰가 등록되었습니다! (Mock)')
+    reviewContent.value = ''
+    userRating.value = 0
+}
 
 const getAverageRatingRounded = () => {
   return Math.floor(localPlace.value.rating * 2) / 2
