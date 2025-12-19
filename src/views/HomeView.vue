@@ -6,7 +6,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         <!-- Left Sidebar: Discovery -->
-        <div class="hidden lg:block lg:col-span-3 sticky top-28 space-y-8">
+        <div class="hidden lg:block lg:col-span-3 space-y-8">
           
           <!-- Keywords Section -->
           <div class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-5 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)]">
@@ -24,31 +24,30 @@
             </div>
           </div>
 
-          <!-- Mini Hot Places -->
-          <div class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-5 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)]">
             <h3 class="text-xl font-black mb-4 uppercase flex items-center gap-2" style="font-family: 'Bebas Neue', sans-serif">
-              <span class="text-[#9BCCC4]">★</span> Hot Places
+              <span class="text-[#9BCCC4]">★</span> Real-time Ranking
             </h3>
-            <div class="space-y-4">
-              <div v-for="(place, idx) in hotPlaces" :key="idx" class="group cursor-pointer">
-                <div class="aspect-video w-full border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden mb-2 relative">
-                  <img :src="place.img" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  <div class="absolute top-2 left-2 w-6 h-6 bg-[#E88555] border-[2px] border-[#2C2C2C] text-white flex items-center justify-center font-black text-xs rounded shadow-sm">
-                    {{ idx + 1 }}
-                  </div>
+            <div class="space-y-3">
+              <div v-for="(place, idx) in hotPlaces" :key="idx" class="flex items-center gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2 transition-colors">
+                <!-- Rank -->
+                <span class="text-lg font-black italic text-[#2C2C2C] w-6 text-center shadow-[2px_2px_0px_0px_rgba(207,245,0,0.5)] bg-white border border-[#2C2C2C] rounded flex-shrink-0">
+                  {{ idx + 1 }}
+                </span>
+                
+                <!-- Content -->
+                <div class="min-w-0 flex-1">
+                   <h4 class="font-bold text-sm truncate text-[#2C2C2C] group-hover:text-[#E88555] transition-colors leading-tight">
+                    {{ place.name }}
+                  </h4>
+                  <p class="text-[10px] text-gray-400 font-bold truncate">
+                    {{ place.location }}
+                  </p>
                 </div>
-                <h4 class="font-bold text-sm truncate decoration-[#F9CA6B] decoration-2 underline-offset-2 group-hover:underline">
-                  {{ place.title }}
-                </h4>
-                <p class="text-xs text-gray-500 font-bold flex items-center gap-1">
-                  <MapPin class="w-3 h-3" /> {{ place.location }}
-                </p>
               </div>
             </div>
             <button class="w-full mt-4 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs uppercase hover:bg-[#F5F5F5] transition-colors">
-              View More
+              View Full Chart
             </button>
-          </div>
         </div>
 
         <!-- Center: Feed -->
@@ -90,7 +89,7 @@
         </div>
 
         <!-- Right Sidebar: Personal -->
-        <div class="hidden lg:block lg:col-span-3 sticky top-28 space-y-8">
+        <div class="hidden lg:block lg:col-span-3 space-y-8">
           
           <!-- New Plan Card (CTA) -->
           <button
@@ -120,19 +119,19 @@
             </div>
 
             <div v-if="upcomingTrips.length > 0" class="space-y-3">
-              <div v-for="trip in upcomingTrips" :key="trip.id" class="flex gap-3 items-center group cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2 transition-colors">
-                <div class="w-12 h-12 bg-gray-100 border-[2px] border-[#2C2C2C] rounded overflow-hidden flex-shrink-0">
-                  <img :src="trip.image" class="w-full h-full object-cover" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between mb-0.5">
-                    <span class="text-xs font-black bg-[#9BCCC4] border border-[#2C2C2C] px-1.5 rounded text-[#2C2C2C]">
+              <div v-for="trip in upcomingTrips" :key="trip.id" class="group cursor-pointer bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-lg p-3 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all">
+                <div class="flex justify-between items-start mb-2">
+                   <div class="flex items-center gap-1.5">
+                      <Calendar class="w-3.5 h-3.5 text-gray-500" />
+                      <span class="text-xs font-bold text-gray-500">{{ trip.date }}</span>
+                   </div>
+                   <span class="text-xs font-black bg-[#2C2C2C] text-white px-2 py-0.5 rounded-full">
                       {{ trip.dDay }}
-                    </span>
-                  </div>
-                  <h4 class="text-sm font-bold truncate text-[#2C2C2C]">{{ trip.title }}</h4>
-                  <p class="text-xs text-gray-500 font-medium">{{ trip.date }}</p>
+                   </span>
                 </div>
+                <h4 class="font-black text-sm text-[#2C2C2C] leading-tight truncate group-hover:underline decoration-2 underline-offset-2">
+                  {{ trip.title }}
+                </h4>
               </div>
             </div>
             <div v-else class="text-center py-8">
@@ -167,7 +166,7 @@ import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
-import { Plus, MapPin, Calendar, ExternalLink } from 'lucide-vue-next'
+import { Plus, MapPin, Calendar, ExternalLink, TrendingUp, TrendingDown, Minus } from 'lucide-vue-next'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { getTripLogFeed } from '@/apis/trip-log/index';
 
@@ -182,14 +181,13 @@ const hasNext = ref(true)
 
 // Mock Data for Sidebars
 const keywords = ['성수동','반려견동반','오션뷰','캠핑로그','제주맛집','호캉스','파리올림픽']
-const hotPlaces = [
-  { title: '성수 연무장길', location: '서울 성동구', img: 'https://images.unsplash.com/photo-1669966138670-363fd0b540ec?w=400&h=300&fit=crop' },
-  { title: '광안리 해수욕장', location: '부산 수영구', img: 'https://images.unsplash.com/photo-1629112995393-272cb25d18ba?w=400&h=300&fit=crop' },
-  { title: '더현대 서울', location: '서울 영등포구', img: 'https://images.unsplash.com/photo-1688195886675-927063d3e70d?w=400&h=300&fit=crop' },
-]
+import { allPlaces } from '@/data/mockData'
+
+const hotPlaces = allPlaces.slice(0, 10) // Show Top 10
+
 const upcomingTrips = ref([
-  { id: 1, title: '여름 휴가 🌊', date: '2024.08.15', dDay: 'D-25', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=100&h=100&fit=crop' },
-  { id: 2, title: '주말 글램핑', date: '2024.07.27', dDay: 'D-4', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?w=100&h=100&fit=crop' }
+  { id: 1, title: '여름 휴가 🌊', date: '2024.08.15', dDay: 'D-25' },
+  { id: 2, title: '주말 글램핑', date: '2024.07.27', dDay: 'D-4' }
 ])
 
 // 무한 스크롤 로직
@@ -239,3 +237,21 @@ onUnmounted(() => {
 })
 
 </script>
+
+<style scoped>
+/* Custom Scrollbar for Magazine Feel */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #2C2C2C;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+</style>
