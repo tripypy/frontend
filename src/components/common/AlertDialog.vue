@@ -11,6 +11,7 @@
       <p class="text-base font-medium text-gray-700 mb-8 whitespace-pre-line">{{ message }}</p>
       <div class="flex gap-3 justify-center">
         <button
+          v-if="showCancelButton"
           @click="handleClose"
           class="px-8 py-3 border-[2px] border-[#2C2C2C] rounded-lg font-black text-sm bg-white text-[#2C2C2C] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase tracking-wide"
         >
@@ -48,6 +49,10 @@ defineProps({
   closeButtonText: {
     type: String,
     default: '취소',
+  },
+  showCancelButton: {
+    type: Boolean,
+    default: true,
   },
 })
 

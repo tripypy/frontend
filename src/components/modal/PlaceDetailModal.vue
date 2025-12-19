@@ -199,15 +199,26 @@
         </div>
       </div>
     </div>
+    
+    <AlertDialog
+        :show="dialogState.show"
+        :title="dialogState.title"
+        :message="dialogState.message"
+        :confirm-button-text="dialogState.confirmButtonText"
+        :show-cancel-button="dialogState.showCancelButton"
+        @close="closeDialog"
+        @confirm="handleDialogConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { X, MapPin, Phone, Globe, Star, Trash2 } from 'lucide-vue-next'
 import { spotApi, type SpotRequestDto, type SpotResponseDto } from '@/apis/spot'
 import { spotReviewApi, type SpotReviewResponseDto } from '@/apis/spot-review'
 import { useAuthStore } from '@/stores/auth'
+import AlertDialog from '@/components/common/AlertDialog.vue'
 
 const props = defineProps<{
   place: any
@@ -215,6 +226,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['close'])
 const authStore = useAuthStore()
+
+// ... (Rest of the state definitions)
 
 const spotId = ref<number | null>(null)
 const spotResponse = ref<SpotResponseDto | null>(null)
@@ -296,6 +309,47 @@ const getStarFillPercent = (starIndex: number) => {
   }
 }
 
+// Dialog State
+const dialogState = ref({
+    show: false,
+    title: '알림',
+    message: '',
+    confirmButtonText: '확인',
+    showCancelButton: false,
+    onConfirm: () => {},
+})
+
+const closeDialog = () => {
+    dialogState.value.show = false
+}
+
+const handleDialogConfirm = () => {
+    dialogState.value.onConfirm()
+    closeDialog()
+}
+
+const showAlert = (message: string, title = '알림') => {
+    dialogState.value = {
+        show: true,
+        title,
+        message,
+        confirmButtonText: '확인',
+        showCancelButton: false,
+        onConfirm: () => {},
+    }
+}
+
+const showConfirm = (message: string, onConfirm: () => void, title = '확인') => {
+     dialogState.value = {
+        show: true,
+        title,
+        message,
+        confirmButtonText: '삭제',
+        showCancelButton: true,
+        onConfirm,
+    }
+}
+
 const fetchSpotData = async () => {
     try {
         // 1. 해당 장소가 이미 등록되어 있는지 조회
@@ -365,7 +419,7 @@ const submitReview = async () => {
                 rating: userRating.value,
                 content: reviewContent.value
             })
-            alert('리뷰가 수정되었습니다!')
+            showAlert('리뷰가 수정되었습니다!')
         } else {
             // Create new review
             await spotReviewApi.postSpotReview({
@@ -373,7 +427,7 @@ const submitReview = async () => {
                 rating: userRating.value,
                 content: reviewContent.value
             })
-            alert('리뷰가 등록되었습니다!')
+            showAlert('리뷰가 등록되었습니다!')
         }
         
         // Refresh
@@ -387,30 +441,30 @@ const submitReview = async () => {
 
     } catch (e) {
         console.error('Failed to submit review:', e)
-        alert('리뷰 저장에 실패했습니다.')
+        showAlert('리뷰 저장에 실패했습니다.')
     }
 }
 
 const deleteReview = async () => {
     if (!myReview.value) return
     
-    if (!confirm('정말 리뷰를 삭제하시겠습니까?')) return
-    
-    try {
-        await spotReviewApi.deleteSpotReview(myReview.value.id)
-        alert('리뷰가 삭제되었습니다.')
-        
-        // Reset inputs
-        reviewContent.value = ''
-        userRating.value = 0
-        myReview.value = null // Explicitly clear myReview to switch back to 'Create' mode immediately
-        
-        await fetchSpotData()
-        
-    } catch (e) {
-        console.error('Failed to delete review:', e)
-        alert('리뷰 삭제에 실패했습니다.')
-    }
+    showConfirm('정말 리뷰를 삭제하시겠습니까?', async () => {
+        try {
+            await spotReviewApi.deleteSpotReview(myReview.value!.id)
+            showAlert('리뷰가 삭제되었습니다.')
+            
+            // Reset inputs
+            reviewContent.value = ''
+            userRating.value = 0
+            myReview.value = null // Explicitly clear myReview to switch back to 'Create' mode immediately
+            
+            await fetchSpotData()
+            
+        } catch (e) {
+            console.error('Failed to delete review:', e)
+            showAlert('리뷰 삭제에 실패했습니다.')
+        }
+    })
 }
 
 // Helper to format date
@@ -470,8 +524,7 @@ onMounted(() => {
     fetchSpotData()
 })
 
-// Watch for reviews change to reset pagination and re-observe
-import { watch, nextTick } from 'vue'
+// Watchers: no additional imports needed here as they are at the top
 watch(reviews, async () => {
     displayedReviewsCount.value = 10
     await nextTick()
