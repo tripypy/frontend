@@ -470,6 +470,12 @@ const handleSearch = () => {
     currentSearchQuery.value = searchQuery.value
     hasSearched.value = true
     activeTab.value = 'all'
+  } else {
+    // 검색어가 비어있을 경우 초기화
+    hasSearched.value = false
+    currentSearchQuery.value = ''
+    searchQuery.value = ''
+    activeTab.value = 'all'
   }
 }
 
