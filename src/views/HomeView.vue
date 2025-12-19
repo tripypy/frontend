@@ -49,7 +49,10 @@
               </div>
             </div>
 
-            <button class="w-full mt-4 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs uppercase hover:bg-[#F5F5F5] transition-colors">
+            <button 
+              @click="handleNavigate('search')"
+              class="w-full mt-4 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs uppercase hover:bg-[#F5F5F5] transition-colors"
+            >
               View Full Chart
             </button>
           </div>
