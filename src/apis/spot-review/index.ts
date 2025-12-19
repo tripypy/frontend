@@ -52,4 +52,8 @@ export const spotReviewApi = {
     updateSpotReview: async (reviewId: number, data: SpotReviewUpdateRequestDto): Promise<void> => {
         await http.patch(`/spot-reviews/${reviewId}`, data)
     },
+
+    deleteSpotReview: async (reviewId: number): Promise<void> => {
+        await http.delete(`/spot-reviews/${reviewId}`)
+    },
 }

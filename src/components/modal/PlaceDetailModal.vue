@@ -107,6 +107,7 @@
                         class="w-full p-3 border-[2px] border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:border-[#2C2C2C] resize-none h-24 placeholder:text-gray-400"
                       ></textarea>
                       <button 
+                      <button 
                         @click="submitReview"
                         :disabled="userRating === 0"
                         class="absolute bottom-3 right-3 px-4 py-1.5 bg-[#2C2C2C] text-white text-xs font-black rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-[#404040] transition-colors"
@@ -122,8 +123,28 @@
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-xl font-black uppercase text-[#2C2C2C]">Reviews</h3>
               <div class="flex gap-2">
-                 <button class="text-xs font-bold px-3 py-1.5 bg-[#2C2C2C] text-white rounded-full">최신순</button>
-                 <button class="text-xs font-bold px-3 py-1.5 bg-white border border-gray-300 text-gray-500 rounded-full hover:border-[#2C2C2C] hover:text-[#2C2C2C]">별점순</button>
+                 <button 
+                    @click="sortBy = 'latest'"
+                    :class="[
+                        'text-xs font-bold px-3 py-1.5 rounded-full border transition-colors',
+                        sortBy === 'latest' 
+                            ? 'bg-[#2C2C2C] text-white border-[#2C2C2C]' 
+                            : 'bg-white text-gray-500 border-gray-300 hover:border-[#2C2C2C] hover:text-[#2C2C2C]'
+                    ]"
+                 >
+                    최신순
+                 </button>
+                 <button 
+                    @click="sortBy = 'rating'"
+                    :class="[
+                        'text-xs font-bold px-3 py-1.5 rounded-full border transition-colors',
+                        sortBy === 'rating' 
+                            ? 'bg-[#2C2C2C] text-white border-[#2C2C2C]' 
+                            : 'bg-white text-gray-500 border-gray-300 hover:border-[#2C2C2C] hover:text-[#2C2C2C]'
+                    ]"
+                 >
+                    별점순
+                 </button>
               </div>
             </div>
 
@@ -132,11 +153,15 @@
                <div v-if="reviews.length === 0" class="bg-white border-[2px] border-dashed border-gray-300 rounded-xl p-8 text-center">
                     <p class="text-gray-500 font-bold">아직 작성된 리뷰가 없습니다.<br/>첫 번째 리뷰를 남겨보세요!</p>
                </div>
-               <div v-for="review in reviews" :key="review.id" class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4">
+               <div 
+                v-for="review in displayedReviews" 
+                :key="review.id" 
+                class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 transition-colors"
+               >
                   <div class="flex justify-between items-start mb-3">
                      <div class="flex items-center gap-3">
                         <!-- Avatar -->
-                        <div class="w-10 h-10 rounded-full bg-[#FFF8ED] border-[2px] border-[#2C2C2C] flex items-center justify-center overflow-hidden">
+                        <div class="w-10 h-10 rounded-full bg-white border-[2px] border-[#2C2C2C] flex items-center justify-center overflow-hidden">
                            <img :src="review.userProfileImage || `https://i.pravatar.cc/150?u=${review.userNickname}`" class="w-full h-full object-cover" />
                         </div>
                         <div>
@@ -144,9 +169,20 @@
                            <div class="text-xs font-bold text-gray-400">{{ formatDate(review.createdAt) }}</div>
                         </div>
                      </div>
-                     <div class="flex items-center gap-1 px-2 py-1 bg-[#FFF8ED] rounded-lg border border-[#2C2C2C]">
-                        <Star class="w-3 h-3 fill-[#FFD60A] text-[#2C2C2C]" stroke-width="2" />
-                        <span class="text-xs font-black">{{ review.rating.toFixed(1) }}</span>
+                     <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1 px-2 py-1 bg-white rounded-lg border border-[#2C2C2C]">
+                            <Star class="w-3 h-3 fill-[#FFD60A] text-[#2C2C2C]" stroke-width="2" />
+                            <span class="text-xs font-black">{{ review.rating.toFixed(1) }}</span>
+                        </div>
+                        <!-- Delete Button (Only for my review) -->
+                        <button 
+                            v-if="myReview && review.id === myReview.id"
+                            @click="deleteReview"
+                            class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                            title="리뷰 삭제"
+                        >
+                            <Trash2 class="w-4 h-4" stroke-width="2.5" />
+                        </button>
                      </div>
                   </div>
                   <p class="text-sm font-medium text-gray-700 leading-relaxed">
@@ -155,10 +191,10 @@
                </div>
             </div>
             
-            <!-- Load More -->
-            <button class="w-full mt-6 py-3 border-[2px] border-gray-300 rounded-xl text-sm font-black text-gray-500 hover:border-[#2C2C2C] hover:text-[#2C2C2C] hover:bg-white transition-all">
-              더 많은 리뷰 보기
-            </button>
+            <!-- Infinite Scroll Trigger -->
+            <div ref="loadMoreTrigger" class="h-10 w-full flex items-center justify-center mt-4">
+                 <div v-if="displayedReviewsCount < reviews.length" class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#2C2C2C]"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -168,7 +204,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { X, MapPin, Phone, Globe, Star } from 'lucide-vue-next'
+import { X, MapPin, Phone, Globe, Star, Trash2 } from 'lucide-vue-next'
 import { spotApi, type SpotRequestDto, type SpotResponseDto } from '@/apis/spot'
 import { spotReviewApi, type SpotReviewResponseDto } from '@/apis/spot-review'
 import { useAuthStore } from '@/stores/auth'
@@ -355,6 +391,28 @@ const submitReview = async () => {
     }
 }
 
+const deleteReview = async () => {
+    if (!myReview.value) return
+    
+    if (!confirm('정말 리뷰를 삭제하시겠습니까?')) return
+    
+    try {
+        await spotReviewApi.deleteSpotReview(myReview.value.id)
+        alert('리뷰가 삭제되었습니다.')
+        
+        // Reset inputs
+        reviewContent.value = ''
+        userRating.value = 0
+        myReview.value = null // Explicitly clear myReview to switch back to 'Create' mode immediately
+        
+        await fetchSpotData()
+        
+    } catch (e) {
+        console.error('Failed to delete review:', e)
+        alert('리뷰 삭제에 실패했습니다.')
+    }
+}
+
 // Helper to format date
 const formatDate = (dateStr: string) => {
     if (!dateStr) return ''
@@ -367,8 +425,67 @@ const truncateUrl = (url: string) => {
   return url.length > 30 ? url.substring(0, 30) + '...' : url
 }
 
+// Sort & Pagination state
+const sortBy = ref<'latest' | 'rating'>('latest')
+const displayedReviewsCount = ref(10)
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+
+const processedReviews = computed(() => {
+    const list = [...reviews.value] // Create a copy
+    if (sortBy.value === 'latest') {
+        return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    } else {
+        return list.sort((a, b) => b.rating - a.rating)
+    }
+})
+
+const displayedReviews = computed(() => {
+    return processedReviews.value.slice(0, displayedReviewsCount.value)
+})
+
+let observer: IntersectionObserver | null = null
+
+const setupIntersectionObserver = () => {
+    if (observer) observer.disconnect()
+    
+    observer = new IntersectionObserver((entries) => {
+        const entry = entries[0]
+        if (entry.isIntersecting && displayedReviewsCount.value < processedReviews.value.length) {
+            // Load more
+            setTimeout(() => {
+                displayedReviewsCount.value += 10
+            }, 300) // Slight delay for UX
+        }
+    }, {
+        root: null, // viewport
+        threshold: 0.1
+    })
+
+    if (loadMoreTrigger.value) {
+        observer.observe(loadMoreTrigger.value)
+    }
+}
+
 onMounted(() => {
     fetchSpotData()
+})
+
+// Watch for reviews change to reset pagination and re-observe
+import { watch, nextTick } from 'vue'
+watch(reviews, async () => {
+    displayedReviewsCount.value = 10
+    await nextTick()
+    setupIntersectionObserver()
+})
+
+watch(sortBy, async () => {
+    displayedReviewsCount.value = 10
+    await nextTick()
+    setupIntersectionObserver()
+})
+
+watch(loadMoreTrigger, () => {
+    setupIntersectionObserver()
 })
 </script>
 
