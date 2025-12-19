@@ -382,14 +382,14 @@
                     <span class="text-sm font-black">{{ place.rating }}</span>
                   </div>
                 </div>
-                <div class="flex items-center gap-2 text-sm font-bold mb-2 text-gray-700">
+                
+                <div class="flex items-center gap-2 text-sm font-bold mb-4 text-gray-700">
                   <MapPin :size="16" :stroke-width="2" />
                   <span>{{ place.location }}</span>
                 </div>
-                <p class="text-sm mb-3 font-medium text-gray-700 leading-relaxed">
-                  {{ place.description }}
-                </p>
+                
                 <div class="flex items-center justify-between">
+                  <!-- Tags -->
                   <div class="flex gap-2 flex-wrap">
                     <span
                       v-for="(tag, idx) in place.tags"
@@ -399,6 +399,8 @@
                       #{{ tag }}
                     </span>
                   </div>
+                  
+                  <!-- Views -->
                   <div class="text-xs font-bold text-gray-500">
                     {{ place.views.toLocaleString() }} 조회
                   </div>
@@ -448,7 +450,7 @@ import { useRouter } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
-import { Search, MapPin, Star, Heart, MessageCircle } from 'lucide-vue-next'
+import { Search, MapPin, Star, Heart, MessageCircle, Map, BookOpen } from 'lucide-vue-next'
 import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
