@@ -320,7 +320,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
@@ -335,6 +335,7 @@ import SearchLogItem from '@/components/search/SearchLogItem.vue'
 import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 import { searchApi, type TripSearchDoc, type TripLogSearchDoc } from '@/apis/search'
 import { getTripDetail } from '@/apis/trip'
+import { spotApi } from '@/apis/spot'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
@@ -693,7 +694,25 @@ const allDiaries = [
   },
 ]
 
-const hotPlaces = allPlaces.slice(0, 10)
+const hotPlaces = ref<any[]>([])
+
+onMounted(async () => {
+  try {
+    const places = await spotApi.getHotPlaces()
+    hotPlaces.value = places.map((place : any) => ({
+        ...place,
+        imageUrl: place.thumbnailUrl, // Map thumbnail to imageUrl
+        location: place.address,      // Map address to location
+        rating: 0.0,                  // Default (API missing)
+        views: 0,                     // Default (API missing)
+        tags: place.category ? place.category.split(' > ').slice(-1) : ['핫플레이스'] // Generate tag from category
+    }))
+  } catch (e) {
+      console.error("Failed to fetch hot places", e)
+      // Fallback empty or keep empty
+      hotPlaces.value = []
+  }
+})
 
 // Clean up Mock Data - filteredCourses logic removed
 
