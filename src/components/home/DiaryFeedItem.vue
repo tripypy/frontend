@@ -21,22 +21,20 @@
       </div>
     </Transition>
     <div
-      class="bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all p-5"
+      class="bg-white rounded-xl border-[2px] border-[#2C2C2C] p-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] transition-all"
     >
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
           <div
-            class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
+            class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-[2px] border-[#2C2C2C] bg-gray-100"
           >
             <img :src="props.authorImageUrl" :alt="props.authorNickname" class="w-full h-full object-cover" />
           </div>
           <div class="flex-1 min-w-0">
-            <h4 class="font-black font-sans">{{ props.authorNickname }}</h4>
-            <div class="flex items-center gap-2 text-xs font-bold text-gray-600">
-              <MapPin class="w-3 h-3 flex-shrink-0" stroke-width="2" />
-              <span class="truncate">{{ props.locationSummary }}</span>
-              <span>•</span>
-              <Calendar class="w-3 h-3 flex-shrink-0" stroke-width="2" />
+            <h4 class="font-black text-base text-[#2C2C2C] leading-none">{{ props.authorNickname }}</h4>
+            <div class="flex items-center gap-1.5 text-xs font-bold text-gray-500 mt-1">
+              <span>{{ props.locationSummary }}</span>
+              <span class="text-gray-300">•</span>
               <span>{{ props.createdAt }}</span>
             </div>
           </div>
@@ -44,29 +42,29 @@
 
         <div class="flex items-center gap-2">
           <button
-            @click="handleShare"
-            class="p-2 border-[2px] border-[#2C2C2C] rounded-lg bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all focus:outline-none"
+             @click="handleShare"
+             class="w-8 h-8 flex items-center justify-center border-[2px] border-[#2C2C2C] rounded-lg bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all focus:outline-none"
           >
-            <Share2 class="w-3.5 h-3.5 text-gray-600" stroke-width="2.5" />
+            <Share2 class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
           </button>
           <button
             @click="isBookmarked = !isBookmarked"
             :class="[
-              'p-2 border-[2px] border-[#2C2C2C] rounded-lg transition-all focus:outline-none',
+              'w-8 h-8 flex items-center justify-center border-[2px] border-[#2C2C2C] rounded-lg transition-all focus:outline-none',
               isBookmarked
-                ? 'bg-[#CFF500] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
+                ? 'bg-[#98D8C8] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
                 : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
             ]"
           >
             <Bookmark
-              :class="['w-3.5 h-3.5', isBookmarked ? 'text-black fill-black ' : 'text-gray-600']"
+              :class="['w-4 h-4', isBookmarked ? 'text-[#2C2C2C] fill-[#2C2C2C]' : 'text-[#2C2C2C]']"
               stroke-width="2.5"
             />
           </button>
         </div>
       </div>
 
-      <h3 class="text-lg font-black mb-2.5 tracking-tight leading-tight font-sans">{{ title }}</h3>
+      <h3 class="text-lg font-black text-[#2C2C2C] mb-3 leading-snug tracking-tight">{{ title }}</h3>
 
       <!-- <div v-if="course && course.length > 0" class="mb-4 flex items-center flex-wrap gap-1.5">
         <div v-for="(place, index) in course" :key="index" class="flex items-center gap-1.5">
@@ -90,63 +88,72 @@
 
       <div
         v-if="allImages.length > 0"
-        class="mb-4 select-none cursor-pointer"
+        class="mb-5 select-none cursor-pointer rounded-xl overflow-hidden border-[2px] border-[#2C2C2C] shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)]"
         @click="showCommentModal = true"
       >
-        <div v-if="allImages.length === 1" class="flex justify-center">
-          <div class="w-[320px] border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden">
-            <img :src="allImages[0]" class="w-full h-[380px] object-cover" />
-          </div>
+        <div v-if="allImages.length === 1" class="w-full">
+          <img :src="allImages[0]" class="w-full h-auto max-h-[500px] object-cover" />
         </div>
-        <div v-else-if="allImages.length === 2" class="grid grid-cols-2 gap-2.5">
+        <div v-else-if="allImages.length === 2" class="grid grid-cols-2 gap-0">
           <div
             v-for="(img, idx) in allImages"
             :key="idx"
-            class="border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
+            class="aspect-square relative overflow-hidden"
           >
             <img
               :src="img"
-              class="w-full h-[300px] object-cover hover:scale-105 transition-transform duration-500"
+              class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
             />
+            <div v-if="idx===0" class="absolute right-0 top-0 bottom-0 w-[2px] bg-[#2C2C2C] z-10"></div>
           </div>
         </div>
         <div v-else class="relative group">
           <div class="overflow-hidden">
             <div
-              class="flex gap-2.5 transition-transform duration-500 ease-in-out will-change-transform"
+              class="flex transition-transform duration-500 ease-in-out will-change-transform"
               :style="{
-                transform: `translateX(calc(-${currentImageIndex * 50}% - ${currentImageIndex * 0.3125}rem))`,
+                transform: `translateX(-${currentImageIndex * 100}%)`,
               }"
             >
               <div
                 v-for="(img, idx) in allImages"
                 :key="idx"
-                class="w-[calc(50%-0.3125rem)] flex-shrink-0 h-[300px] border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden bg-gray-100"
+                class="w-full flex-shrink-0 aspect-[4/3] bg-gray-100"
               >
                 <img :src="img" class="w-full h-full object-cover" />
               </div>
             </div>
           </div>
-          <button
-            v-if="currentImageIndex > 0"
-            @click.stop="prevImage"
-            class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] z-10 focus:outline-none"
-          >
-            <ChevronLeft class="w-5 h-5 text-[#2C2C2C]" stroke-width="2.5" />
-          </button>
-          <button
-            v-if="currentImageIndex + 2 < allImages.length"
-            @click.stop="nextImage"
-            class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-[2px_2px_0px_0px_rgba(44,44,44,0.2)] z-10 focus:outline-none"
-          >
-            <ChevronRight class="w-5 h-5 text-[#2C2C2C]" stroke-width="2.5" />
-          </button>
+          
+          <div v-if="allImages.length > 1" class="absolute inset-0 flex items-center justify-between px-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <button
+              v-if="currentImageIndex > 0"
+              @click.stop="prevImage"
+              class="pointer-events-auto w-9 h-9 bg-white border-[2px] border-[#2C2C2C] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.5)] rounded-full flex items-center justify-center hover:scale-105 transition-all text-[#2C2C2C]"
+            >
+              <ChevronLeft class="w-5 h-5" stroke-width="3" />
+            </button>
+            <div v-else class="w-9"></div>
+            
+             <button
+              v-if="currentImageIndex < allImages.length - 1"
+              @click.stop="nextImage"
+              class="pointer-events-auto w-9 h-9 bg-white border-[2px] border-[#2C2C2C] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.5)] rounded-full flex items-center justify-center hover:scale-105 transition-all text-[#2C2C2C]"
+            >
+              <ChevronRight class="w-5 h-5" stroke-width="3" />
+            </button>
+             <div v-else class="w-9"></div>
+          </div>
+          
+           <div class="absolute bottom-3 right-3 bg-[#2C2C2C] text-white text-xs font-black px-2.5 py-1 rounded-md border-[2px] border-white pointer-events-none shadow-md">
+            {{ currentImageIndex + 1 }} / {{ allImages.length }}
+          </div>
         </div>
       </div>
 
       <div class="relative mb-4">
         <p
-          class="text-sm leading-relaxed font-medium text-gray-800 whitespace-pre-line cursor-pointer hover:opacity-80 transition-opacity"
+          class="text-sm leading-relaxed font-medium text-[#2C2C2C] whitespace-pre-line cursor-pointer"
           :class="{ 'line-clamp-3': !isExpanded }"
           @click="isExpanded = !isExpanded"
           v-html="processedContent"
@@ -154,33 +161,32 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-2 pt-4 border-t-[2px] border-gray-200">
-        <button
-          @click="toggleLike"
-          :class="[
-            'flex items-center gap-1.5 px-3.5 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase focus:outline-none',
-            isLiked
-              ? 'bg-[#FF6B9D] text-white shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-              : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
-          ]"
-        >
-          <Heart :class="['w-3.5 h-3.5', isLiked ? 'fill-current' : '']" stroke-width="2.5" />
-          <span>{{ currentLikes }}</span>
-        </button>
+      <div class="flex items-center justify-between pt-4 mt-2 border-t-[2px] border-[#F0F0F0]">
+        <div class="flex items-center gap-2">
+          <button
+            @click="toggleLike"
+            :class="[
+              'flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-[#2C2C2C] rounded-md font-black text-xs transition-all uppercase focus:outline-none shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none',
+              isLiked
+                ? 'bg-[#FF6B9D] text-white'
+                : 'bg-white text-[#2C2C2C]',
+            ]"
+          >
+            <Heart
+              :class="['w-3.5 h-3.5', isLiked ? 'fill-current' : 'fill-none']"
+              stroke-width="2.5"
+            />
+            <span>Like {{ currentLikes }}</span>
+          </button>
 
-        <button
-          @click="showCommentModal = true"
-          class="flex items-center gap-1.5 px-3.5 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px] focus:outline-none"
-        >
-          <MessageCircle class="w-3.5 h-3.5" stroke-width="2.5" />
-          <span>{{ props.commentCount }}</span>
-        </button>
-
-        <button
-          class="ml-auto px-4 py-2 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs bg-[#E88555] text-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase focus:outline-none"
-        >
-          내 계획에 추가
-        </button>
+          <button
+            @click="showCommentModal = true"
+             class="flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-[#2C2C2C] rounded-md font-black text-xs transition-all uppercase focus:outline-none bg-white text-[#2C2C2C] shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+          >
+            <MessageCircle class="w-3.5 h-3.5" stroke-width="2.5" />
+            <span>Comment {{ props.commentCount }}</span>
+          </button>
+        </div>
       </div>
     </div>
     <Teleport to="body">
@@ -239,10 +245,10 @@ const allImages = computed(() => {
   return [];
 });
 const prevImage = () => {
-  currentImageIndex.value = Math.max(0, currentImageIndex.value - 2)
+   currentImageIndex.value = Math.max(0, currentImageIndex.value - 1)
 }
 const nextImage = () => {
-  currentImageIndex.value = Math.min(allImages.value.length - 2, currentImageIndex.value + 2)
+    currentImageIndex.value = Math.min(allImages.value.length - 1, currentImageIndex.value + 1)
 }
 
 // Like Action
