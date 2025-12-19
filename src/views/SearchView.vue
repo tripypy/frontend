@@ -110,15 +110,23 @@
                 >
                   <div class="flex items-center gap-4">
                     <!-- Image -->
+                    <!-- Image -->
                     <div
                       class="w-24 h-24 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
                     >
                       <img
+                        v-if="place.imageUrl"
                         :src="place.imageUrl"
                         :alt="place.name"
                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         @error="handleImageError"
                       />
+                      <div
+                        v-else
+                        class="w-full h-full bg-[#FFF8ED] flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                      >
+                        <Map :size="32" :stroke-width="2" class="text-[#2C2C2C]" />
+                      </div>
                     </div>
                     <!-- Content -->
                     <div class="flex-1 min-w-0">
@@ -505,8 +513,8 @@ const filteredPlaces = computed(() => {
   return searchResults.value.map(place => ({
     id: place.id,
     name: place.name,
-    // API에서 이미지가 오지 않으므로 기본 이미지 사용
-    imageUrl: '/images/no-image.jpg',
+    // API에서 이미지가 오지 않으므로 null 설정 (UI에서 아이콘으로 대체)
+    imageUrl: null,
     // 평점 정보 없음
     rating: 0.0,
     location: place.address,
