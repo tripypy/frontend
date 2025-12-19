@@ -478,28 +478,60 @@ import { Search, MapPin, Star, Heart, MessageCircle, Map, BookOpen } from 'lucid
 import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
+import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
-const searchQuery = ref('')
+const {
+  searchQuery,
+  searchResults,
+  isSearching,
+  searchPlaces
+} = usePlaceSearch()
+
+// UI에서 표시할 쿼리 (검색 완료 후 업데이트)
 const currentSearchQuery = ref('')
+// 검색 실행 여부
 const hasSearched = ref(false)
 const activeTab = ref<'all' | 'places' | 'courses' | 'diaries'>('all')
+
 const selectedDiary = ref<any>(null)
 const selectedCourse = ref<any>(null)
 const selectedPlace = ref<any>(null)
+
+// Computed - Filtered Results
+// 장소: API 결과 사용
+const filteredPlaces = computed(() => {
+  return searchResults.value.map(place => ({
+    id: place.id,
+    name: place.name,
+    // API에서 이미지가 오지 않으므로 기본 이미지 사용
+    imageUrl: '/images/no-image.jpg',
+    // 평점 정보 없음
+    rating: 0.0,
+    location: place.address,
+    description: place.address, // 상세 설명이 없으므로 주소로 대체
+    // 카테고리를 태그로 사용
+    tags: place.category ? place.category.split(' > ').slice(-1) : ['장소'],
+    views: 0 // 조회수 정보 없음
+  }))
+})
 
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
     currentSearchQuery.value = searchQuery.value
     hasSearched.value = true
     activeTab.value = 'all'
+    
+    // Call API
+    searchPlaces()
   } else {
     // 검색어가 비어있을 경우 초기화
     hasSearched.value = false
     currentSearchQuery.value = ''
     searchQuery.value = ''
     activeTab.value = 'all'
+    searchResults.value = []
   }
 }
 
@@ -531,6 +563,8 @@ const handlePlaceClick = (place: any, index?: number) => {
   selectedPlace.value = {
     number: index !== undefined ? index + 1 : 1,
     name: place.name,
+    // API 결과에 맞게 추가 매핑 필요시 여기서 처리
+    ...place
   }
 }
 
@@ -743,19 +777,6 @@ const allDiaries = [
 ]
 
 const hotPlaces = allPlaces.slice(0, 10)
-
-// Computed - Filtered Results
-const filteredPlaces = computed(() => {
-  if (!currentSearchQuery.value) return []
-  const query = currentSearchQuery.value.toLowerCase()
-  return allPlaces.filter(
-    (place) =>
-      place.name.toLowerCase().includes(query) ||
-      place.location.toLowerCase().includes(query) ||
-      place.description.toLowerCase().includes(query) ||
-      place.tags.some((tag) => tag.toLowerCase().includes(query)),
-  )
-})
 
 const filteredCourses = computed(() => {
   if (!currentSearchQuery.value) return []
