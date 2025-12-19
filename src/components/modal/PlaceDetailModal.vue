@@ -213,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { X, MapPin, Phone, Globe, Star, Trash2 } from 'lucide-vue-next'
 import { spotApi, type SpotRequestDto, type SpotResponseDto } from '@/apis/spot'
 import { spotReviewApi, type SpotReviewResponseDto } from '@/apis/spot-review'
@@ -328,14 +328,30 @@ const handleDialogConfirm = () => {
     closeDialog()
 }
 
-const showAlert = (message: string, title = '알림') => {
+// Close on Esc
+const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !dialogState.value.show) {
+        emit('close')
+    }
+}
+
+onMounted(() => {
+    fetchSpotData()
+    window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown)
+})
+
+const showAlert = (message: string, title = '알림', onConfirm?: () => void) => {
     dialogState.value = {
         show: true,
         title,
         message,
         confirmButtonText: '확인',
         showCancelButton: false,
-        onConfirm: () => {},
+        onConfirm: onConfirm || (() => {}),
     }
 }
 
@@ -419,7 +435,9 @@ const submitReview = async () => {
                 rating: userRating.value,
                 content: reviewContent.value
             })
-            showAlert('리뷰가 수정되었습니다!')
+            showAlert('리뷰가 수정되었습니다!', '알림', async () => {
+                await fetchSpotData()
+            })
         } else {
             // Create new review
             await spotReviewApi.postSpotReview({
@@ -427,17 +445,13 @@ const submitReview = async () => {
                 rating: userRating.value,
                 content: reviewContent.value
             })
-            showAlert('리뷰가 등록되었습니다!')
+             showAlert('리뷰가 등록되었습니다!', '알림', async () => {
+                // Clear inputs if it was a new review
+                reviewContent.value = ''
+                userRating.value = 0
+                await fetchSpotData()
+            })
         }
-        
-        // Refresh
-        if (!myReview.value) {
-            // Clear inputs if it was a new review
-            reviewContent.value = ''
-            userRating.value = 0
-        }
-        
-        await fetchSpotData()
 
     } catch (e) {
         console.error('Failed to submit review:', e)
@@ -451,15 +465,14 @@ const deleteReview = async () => {
     showConfirm('정말 리뷰를 삭제하시겠습니까?', async () => {
         try {
             await spotReviewApi.deleteSpotReview(myReview.value!.id)
-            showAlert('리뷰가 삭제되었습니다.')
-            
-            // Reset inputs
-            reviewContent.value = ''
-            userRating.value = 0
-            myReview.value = null // Explicitly clear myReview to switch back to 'Create' mode immediately
-            
-            await fetchSpotData()
-            
+            showAlert('리뷰가 삭제되었습니다.', '알림', async () => {
+                 // Reset inputs
+                reviewContent.value = ''
+                userRating.value = 0
+                myReview.value = null // Explicitly clear myReview to switch back to 'Create' mode immediately
+                
+                await fetchSpotData()
+            })
         } catch (e) {
             console.error('Failed to delete review:', e)
             showAlert('리뷰 삭제에 실패했습니다.')
@@ -520,9 +533,7 @@ const setupIntersectionObserver = () => {
     }
 }
 
-onMounted(() => {
-    fetchSpotData()
-})
+
 
 // Watchers: no additional imports needed here as they are at the top
 watch(reviews, async () => {
