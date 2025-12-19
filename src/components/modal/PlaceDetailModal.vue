@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm" @click="emit('close')">
+  <div class="fixed inset-0 bg-black/60 z-[60]" @click="emit('close')">
     <div class="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none">
       <div
         class="bg-white border-[3px] border-[#2C2C2C] rounded-2xl shadow-[8px_8px_0px_0px_rgba(44,44,44,1)] max-w-2xl w-full max-h-[85vh] flex flex-col pointer-events-auto overflow-hidden"
