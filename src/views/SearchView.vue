@@ -334,6 +334,7 @@ import SearchTripItem from '@/components/search/SearchTripItem.vue'
 import SearchLogItem from '@/components/search/SearchLogItem.vue'
 import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 import { searchApi, type TripSearchDoc, type TripLogSearchDoc } from '@/apis/search'
+import { getTripDetail } from '@/apis/trip'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
@@ -351,7 +352,9 @@ const hasSearched = ref(false)
 const activeTab = ref<'all' | 'places' | 'trips' | 'logs'>('all')
 
 const selectedLog = ref<TripLogSearchDoc | null>(null)
-const selectedTrip = ref<TripSearchDoc | null>(null)
+// selectedTrip type is effectively 'any' because TripDetailModal expects a complex object (TripResponseDto-ish + UI fields)
+// We will assign a mapped object to it.
+const selectedTrip = ref<any>(null)
 const selectedPlace = ref<any>(null)
 
 // API Results
@@ -438,26 +441,33 @@ const handleLogClick = (log: TripLogSearchDoc) => {
   selectedLog.value = log
 }
 
-const handleTripClick = (trip: TripSearchDoc) => {
-  // selectedTrip.value = trip 
-  // TripDetailModal might need full details. 
-  // If we want to navigate to detail page or show modal? 
-  // User asked for "search list integration". Let's simply log or set selection for now.
-  // Existing logic was "handleCourseEdit" -> push to create-trip. 
-  // Let's assume we want to show details or edit. 
-  // Based on current UI, clicking item usually opens modal.
-  // But TripDetailModal prop type might differ. 
-  // For now, let's keep it consistent: click -> open modal? 
-  // Actually, let's look at handleCourseEdit logic. 
-  // It pushed to router. 
-  // Let's keep it simple: Navigate to trip detail or Use Modal. 
-  // Given user didn't specify interaction, I will assume we might want to just show it or do nothing.
-  // Wait, I should probably reuse existing modal if possible.
-  // But TripDetailModal takes 'trip'. 
-  // Let's try to pass it to TripDetailModal if compatible. 
-  // Or just router push to view trip?
-  // Let's implement basics first.
-  selectedTrip.value = trip
+const handleTripClick = async (trip: TripSearchDoc) => {
+  try {
+    const detail = await getTripDetail(trip.trip_id)
+      selectedTrip.value = {
+      ...detail,
+      // Manual mapping for fields that might be missing or need UI transform
+      description: detail.tripItems && detail.tripItems.length > 0 
+          ? detail.tripItems.map((item:any) => item.spot.name).join(' → ') 
+          : '장소 없음',
+      // UI fields Mock/Calculated
+      duration: calculateDuration(detail.startDate, detail.endDate),
+      views: 0, // Mock for now
+      imageUrl: '', // Mock
+    }
+  } catch (e) {
+      console.error(e)
+      alert("여행 상세 정보를 불러오는데 실패했습니다.")
+  }
+}
+
+const calculateDuration = (start?: string, end?: string) => {
+    if (!start || !end) return ''
+    const s = new Date(start)
+    const e = new Date(end)
+    const diffTime = Math.abs(e.getTime() - s.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 
+    return `${diffDays} Days`
 }
 
 const handleTripEdit = (trip: any) => {
