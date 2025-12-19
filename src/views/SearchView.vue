@@ -86,20 +86,20 @@
         <div class="space-y-4">
           <!-- All Tab or Places Tab -->
           <template v-if="activeTab === 'all' || activeTab === 'places'">
-            <div v-if="filteredPlaces.length > 0">
+            <div v-if="filteredPlaces.length > 0 || (activeTab === 'all' && totalResultsCount > 0)">
               <div class="flex items-center justify-between mb-4">
                 <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
                   장소
                 </h4>
                 <button
-                  v-if="activeTab === 'all'" (
+                  v-if="activeTab === 'all'"
                   @click="activeTab = 'places'"
                   class="text-sm font-bold text-gray-500 hover:text-[#2C2C2C] transition-colors"
                 >
                   + 더보기
                 </button>
               </div>
-              <div class="space-y-3">
+              <div v-if="filteredPlaces.length > 0" class="space-y-3">
                 <SearchPlaceItem
                   v-for="(place, index) in activeTab === 'all'
                     ? filteredPlaces.slice(0, 3)
@@ -109,12 +109,15 @@
                   @click="handlePlaceClick(place, index)"
                 />
               </div>
+              <div v-else class="text-center py-8 text-gray-400 font-bold text-sm bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  검색 결과가 없습니다.
+              </div>
             </div>
           </template>
 
           <!-- All Tab or Trips Tab -->
           <template v-if="activeTab === 'all' || activeTab === 'trips'">
-            <div v-if="filteredTrips.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
+            <div v-if="filteredTrips.length > 0 || (activeTab === 'all' && totalResultsCount > 0)" :class="{ 'mt-8': activeTab === 'all' }">
               <div class="flex items-center justify-between mb-4">
                 <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
                   TRIPS
@@ -127,7 +130,7 @@
                   + 더보기
                 </button>
               </div>
-              <div class="space-y-3">
+              <div v-if="filteredTrips.length > 0" class="space-y-3">
                 <SearchTripItem
                   v-for="trip in activeTab === 'all'
                     ? filteredTrips.slice(0, 3)
@@ -137,12 +140,15 @@
                   @click="handleTripClick(trip)"
                 />
               </div>
+              <div v-else class="text-center py-8 text-gray-400 font-bold text-sm bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  검색 결과가 없습니다.
+              </div>
             </div>
           </template>
 
           <!-- All Tab or Logs Tab -->
           <template v-if="activeTab === 'all' || activeTab === 'logs'">
-            <div v-if="filteredLogs.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
+            <div v-if="filteredLogs.length > 0 || (activeTab === 'all' && totalResultsCount > 0)" :class="{ 'mt-8': activeTab === 'all' }">
               <div class="flex items-center justify-between mb-4">
                 <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
                   LOGS
@@ -155,7 +161,7 @@
                   + 더보기
                 </button>
               </div>
-              <div class="space-y-3">
+              <div v-if="filteredLogs.length > 0" class="space-y-3">
                 <SearchLogItem
                   v-for="log in activeTab === 'all'
                     ? filteredLogs.slice(0, 3)
@@ -164,6 +170,9 @@
                   :log="log"
                   @click="handleLogClick(log)"
                 />
+              </div>
+              <div v-else class="text-center py-8 text-gray-400 font-bold text-sm bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  검색 결과가 없습니다.
               </div>
             </div>
           </template>
