@@ -303,7 +303,7 @@
     <DiaryCommentModal
       v-if="selectedLogId"
       :log-id="selectedLogId"
-      @close="selectedLogId = null"
+      @close="handleLogClose"
       @update="handleLogUpdate"
     />
 
@@ -366,6 +366,7 @@ const selectedTrip = ref<any>(null)
 const selectedPlace = ref<any>(null)
 const placeDetailModalRef = ref<any>(null)
 const selectedCategory = ref<string>('')
+const hasLogUpdates = ref(false)
 
 // API Results
 const filteredTrips = ref<TripSearchDoc[]>([])
@@ -453,8 +454,19 @@ const handleOpenTripLog = (logId: number) => {
 }
 
 const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
+    hasLogUpdates.value = true
     if (placeDetailModalRef.value) {
         placeDetailModalRef.value.updateTripLogState(payload.logId, { likeCount: payload.likeCount, liked: payload.liked })
+    }
+}
+
+const handleLogClose = () => {
+    selectedLogId.value = null
+    if (hasLogUpdates.value) {
+        if (placeDetailModalRef.value) {
+            placeDetailModalRef.value.refreshWithEffect()
+        }
+        hasLogUpdates.value = false
     }
 }
 

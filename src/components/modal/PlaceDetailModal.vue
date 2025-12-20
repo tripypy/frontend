@@ -53,7 +53,19 @@
         <div class="flex-1 overflow-y-auto bg-[#FAFAFA]">
           <div class="p-6">
             <!-- Trip Logs Section -->
-            <div v-if="tripLogs.length > 0" class="mb-12">
+            <div v-if="tripLogs.length > 0" class="mb-12 relative min-h-[200px]">
+              <Transition
+                  enter-active-class="transition-opacity duration-200"
+                  leave-active-class="transition-opacity duration-200"
+                  enter-from-class="opacity-0"
+                  leave-to-class="opacity-0"
+              >
+                  <div 
+                      v-if="isRefreshing" 
+                      class="absolute inset-0 bg-white/50 z-10 rounded-xl"
+                  ></div>
+              </Transition>
+
               <h3 class="text-xl font-black uppercase text-[#2C2C2C] mb-4 flex items-center gap-2">
                 Trip Logs 
                 <span class="px-2 py-0.5 bg-[#9BCCC4] text-white text-xs rounded-full">{{ tripLogs.length }}{{ tripLogsHasNext ? '+' : '' }}</span>
@@ -308,6 +320,7 @@ const tripLogs = ref<TripLogFeedItemDto[]>([])
 const tripLogsCursor = ref<number | null>(null)
 const tripLogsHasNext = ref(false)
 const isTripLogsLoading = ref(false)
+const isRefreshing = ref(false) // Visual effect state
 
 const myReview = ref<SpotReviewResponseDto | null>(null)
 
@@ -532,8 +545,13 @@ const updateTripLogState = (logId: number, newState: { likeCount?: number; liked
     const log = tripLogs.value.find(l => l.logId === logId)
     if (log) {
         if (newState.likeCount !== undefined) log.likeCount = newState.likeCount
-        // liked status field isn't in FeedItemDto currently but if we add visual cue later it helps
     }
+}
+
+const refreshWithEffect = async () => {
+    isRefreshing.value = true
+    await new Promise(resolve => setTimeout(resolve, 150)) // 0.15초 (짧은 깜빡임)
+    isRefreshing.value = false
 }
 
 const submitReview = async () => {
@@ -664,7 +682,8 @@ watch(loadMoreTrigger, () => {
 })
 
 defineExpose({
-    updateTripLogState
+    updateTripLogState,
+    refreshWithEffect
 })
 </script>
 
