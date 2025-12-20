@@ -128,7 +128,12 @@
             </div>
 
             <div v-if="upcomingTrips.length > 0" class="space-y-3">
-              <div v-for="trip in upcomingTrips" :key="trip.id" class="group cursor-pointer bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-lg p-3 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all">
+              <div 
+                v-for="trip in upcomingTrips" 
+                :key="trip.id" 
+                class="group cursor-pointer bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-lg p-3 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all"
+                @click="handleNavigateToTrip(trip.id)"
+              >
                 <div class="flex justify-between items-start mb-2">
                    <div class="flex items-center gap-1.5">
                       <Calendar class="w-3.5 h-3.5 text-gray-500" />
@@ -187,6 +192,13 @@
         @update="handleLogUpdate"
     />
 
+    <TripDetailModal
+        v-if="selectedTrip"
+        :trip="selectedTrip"
+        @close="selectedTrip = null"
+        @edit="handleEditFromModal"
+    />
+
     <ScrollToTop />
   </div>
 </template>
@@ -196,18 +208,19 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
+import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
+import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
+import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
-import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import { Plus, MapPin, Calendar, ExternalLink, TrendingUp, TrendingDown, Minus } from 'lucide-vue-next'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { getTripLogFeed } from '@/apis/trip-log/index';
 import { dailyMissions } from '@/data/mockData'
 import { spotApi } from '@/apis/spot'
-import { getMyTrips, createTrip } from '@/apis/trip'
+import { getMyTrips, createTrip, getTripDetail } from '@/apis/trip' // Added getTripDetail
 import type { TripResponseDto } from '@/apis/trip/types'
 import { differenceInCalendarDays, isAfter, isSameDay, startOfDay, parseISO } from 'date-fns'
-import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
@@ -216,6 +229,7 @@ const selectedPlaceForDetail = ref<any>(null) // For PlaceDetailModal
 const placeDetailModalRef = ref<any>(null)
 const selectedLogId = ref<number | null>(null)
 const hasLogUpdates = ref(false)
+const selectedTrip = ref<any>(null)
 
 const handleOpenTripLog = (logId: number) => {
     selectedLogId.value = logId
@@ -236,6 +250,30 @@ const handleLogClose = () => {
         }
         hasLogUpdates.value = false
     }
+}
+
+const handleNavigateToTrip = async (tripId: number) => {
+    try {
+        const detail = await getTripDetail(tripId)
+        selectedTrip.value = {
+            ...detail,
+             description:
+                detail.tripItems && detail.tripItems.length > 0
+                ? detail.tripItems.map((item : any) => item.spot.name).join(' → ')
+                : '장소 없음',
+            duration: '반나절', // Mock
+            views: 1240, // Mock
+            imageUrl: '', // Mock
+        }
+    } catch (error) {
+        console.error('Failed to fetch trip detail:', error)
+        alert('여행 정보를 불러오는데 실패했습니다.')
+    }
+}
+
+const handleEditFromModal = (trip: any) => {
+    selectedTrip.value = null
+    handleNavigate('trip-edit', { id: trip.id })
 }
 
 const handleCreateTrip = async () => {

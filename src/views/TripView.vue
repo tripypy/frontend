@@ -89,7 +89,7 @@ import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { useRouter } from 'vue-router'
-import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index' // Added getTripDetail
+import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index' // Keep getTripDetail for own modal usage
 import type { TripResponseDto, TripDetailResponseDto } from '@/apis/trip/types' // Added TripDetailResponseDto
 import { TripStatus } from '@/types/common'
 
