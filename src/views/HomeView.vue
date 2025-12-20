@@ -102,7 +102,7 @@
           
           <!-- New Plan Card (CTA) -->
           <button
-            @click="handleNavigate('create-trip')"
+            @click="handleCreateTrip"
             class="w-full bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-xl p-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all text-left group relative overflow-hidden"
           >
              <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
@@ -188,12 +188,22 @@ import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { getTripLogFeed } from '@/apis/trip-log/index';
 import { dailyMissions } from '@/data/mockData'
 import { spotApi } from '@/apis/spot'
-import { getMyTrips } from '@/apis/trip'
+import { getMyTrips, createTrip } from '@/apis/trip'
 import type { TripResponseDto } from '@/apis/trip/types'
 import { differenceInCalendarDays, isAfter, isSameDay, startOfDay, parseISO } from 'date-fns'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
+
+const handleCreateTrip = async () => {
+    try {
+        const newTrip = await createTrip()
+        handleNavigate('trip-edit', { id: newTrip.id })
+    } catch (error) {
+        console.error('Failed to create trip:', error)
+        alert('여행 계획 생성에 실패했습니다.')
+    }
+}
 
 // 상태 관리
 const diaryEntries = ref<TripLogFeedItemDto[]>([])
