@@ -54,7 +54,7 @@
               @click="handleNavigate('search')"
               class="w-full mt-4 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs uppercase hover:bg-[#F5F5F5] transition-colors"
             >
-              View Full Chart
+              EXPLORE MORE
             </button>
           </div>
         </div>
@@ -214,9 +214,9 @@ const handleCreateTrip = async () => {
     }
 }
 
-const handlePlaceClick = () => {
-    // Navigate to Search Page Initial Mode (User Request)
-    handleNavigate('search')
+const handlePlaceClick = (place: any) => {
+    // Open Place Detail Modal directly
+    selectedPlaceForDetail.value = place
 }
 
 const handleKeywordClick = (keyword: string) => {
