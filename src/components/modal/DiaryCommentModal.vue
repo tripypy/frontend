@@ -363,7 +363,7 @@ const props = defineProps<{
   logId: number
 }>()
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'update'])
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -491,7 +491,9 @@ const handleLike = async () => {
       response = await likeTripLog(props.logId)
     }
     currentLikes.value = response.likeCount
+    currentLikes.value = response.likeCount
     isLiked.value = response.liked
+    emit('update', { logId: props.logId, likeCount: response.likeCount, liked: response.liked })
   } catch (e) {
     console.error('Failed to toggle like status:', e)
     alert('좋아요 상태 변경에 실패했습니다.')

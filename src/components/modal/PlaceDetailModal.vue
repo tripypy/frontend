@@ -52,6 +52,68 @@
 
         <div class="flex-1 overflow-y-auto bg-[#FAFAFA]">
           <div class="p-6">
+            <!-- Trip Logs Section -->
+            <div v-if="tripLogs.length > 0" class="mb-12">
+              <h3 class="text-xl font-black uppercase text-[#2C2C2C] mb-4 flex items-center gap-2">
+                Trip Logs 
+                <span class="px-2 py-0.5 bg-[#9BCCC4] text-white text-xs rounded-full">{{ tripLogs.length }}{{ tripLogsHasNext ? '+' : '' }}</span>
+              </h3>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div 
+                  v-for="log in tripLogs" 
+                  :key="log.logId"
+                  class="bg-white border-[2px] border-[#2C2C2C] rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-transform hover:-translate-y-1"
+                  @click="emit('open-trip-log', log.logId)"
+                >
+                  <!-- Image -->
+                  <div class="h-40 bg-gray-100 relative">
+                     <img 
+                      v-if="log.images && log.images.length > 0" 
+                      :src="log.images[0].imageUrl" 
+                      class="w-full h-full object-cover"
+                    />
+                    <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+                        <span class="text-xs font-bold">No Image</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div class="p-3">
+                     <h4 class="font-black text-sm text-[#2C2C2C] line-clamp-1 mb-1">{{ log.title }}</h4>
+                     <p class="text-xs text-gray-500 line-clamp-2 mb-2 h-8">{{ log.content }}</p>
+                     
+                     <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                        <div class="flex items-center gap-1.5">
+                           <div class="w-5 h-5 rounded-full bg-gray-100 border border-gray-200 overflow-hidden">
+                              <img :src="log.authorImageUrl || `https://i.pravatar.cc/150?u=${log.authorNickname}`" class="w-full h-full object-cover" />
+                           </div>
+                           <span class="text-xs font-bold text-gray-600 truncate max-w-[80px]">{{ log.authorNickname }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-gray-400">
+                           <div class="flex items-center gap-0.5">
+                              <Heart class="w-3 h-3 fill-gray-400 text-gray-400" /> {{ log.likeCount }}
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                </div>
+              </div>
+
+               <!-- Load More Trip Logs -->
+               <div v-if="tripLogsHasNext" class="mt-4 text-center">
+                  <button 
+                    @click="fetchTripLogs(true)"
+                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-black text-[#2C2C2C] transition-colors disabled:opacity-50"
+                    :disabled="isTripLogsLoading"
+                  >
+                    {{ isTripLogsLoading ? 'Loading...' : 'More Trip Logs' }}
+                  </button>
+               </div>
+            </div>
+
+            <div v-if="tripLogs.length > 0" class="w-full h-[2px] bg-gray-100 mb-8 border-t border-dashed border-gray-300"></div>
+
             <!-- Reviews Highlight -->
             <div class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-5 mb-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)]">
                <div class="flex flex-col sm:flex-row gap-6 items-start">
@@ -196,62 +258,7 @@
                  <div v-if="displayedReviewsCount < reviews.length" class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#2C2C2C]"></div>
             </div>
 
-            <!-- Trip Logs Section -->
-            <div v-if="tripLogs.length > 0" class="mt-8 pt-8 border-t-[2px] border-dashed border-gray-300">
-              <h3 class="text-xl font-black uppercase text-[#2C2C2C] mb-4">Trip Logs <span class="text-sm font-bold text-gray-500 ml-1">({{ tripLogs.length }}{{ tripLogsHasNext ? '+' : '' }})</span></h3>
-              
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div 
-                  v-for="log in tripLogs" 
-                  :key="log.logId"
-                  class="bg-white border-[2px] border-[#2C2C2C] rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-transform hover:-translate-y-1"
-                  @click="emit('open-trip-log', log.logId)"
-                >
-                  <!-- Image -->
-                  <div class="h-40 bg-gray-100 relative">
-                     <img 
-                      v-if="log.images && log.images.length > 0" 
-                      :src="log.images[0].imageUrl" 
-                      class="w-full h-full object-cover"
-                    />
-                    <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-                        <span class="text-xs font-bold">No Image</span>
-                    </div>
-                  </div>
-                  
-                  <!-- Content -->
-                  <div class="p-3">
-                     <h4 class="font-black text-sm text-[#2C2C2C] line-clamp-1 mb-1">{{ log.title }}</h4>
-                     <p class="text-xs text-gray-500 line-clamp-2 mb-2 h-8">{{ log.content }}</p>
-                     
-                     <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                        <div class="flex items-center gap-1.5">
-                           <div class="w-5 h-5 rounded-full bg-gray-100 border border-gray-200 overflow-hidden">
-                              <img :src="log.authorImageUrl || `https://i.pravatar.cc/150?u=${log.authorNickname}`" class="w-full h-full object-cover" />
-                           </div>
-                           <span class="text-xs font-bold text-gray-600 truncate max-w-[80px]">{{ log.authorNickname }}</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-xs font-bold text-gray-400">
-                           <div class="flex items-center gap-0.5">
-                              <Heart class="w-3 h-3 fill-gray-400 text-gray-400" /> {{ log.likeCount }}
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-                </div>
-              </div>
 
-               <!-- Load More Trip Logs -->
-               <div v-if="tripLogsHasNext" class="mt-4 text-center">
-                  <button 
-                    @click="fetchTripLogs(true)"
-                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-black text-[#2C2C2C] transition-colors disabled:opacity-50"
-                    :disabled="isTripLogsLoading"
-                  >
-                    {{ isTripLogsLoading ? 'Loading...' : 'More Trip Logs' }}
-                  </button>
-               </div>
-            </div>
           </div>
         </div>
       </div>
@@ -521,6 +528,14 @@ const fetchTripLogs = async (isLoadMore = false) => {
     }
 }
 
+const updateTripLogState = (logId: number, newState: { likeCount?: number; liked?: boolean }) => {
+    const log = tripLogs.value.find(l => l.logId === logId)
+    if (log) {
+        if (newState.likeCount !== undefined) log.likeCount = newState.likeCount
+        // liked status field isn't in FeedItemDto currently but if we add visual cue later it helps
+    }
+}
+
 const submitReview = async () => {
     if (userRating.value === 0 || !spotId.value) return
     
@@ -646,6 +661,10 @@ watch(sortBy, async () => {
 
 watch(loadMoreTrigger, () => {
     setupIntersectionObserver()
+})
+
+defineExpose({
+    updateTripLogState
 })
 </script>
 

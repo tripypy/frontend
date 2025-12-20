@@ -304,6 +304,7 @@
       v-if="selectedLogId"
       :log-id="selectedLogId"
       @close="selectedLogId = null"
+      @update="handleLogUpdate"
     />
 
     <!-- Course/Trip Modal -->
@@ -317,6 +318,7 @@
     <!-- Place Detail Modal -->
     <PlaceDetailModal 
       v-if="selectedPlace" 
+      ref="placeDetailModalRef"
       :place="selectedPlace" 
       @close="selectedPlace = null" 
       @open-trip-log="handleOpenTripLog"
@@ -362,6 +364,8 @@ const selectedLogId = ref<number | null>(null)
 // We will assign a mapped object to it.
 const selectedTrip = ref<any>(null)
 const selectedPlace = ref<any>(null)
+const placeDetailModalRef = ref<any>(null)
+const selectedCategory = ref<string>('')
 
 // API Results
 const filteredTrips = ref<TripSearchDoc[]>([])
@@ -446,6 +450,12 @@ const handleLogClick = (log: TripLogSearchDoc) => {
 
 const handleOpenTripLog = (logId: number) => {
     selectedLogId.value = logId
+}
+
+const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
+    if (placeDetailModalRef.value) {
+        placeDetailModalRef.value.updateTripLogState(payload.logId, { likeCount: payload.likeCount, liked: payload.liked })
+    }
 }
 
 const handleTripClick = async (trip: TripSearchDoc) => {

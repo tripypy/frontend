@@ -174,6 +174,7 @@
 
     <PlaceDetailModal
       v-if="selectedPlaceForDetail"
+      ref="placeDetailModalRef"
       :place="selectedPlaceForDetail"
       @close="selectedPlaceForDetail = null"
       @open-trip-log="handleOpenTripLog"
@@ -183,6 +184,7 @@
         v-if="selectedLogId"
         :log-id="selectedLogId"
         @close="selectedLogId = null"
+        @update="handleLogUpdate"
     />
 
     <ScrollToTop />
@@ -211,10 +213,17 @@ const router = useRouter()
 const { handleNavigate } = useNavigate()
 
 const selectedPlaceForDetail = ref<any>(null) // For PlaceDetailModal
+const placeDetailModalRef = ref<any>(null)
 const selectedLogId = ref<number | null>(null)
 
 const handleOpenTripLog = (logId: number) => {
     selectedLogId.value = logId
+}
+
+const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
+    if (placeDetailModalRef.value) {
+        placeDetailModalRef.value.updateTripLogState(payload.logId, { likeCount: payload.likeCount, liked: payload.liked })
+    }
 }
 
 const handleCreateTrip = async () => {
