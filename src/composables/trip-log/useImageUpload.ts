@@ -3,6 +3,7 @@ export async function uploadToS3(
   presignedUrl: string,
   file: File
 ): Promise<void> {
+  console.warn(file.type)
   const response = await fetch(presignedUrl, {
     method: 'PUT',
     headers: {
