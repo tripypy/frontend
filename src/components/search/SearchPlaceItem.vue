@@ -27,13 +27,7 @@
           <h5 class="text-xl font-black group-hover:text-[#9BCCC4] transition-colors truncate">
             {{ place.name }}
           </h5>
-          <div
-            v-if="rating > 0"
-            class="flex items-center gap-1 px-2.5 py-1 bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-full flex-shrink-0 ml-2"
-          >
-            <Star :size="14" :stroke-width="2" class="fill-current text-[#2C2C2C]" />
-            <span class="text-xs font-black">{{ rating.toFixed(1) }}</span>
-          </div>
+            <!-- Rating removed -->
         </div>
         <div class="flex flex-col gap-1.5 mb-3">
             <div class="flex items-center gap-2 text-xs font-bold text-gray-600">
@@ -68,9 +62,7 @@
               #{{ categoryTag }}
             </span>
           </div>
-          <div class="text-xs font-bold text-gray-500">
-             리뷰 {{ reviewCount }}개
-          </div>
+           <!-- Review count removed -->
         </div>
       </div>
     </div>
@@ -79,16 +71,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Map, MapPin, Star, Phone, Globe } from 'lucide-vue-next'
-import { spotApi } from '@/apis/spot'
-import { spotReviewApi } from '@/apis/spot-review'
+import { Map, MapPin, Phone, Globe } from 'lucide-vue-next'
+
 
 const props = defineProps<{
   place: any
 }>()
 
-const rating = ref(0)
-const reviewCount = ref(0)
+
 
 const categoryTag = computed(() => {
     if (!props.place.category) return ''
@@ -109,20 +99,5 @@ const handleImageError = (event: Event) => {
   // For now, let's just leave it, or maybe set to a transparent pixel.
 }
 
-onMounted(async () => {
-    try {
-        // 1. Check if spot exists in DB
-        const spot = await spotApi.getSpotByKakaoPlaceId(props.place.kakaoPlaceId)
-        
-        if (spot) {
-            // 2. Fetch stats
-            const stats = await spotReviewApi.getSpotReviewStats(spot.id)
-            rating.value = stats.averageRating
-            reviewCount.value = stats.reviewCount
-        }
-    } catch (e) {
-        // Fail silently, show 0/0
-        // console.error(e) 
-    }
-})
+
 </script>
