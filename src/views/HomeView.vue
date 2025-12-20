@@ -176,6 +176,13 @@
       v-if="selectedPlaceForDetail"
       :place="selectedPlaceForDetail"
       @close="selectedPlaceForDetail = null"
+      @open-trip-log="handleOpenTripLog"
+    />
+
+    <DiaryCommentModal
+        v-if="selectedLogId"
+        :log-id="selectedLogId"
+        @close="selectedLogId = null"
     />
 
     <ScrollToTop />
@@ -189,6 +196,7 @@ import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
+import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import { Plus, MapPin, Calendar, ExternalLink, TrendingUp, TrendingDown, Minus } from 'lucide-vue-next'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { getTripLogFeed } from '@/apis/trip-log/index';
@@ -203,6 +211,11 @@ const router = useRouter()
 const { handleNavigate } = useNavigate()
 
 const selectedPlaceForDetail = ref<any>(null) // For PlaceDetailModal
+const selectedLogId = ref<number | null>(null)
+
+const handleOpenTripLog = (logId: number) => {
+    selectedLogId.value = logId
+}
 
 const handleCreateTrip = async () => {
     try {

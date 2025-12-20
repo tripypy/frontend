@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+    class="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4"
     @click.self="emit('close')"
   >
     <Transition
@@ -556,6 +556,7 @@ const getBadgeColor = (idx: number) => colors[idx % colors.length]
 
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
+    e.stopPropagation() // Prevent event from bubbling to parent modals (window listener)
     if (isTripDetailModalVisible.value) {
       isTripDetailModalVisible.value = false
     } else {

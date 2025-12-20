@@ -299,12 +299,12 @@
          But wait, DiaryCommentModal is for existing Diary. 
          TripLog data is different. I'll comment it out to avoid type errors.
     -->
-    <!-- 
+    <!-- Diary Modal (Log Detail) -->
     <DiaryCommentModal
-      v-if="selectedLog"
-      ...
-    /> 
-    -->
+      v-if="selectedLogId"
+      :log-id="selectedLogId"
+      @close="selectedLogId = null"
+    />
 
     <!-- Course/Trip Modal -->
     <TripDetailModal
@@ -315,7 +315,12 @@
     />
 
     <!-- Place Detail Modal -->
-    <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
+    <PlaceDetailModal 
+      v-if="selectedPlace" 
+      :place="selectedPlace" 
+      @close="selectedPlace = null" 
+      @open-trip-log="handleOpenTripLog"
+    />
   </div>
 </template>
 
@@ -352,7 +357,7 @@ const currentSearchQuery = ref('')
 const hasSearched = ref(false)
 const activeTab = ref<'all' | 'places' | 'trips' | 'logs'>('all')
 
-const selectedLog = ref<TripLogSearchDoc | null>(null)
+const selectedLogId = ref<number | null>(null)
 // selectedTrip type is effectively 'any' because TripDetailModal expects a complex object (TripResponseDto-ish + UI fields)
 // We will assign a mapped object to it.
 const selectedTrip = ref<any>(null)
@@ -436,10 +441,11 @@ const handleImageError = (event: Event) => {
 }
 
 const handleLogClick = (log: TripLogSearchDoc) => {
-  // selectedLog.value = log 
-  // Need to implement Log detail view/modal or navigation
-  // For now just set select for potential modal use
-  selectedLog.value = log
+  selectedLogId.value = log.log_id
+}
+
+const handleOpenTripLog = (logId: number) => {
+    selectedLogId.value = logId
 }
 
 const handleTripClick = async (trip: TripSearchDoc) => {
