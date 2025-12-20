@@ -696,22 +696,32 @@ const allDiaries = [
 
 const hotPlaces = ref<any[]>([])
 
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
 onMounted(async () => {
-  try {
-    const places = await spotApi.getHotPlaces()
-    hotPlaces.value = places.map((place : any) => ({
-        ...place,
-        imageUrl: place.thumbnailUrl, // Map thumbnail to imageUrl
-        location: place.address,      // Map address to location
-        rating: 0.0,                  // Default (API missing)
-        views: 0,                     // Default (API missing)
-        tags: place.category ? place.category.split(' > ').slice(-1) : ['핫플레이스'] // Generate tag from category
-    }))
-  } catch (e) {
-      console.error("Failed to fetch hot places", e)
-      // Fallback empty or keep empty
-      hotPlaces.value = []
-  }
+    // 1. Check for query param 'q' (Keyword Search)
+    if (route.query.q) {
+        searchQuery.value = route.query.q as string
+        handleSearch()
+    }
+
+    // 2. Load Hot Places
+    try {
+        const places = await spotApi.getHotPlaces()
+        hotPlaces.value = places.map((place: any) => ({
+            ...place,
+            imageUrl: place.thumbnailUrl,
+            location: place.address,
+            rating: 0.0,
+            views: 0,
+            tags: place.category ? place.category.split(' > ').slice(-1) : ['핫플레이스']
+        }))
+    } catch (e) {
+        console.error("Failed to fetch hot places", e)
+        hotPlaces.value = []
+    }
 })
 
 // Clean up Mock Data - filteredCourses logic removed

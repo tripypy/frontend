@@ -11,7 +11,7 @@
           <!-- Keywords Section -->
           <div class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-5 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)]">
             <h3 class="text-xl font-black mb-4 uppercase flex items-center gap-2" style="font-family: 'Bebas Neue', sans-serif">
-              <span class="text-[#E88555]">#</span> Trending Now
+              <span class="text-[#E88555]">#</span> TRAVEL KEYWORD
             </h3>
             <div class="flex flex-wrap gap-2 max-h-[66px] overflow-hidden">
               <button
@@ -32,7 +32,7 @@
             </h3>
             
             <div class="space-y-3">
-              <div v-for="(place, idx) in hotPlaces" :key="idx" class="flex items-center gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+              <div v-for="(place, idx) in hotPlaces" :key="idx" @click="handlePlaceClick(place)" class="flex items-center gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
                 <!-- Rank -->
                 <span class="text-lg font-black italic text-[#2C2C2C] w-6 text-center shadow-[2px_2px_0px_0px_rgba(207,245,0,0.5)] bg-white border border-[#2C2C2C] rounded flex-shrink-0">
                   {{ idx + 1 }}
@@ -172,6 +172,12 @@
       </div>
     </div>
 
+    <PlaceDetailModal
+      v-if="selectedPlaceForDetail"
+      :place="selectedPlaceForDetail"
+      @close="selectedPlaceForDetail = null"
+    />
+
     <ScrollToTop />
   </div>
 </template>
@@ -191,9 +197,12 @@ import { spotApi } from '@/apis/spot'
 import { getMyTrips, createTrip } from '@/apis/trip'
 import type { TripResponseDto } from '@/apis/trip/types'
 import { differenceInCalendarDays, isAfter, isSameDay, startOfDay, parseISO } from 'date-fns'
+import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
+
+const selectedPlaceForDetail = ref<any>(null) // For PlaceDetailModal
 
 const handleCreateTrip = async () => {
     try {
@@ -203,6 +212,15 @@ const handleCreateTrip = async () => {
         console.error('Failed to create trip:', error)
         alert('여행 계획 생성에 실패했습니다.')
     }
+}
+
+const handlePlaceClick = () => {
+    // Navigate to Search Page Initial Mode (User Request)
+    handleNavigate('search')
+}
+
+const handleKeywordClick = (keyword: string) => {
+  router.push({ path: '/search', query: { q: keyword } })
 }
 
 // 상태 관리
@@ -216,11 +234,7 @@ const hasNext = ref(true)
 const currentMission = ref(dailyMissions[Math.floor(Math.random() * dailyMissions.length)])
 
 // Keywords
-const keywords = ['성수동','반려견동반','오션뷰','캠핑로그','제주맛집','호캉스','파리올림픽']
-
-const handleKeywordClick = (keyword: string) => {
-  router.push({ path: '/search', query: { q: keyword } })
-}
+const keywords = ['동네산책', '책방투어', 'LP바', '성수카페', '팝업스토어', '자전거라이딩', '클라이밍', '야시장']
 
 // Hot Places
 const hotPlaces = ref<any[]>([])
