@@ -1,178 +1,290 @@
 <template>
-  <div class="fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm" @click="emit('close')">
+  <div class="fixed inset-0 bg-black/60 z-[60]" @click="emit('close')">
     <div class="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none">
       <div
-        class="bg-white border-[3px] border-[#2C2C2C] rounded-2xl shadow-[8px_8px_0px_0px_rgba(44,44,44,1)] max-w-2xl w-full max-h-[85vh] overflow-hidden pointer-events-auto"
+        class="bg-white border-[3px] border-[#2C2C2C] rounded-2xl shadow-[8px_8px_0px_0px_rgba(44,44,44,1)] max-w-2xl w-full max-h-[85vh] flex flex-col pointer-events-auto overflow-hidden"
         @click.stop
       >
-        <div class="relative">
-          <div class="h-64 border-b-[3px] border-[#2C2C2C] overflow-hidden">
-            <img :src="placeData.image" :alt="placeData.name" class="w-full h-full object-cover" />
-          </div>
+        <!-- Header Section -->
+        <div class="p-6 border-b-[3px] border-[#2C2C2C] bg-white relative">
           <button
             @click="emit('close')"
-            class="absolute top-4 right-4 p-2.5 border-[2px] border-[#2C2C2C] rounded-lg bg-white hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all active:shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] active:translate-x-[1px] active:translate-y-[1px]"
+            class="absolute top-6 right-6 p-2 border-[2px] border-[#2C2C2C] rounded-lg bg-white hover:bg-gray-50 transition-colors"
           >
             <X class="w-5 h-5 text-[#2C2C2C]" stroke-width="2" />
           </button>
+
+          <div class="pr-12">
+             <div class="flex flex-wrap gap-2 mb-3">
+              <span
+                v-for="(tag, index) in localPlace.tags"
+                :key="index"
+                class="px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-[#9BCCC4] text-xs font-black text-[#2C2C2C]"
+              >
+                #{{ tag }}
+              </span>
+            </div>
+            <h2 class="text-3xl font-black tracking-tight font-sans text-[#2C2C2C] leading-tight mb-2">
+              {{ localPlace.name }}
+            </h2>
+          </div>
+          
+          <!-- Compact Info Bar -->
+           <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold text-gray-600 mt-4">
+             <div class="flex items-center gap-1.5">
+               <MapPin class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+               <span class="truncate max-w-[200px]">{{ localPlace.address || '주소 정보 없음' }}</span>
+             </div>
+             
+             <div v-if="localPlace.phone" class="flex items-center gap-1.5">
+               <Phone class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+               <span>{{ localPlace.phone }}</span>
+             </div>
+             
+             <div v-if="localPlace.website" class="flex items-center gap-1.5">
+               <Globe class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+               <a :href="localPlace.website" target="_blank" class="hover:text-[#E88555] hover:underline truncate max-w-[150px]">
+                 {{ truncateUrl(localPlace.website) }}
+               </a>
+             </div>
+           </div>
         </div>
 
-        <div class="p-8 overflow-y-auto max-h-[calc(85vh-16rem)]">
-          <div
-            class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#FFD60A] border-[3px] border-[#2C2C2C] mb-4"
-          >
-            <span class="text-lg font-black text-[#2C2C2C]">{{ place.number }}</span>
-          </div>
+        <div class="flex-1 overflow-y-auto bg-[#FAFAFA]">
+          <div class="p-6">
+            <!-- Reviews Highlight -->
+            <div class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-5 mb-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)]">
+               <div class="flex flex-col sm:flex-row gap-6 items-start">
+                 <!-- Rating Stats -->
+                 <div class="flex flex-col items-center justify-center min-w-[120px] pt-2">
+                    <span class="text-5xl font-black text-[#2C2C2C] tracking-tighter">{{ localPlace.rating.toFixed(1) }}</span>
+                    <div class="flex gap-0.5 my-1">
+                      <div v-for="i in 5" :key="i" class="relative w-4 h-4">
+                        <Star class="absolute inset-0 w-4 h-4 text-gray-200 fill-gray-200" stroke-width="1.5" />
+                        <div class="absolute inset-0 overflow-hidden" :style="{ width: `${Math.max(0, Math.min(100, (localPlace.rating - (i - 1)) * 100))}%` }">
+                            <Star class="absolute left-0 w-4 h-4 fill-[#FFD60A] text-[#2C2C2C]" stroke-width="1.5" />
+                        </div>
+                      </div>
+                    </div>
+                    <span class="text-xs font-bold text-gray-500">{{ localPlace.reviews.toLocaleString() }} Reviews</span>
+                 </div>
+                 
+                 <div class="hidden sm:block w-[2px] self-stretch bg-gray-100"></div>
+                 
+                 <div class="flex-1 w-full flex flex-col items-end">
+                    <p class="text-sm font-black text-gray-800 mb-2 w-full text-left">
+                        이 장소는 나에게 어떤 곳이었나요? 기록을 남겨주세요!
+                    </p>
+                    <div class="flex items-center gap-1 cursor-pointer mb-3 w-full" @mouseleave="handleStarLeave">
+                      <div
+                        v-for="star in 5"
+                        :key="star"
+                        class="relative w-8 h-8"
+                        @mousemove="(e) => handleStarHover(star - 1, e)"
+                        @click="(e) => handleStarClick(star - 1, e)"
+                      >
+                        <Star class="absolute inset-0 w-8 h-8 text-gray-200 fill-gray-200" stroke-width="2" />
+                        <div
+                          class="absolute inset-0 overflow-hidden"
+                          :style="{ width: `${getStarFillPercent(star - 1)}%` }"
+                        >
+                           <Star
+                            class="absolute left-0 w-8 h-8 fill-[#FFD60A] text-[#2C2C2C]"
+                            stroke-width="2"
+                          />
+                        </div>
+                      </div>
+                      <span v-if="userRating > 0" class="ml-2 text-sm font-bold text-[#E88555]">
+                        {{ userRating.toFixed(1) }}점
+                      </span>
+                    </div>
 
-          <h2 class="text-4xl font-black mb-2 tracking-tight font-sans">{{ placeData.name }}</h2>
-          <p class="text-sm font-bold text-gray-600 uppercase mb-4">{{ placeData.category }}</p>
-
-          <div class="mb-6">
-            <!-- 평균 평점 표시 -->
-            <div class="flex items-center gap-2 mb-3">
-              <span class="text-sm font-black text-gray-600 uppercase">평균 평점</span>
-              <span class="font-black text-lg">{{ placeData.rating }}</span>
-              <span class="text-sm font-bold text-gray-600"
-                >({{ placeData.reviews.toLocaleString() }} 평가)</span
-              >
+                    <!-- Review Text Input -->
+                    <div class="relative w-full">
+                      <textarea
+                        v-model="reviewContent"
+                        placeholder="솔직한 리뷰를 남겨주세요."
+                        class="w-full p-3 border-[2px] border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:border-[#2C2C2C] resize-none h-24 placeholder:text-gray-400"
+                      ></textarea>
+                      <button 
+                      <button 
+                        @click="submitReview"
+                        :disabled="userRating === 0"
+                        class="absolute bottom-3 right-3 px-4 py-1.5 bg-[#2C2C2C] text-white text-xs font-black rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-[#404040] transition-colors"
+                      >
+                        {{ myReview ? '수정하기' : '등록하기' }}
+                      </button>
+                    </div>
+                 </div>
+               </div>
             </div>
 
-            <!-- 내 평가 -->
-            <div class="flex items-center gap-3">
-              <span class="text-sm font-black text-gray-600 uppercase">내 평가</span>
-              <div class="flex items-center gap-1 cursor-pointer" @mouseleave="handleStarLeave">
-                <div
-                  v-for="star in 5"
-                  :key="star"
-                  class="relative w-6 h-6"
-                  @mousemove="(e) => handleStarHover(star - 1, e)"
-                  @click="(e) => handleStarClick(star - 1, e)"
-                >
-                  <!-- 배경 별 (회색) -->
-                  <Star class="absolute inset-0 w-6 h-6 fill-none text-gray-300" stroke-width="2" />
-                  <!-- 채워진 별 (노란색 hover 또는 마젠타 user rating) -->
-                  <div
-                    class="absolute inset-0 overflow-hidden"
-                    :style="{ width: `${getStarFillPercent(star - 1)}%` }"
-                  >
-                    <Star
-                      :class="[
-                        'absolute left-0 w-6 h-6',
-                        hoverRating > 0 || userRating === 0
-                          ? 'fill-[#FFD60A] text-[#FFD60A]'
-                          : 'fill-[#FF1493] text-[#FF1493]',
-                      ]"
-                      stroke-width="2"
-                    />
+            <!-- Review List Header -->
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xl font-black uppercase text-[#2C2C2C]">Reviews</h3>
+              <div class="flex gap-2">
+                 <button 
+                    @click="sortBy = 'latest'"
+                    :class="[
+                        'text-xs font-bold px-3 py-1.5 rounded-full border transition-colors',
+                        sortBy === 'latest' 
+                            ? 'bg-[#2C2C2C] text-white border-[#2C2C2C]' 
+                            : 'bg-white text-gray-500 border-gray-300 hover:border-[#2C2C2C] hover:text-[#2C2C2C]'
+                    ]"
+                 >
+                    최신순
+                 </button>
+                 <button 
+                    @click="sortBy = 'rating'"
+                    :class="[
+                        'text-xs font-bold px-3 py-1.5 rounded-full border transition-colors',
+                        sortBy === 'rating' 
+                            ? 'bg-[#2C2C2C] text-white border-[#2C2C2C]' 
+                            : 'bg-white text-gray-500 border-gray-300 hover:border-[#2C2C2C] hover:text-[#2C2C2C]'
+                    ]"
+                 >
+                    별점순
+                 </button>
+              </div>
+            </div>
+
+            <!-- Review List -->
+            <div class="space-y-4">
+               <div v-if="reviews.length === 0" class="bg-white border-[2px] border-dashed border-gray-300 rounded-xl p-8 text-center">
+                    <p class="text-gray-500 font-bold">아직 작성된 리뷰가 없습니다.<br/>첫 번째 리뷰를 남겨보세요!</p>
+               </div>
+               <div 
+                v-for="review in displayedReviews" 
+                :key="review.id" 
+                class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 transition-colors"
+               >
+                  <div class="flex justify-between items-start mb-3">
+                     <div class="flex items-center gap-3">
+                        <!-- Avatar -->
+                        <div class="w-10 h-10 rounded-full bg-white border-[2px] border-[#2C2C2C] flex items-center justify-center overflow-hidden">
+                           <img :src="review.userProfileImage || `https://i.pravatar.cc/150?u=${review.userNickname}`" class="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                           <div class="font-black text-sm text-[#2C2C2C]">{{ review.userNickname }}</div>
+                           <div class="text-xs font-bold text-gray-400">{{ formatDate(review.createdAt) }}</div>
+                        </div>
+                     </div>
+                     <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1 px-2 py-1 bg-white rounded-lg border border-[#2C2C2C]">
+                            <Star class="w-3 h-3 fill-[#FFD60A] text-[#2C2C2C]" stroke-width="2" />
+                            <span class="text-xs font-black">{{ review.rating.toFixed(1) }}</span>
+                        </div>
+                        <!-- Delete Button (Only for my review) -->
+                        <button 
+                            v-if="myReview && review.id === myReview.id"
+                            @click="deleteReview"
+                            class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                            title="리뷰 삭제"
+                        >
+                            <Trash2 class="w-4 h-4" stroke-width="2.5" />
+                        </button>
+                     </div>
                   </div>
-                </div>
-              </div>
-              <span v-if="userRating > 0" class="font-black text-lg text-[#FF1493]">
-                {{ userRating.toFixed(1) }}
-              </span>
-              <span v-else class="text-sm font-bold text-gray-400"> 별을 클릭하여 평가하세요 </span>
+                  <p class="text-sm font-medium text-gray-700 leading-relaxed">
+                    {{ review.content }}
+                  </p>
+               </div>
             </div>
-          </div>
-
-          <p class="text-base leading-relaxed font-medium text-gray-800 mb-6">
-            {{ placeData.description }}
-          </p>
-
-          <div class="flex flex-wrap gap-2 mb-6">
-            <span
-              v-for="(tag, index) in placeData.tags"
-              :key="index"
-              class="px-3 py-1.5 border-[2px] border-[#2C2C2C] rounded-full bg-[#B4E4FF] text-xs font-black uppercase"
-            >
-              #{{ tag }}
-            </span>
-          </div>
-
-          <div class="space-y-3 mb-6">
-            <div
-              class="flex items-start gap-3 p-4 border-[2px] border-[#2C2C2C] rounded-xl bg-[#FFF8ED]"
-            >
-              <MapPin class="w-5 h-5 text-[#2C2C2C] mt-0.5 flex-shrink-0" stroke-width="2" />
-              <div>
-                <p class="text-xs font-black uppercase text-gray-600 mb-1">주소</p>
-                <p class="font-bold">{{ placeData.address }}</p>
-              </div>
-            </div>
-            <div
-              class="flex items-start gap-3 p-4 border-[2px] border-[#2C2C2C] rounded-xl bg-[#FFF8ED]"
-            >
-              <Clock class="w-5 h-5 text-[#2C2C2C] mt-0.5 flex-shrink-0" stroke-width="2" />
-              <div>
-                <p class="text-xs font-black uppercase text-gray-600 mb-1">운영시간</p>
-                <p class="font-bold">{{ placeData.hours }}</p>
-              </div>
-            </div>
-            <div
-              class="flex items-start gap-3 p-4 border-[2px] border-[#2C2C2C] rounded-xl bg-[#FFF8ED]"
-            >
-              <Phone class="w-5 h-5 text-[#2C2C2C] mt-0.5 flex-shrink-0" stroke-width="2" />
-              <div>
-                <p class="text-xs font-black uppercase text-gray-600 mb-1">전화번호</p>
-                <p class="font-bold">{{ placeData.phone }}</p>
-              </div>
-            </div>
-            <div
-              class="flex items-start gap-3 p-4 border-[2px] border-[#2C2C2C] rounded-xl bg-[#FFF8ED]"
-            >
-              <Globe class="w-5 h-5 text-[#2C2C2C] mt-0.5 flex-shrink-0" stroke-width="2" />
-              <div>
-                <p class="text-xs font-black uppercase text-gray-600 mb-1">웹사이트</p>
-                <p class="font-bold">{{ placeData.website }}</p>
-              </div>
+            
+            <!-- Infinite Scroll Trigger -->
+            <div ref="loadMoreTrigger" class="h-10 w-full flex items-center justify-center mt-4">
+                 <div v-if="displayedReviewsCount < reviews.length" class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#2C2C2C]"></div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    
+    <AlertDialog
+        :show="dialogState.show"
+        :title="dialogState.title"
+        :message="dialogState.message"
+        :confirm-button-text="dialogState.confirmButtonText"
+        :show-cancel-button="dialogState.showCancelButton"
+        @close="closeDialog"
+        @confirm="handleDialogConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { X, MapPin, Clock, Phone, Globe, Star } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { X, MapPin, Phone, Globe, Star, Trash2 } from 'lucide-vue-next'
+import { spotApi, type SpotRequestDto, type SpotResponseDto } from '@/apis/spot'
+import { spotReviewApi, type SpotReviewResponseDto } from '@/apis/spot-review'
+import { useAuthStore } from '@/stores/auth'
+import AlertDialog from '@/components/common/AlertDialog.vue'
 
 const props = defineProps<{
-  place: { number: number; name: string }
+  place: any
 }>()
 
 const emit = defineEmits(['close'])
+const authStore = useAuthStore()
+
+// ... (Rest of the state definitions)
+
+const spotId = ref<number | null>(null)
+const spotResponse = ref<SpotResponseDto | null>(null)
+const reviews = ref<SpotReviewResponseDto[]>([])
+const reviewStats = ref<{ averageRating: number; reviewCount: number }>({
+  averageRating: 0,
+  reviewCount: 0,
+})
+
+const myReview = ref<SpotReviewResponseDto | null>(null)
+
+const localPlace = computed(() => {
+  const base = {
+    name: props.place.name,
+    tags: props.place.tags || [],
+    address: props.place.location || props.place.address,
+    phone: props.place.phone,
+    website: props.place.website || props.place.placeUrl,
+  }
+
+  // API 응답이 있으면 덮어쓰기 (실제 DB 데이터 우선)
+  if (spotResponse.value) {
+      if (spotResponse.value.name) base.name = spotResponse.value.name
+  }
+
+  return {
+    ...base,
+    rating: reviewStats.value.averageRating,
+    reviews: reviewStats.value.reviewCount
+  }
+})
+
 
 // 사용자 평가 state
-const userRating = ref<number>(0) // 0이면 평가 안함, 0.5~5.0 사이 값
-const hoverRating = ref<number>(0) // 마우스 hover 시 임시 표시
+const userRating = ref<number>(0)
+const hoverRating = ref<number>(0)
+const reviewContent = ref<string>('')
 
-// 평균 평점을 0.5 단위로 반내림
 const getAverageRatingRounded = () => {
-  return Math.floor(placeData.rating * 2) / 2
+  return Math.floor(localPlace.value.rating * 2) / 2
 }
-
-// 별점 hover 핸들러
 const handleStarHover = (starIndex: number, event: MouseEvent) => {
   const target = event.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
   const x = event.clientX - rect.left
   const width = rect.width
-
-  // 왼쪽 절반이면 0.5, 오른쪽 절반이면 1.0
   const rating = x < width / 2 ? starIndex + 0.5 : starIndex + 1
   hoverRating.value = rating
 }
 
-// 별점 클릭 핸들러
 const handleStarClick = (starIndex: number, event: MouseEvent) => {
   const target = event.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
   const x = event.clientX - rect.left
   const width = rect.width
-
   const rating = x < width / 2 ? starIndex + 0.5 : starIndex + 1
 
-  // 같은 평점을 다시 클릭하면 취소
   if (userRating.value === rating) {
     userRating.value = 0
   } else {
@@ -180,44 +292,263 @@ const handleStarClick = (starIndex: number, event: MouseEvent) => {
   }
 }
 
-// 마우스가 별점 영역을 벗어날 때
 const handleStarLeave = () => {
   hoverRating.value = 0
 }
 
-// 별이 몇 % 채워져야 하는지 계산 (반개 별 구현)
 const getStarFillPercent = (starIndex: number) => {
-  // hover 중이면 hover 기준, 아니면 사용자 평가 또는 평균 평점 기준
   const displayRating = hoverRating.value || userRating.value || getAverageRatingRounded()
   const starPosition = starIndex + 1
 
   if (displayRating >= starPosition) {
-    return 100 // 완전히 채움
+    return 100
   } else if (displayRating > starIndex) {
-    // 부분적으로 채움 (0.5 = 50%, 0.3 = 30% 등)
     return (displayRating - starIndex) * 100
   } else {
-    return 0 // 안 채움
+    return 0
   }
 }
 
-// Mock Data
-const placeData = {
-  name: props.place.name,
-  category: '카페 & 디저트',
-  rating: 4.8,
-  reviews: 1234,
-  address: '서울특별시 성동구 연무장길 74',
-  phone: '02-1234-5678',
-  hours: '10:00 - 22:00',
-  website: 'www.example.com',
-  description:
-    '성수동 핫플레이스로 유명한 감성 카페입니다. 넓은 공간과 아늑한 분위기, 맛있는 커피와 디저트를 즐길 수 있어요. 특히 시그니처 음료인 얼그레이 라떼와 수제 티라미수가 인기 메뉴입니다.',
-  image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800',
-  tags: ['카페', '디저트', '감성', '인스타그램', '데이트'],
+// Dialog State
+const dialogState = ref({
+    show: false,
+    title: '알림',
+    message: '',
+    confirmButtonText: '확인',
+    showCancelButton: false,
+    onConfirm: () => {},
+})
+
+const closeDialog = () => {
+    dialogState.value.show = false
 }
+
+const handleDialogConfirm = () => {
+    dialogState.value.onConfirm()
+    closeDialog()
+}
+
+// Close on Esc
+const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !dialogState.value.show) {
+        emit('close')
+    }
+}
+
+onMounted(() => {
+    fetchSpotData()
+    window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown)
+})
+
+const showAlert = (message: string, title = '알림', onConfirm?: () => void) => {
+    dialogState.value = {
+        show: true,
+        title,
+        message,
+        confirmButtonText: '확인',
+        showCancelButton: false,
+        onConfirm: onConfirm || (() => {}),
+    }
+}
+
+const showConfirm = (message: string, onConfirm: () => void, title = '확인') => {
+     dialogState.value = {
+        show: true,
+        title,
+        message,
+        confirmButtonText: '삭제',
+        showCancelButton: true,
+        onConfirm,
+    }
+}
+
+const fetchSpotData = async () => {
+    try {
+        // 1. 장소 생성 (Upsert) - 없으면 생성, 있으면 조회됨 (Upsert)
+        const createData: SpotRequestDto = {
+            kakaoPlaceId: props.place.kakaoPlaceId,
+            name: props.place.name,
+            address: props.place.location || props.place.address || '',
+            category: props.place.category || '기타',
+            lat: props.place.lat || 0,
+            lng: props.place.lng || 0,
+            placeUrl: props.place.placeUrl || '',
+            thumbnailUrl: ''
+        }
+        
+        // POST /spots 호출 (200 OK or 201 Created)
+        let spot = await spotApi.createSpot(createData)
+
+        if (spot) {
+            spotId.value = spot.id
+            spotResponse.value = spot
+            
+            // 3. 리뷰 및 통계 조회
+            const [reviewsData, statsData] = await Promise.all([
+                spotReviewApi.getSpotReviews(spot.id),
+                spotReviewApi.getSpotReviewStats(spot.id)
+            ])
+
+            // New API response structure: { myReview, reviews }
+            reviews.value = reviewsData.reviews || []
+            myReview.value = reviewsData.myReview
+            reviewStats.value = statsData
+            
+            // If myReview exists but is not in reviews list, add it (so user sees it in the list too)
+            if (myReview.value) {
+                const exists = reviews.value.find(r => r.id === myReview.value?.id)
+                if (!exists) {
+                    reviews.value.unshift(myReview.value)
+                }
+            }
+
+            // Populate input if myReview exists
+            if (myReview.value) {
+                userRating.value = myReview.value.rating
+                reviewContent.value = myReview.value.content
+            } else {
+                // Reset inputs if no review
+                userRating.value = 0
+                reviewContent.value = ''
+            }
+        }
+
+    } catch (e) {
+        console.error('Failed to fetch spot data:', e)
+    }
+}
+
+const submitReview = async () => {
+    if (userRating.value === 0 || !spotId.value) return
+    
+    try {
+        if (myReview.value) {
+            // Update existig review using PATCH
+             await spotReviewApi.updateSpotReview(myReview.value.id, {
+                rating: userRating.value,
+                content: reviewContent.value
+            })
+            showAlert('리뷰가 수정되었습니다!', '알림', async () => {
+                await fetchSpotData()
+            })
+        } else {
+            // Create new review
+            await spotReviewApi.postSpotReview({
+                spotId: spotId.value,
+                rating: userRating.value,
+                content: reviewContent.value
+            })
+             showAlert('리뷰가 등록되었습니다!', '알림', async () => {
+                // Clear inputs if it was a new review
+                reviewContent.value = ''
+                userRating.value = 0
+                await fetchSpotData()
+            })
+        }
+
+    } catch (e) {
+        console.error('Failed to submit review:', e)
+        showAlert('리뷰 저장에 실패했습니다.')
+    }
+}
+
+const deleteReview = async () => {
+    if (!myReview.value) return
+    
+    showConfirm('정말 리뷰를 삭제하시겠습니까?', async () => {
+        try {
+            await spotReviewApi.deleteSpotReview(myReview.value!.id)
+            showAlert('리뷰가 삭제되었습니다.', '알림', async () => {
+                 // Reset inputs
+                reviewContent.value = ''
+                userRating.value = 0
+                myReview.value = null // Explicitly clear myReview to switch back to 'Create' mode immediately
+                
+                await fetchSpotData()
+            })
+        } catch (e) {
+            console.error('Failed to delete review:', e)
+            showAlert('리뷰 삭제에 실패했습니다.')
+        }
+    })
+}
+
+// Helper to format date
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    return new Date(dateStr).toLocaleDateString()
+}
+
+// Helper to truncate URL
+const truncateUrl = (url: string) => {
+  if (!url) return ''
+  return url.length > 30 ? url.substring(0, 30) + '...' : url
+}
+
+// Sort & Pagination state
+const sortBy = ref<'latest' | 'rating'>('latest')
+const displayedReviewsCount = ref(10)
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+
+const processedReviews = computed(() => {
+    const list = [...reviews.value] // Create a copy
+    if (sortBy.value === 'latest') {
+        return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    } else {
+        return list.sort((a, b) => b.rating - a.rating)
+    }
+})
+
+const displayedReviews = computed(() => {
+    return processedReviews.value.slice(0, displayedReviewsCount.value)
+})
+
+let observer: IntersectionObserver | null = null
+
+const setupIntersectionObserver = () => {
+    if (observer) observer.disconnect()
+    
+    observer = new IntersectionObserver((entries) => {
+        const entry = entries[0]
+        if (entry.isIntersecting && displayedReviewsCount.value < processedReviews.value.length) {
+            // Load more
+            setTimeout(() => {
+                displayedReviewsCount.value += 10
+            }, 300) // Slight delay for UX
+        }
+    }, {
+        root: null, // viewport
+        threshold: 0.1
+    })
+
+    if (loadMoreTrigger.value) {
+        observer.observe(loadMoreTrigger.value)
+    }
+}
+
+
+
+// Watchers: no additional imports needed here as they are at the top
+watch(reviews, async () => {
+    displayedReviewsCount.value = 10
+    await nextTick()
+    setupIntersectionObserver()
+})
+
+watch(sortBy, async () => {
+    displayedReviewsCount.value = 10
+    await nextTick()
+    setupIntersectionObserver()
+})
+
+watch(loadMoreTrigger, () => {
+    setupIntersectionObserver()
+})
 </script>
 
 <style scoped>
-/* No hover animation */
 </style>
