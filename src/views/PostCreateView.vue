@@ -1,26 +1,33 @@
 <template>
-  <div class="post-create-page">
+  <div class="min-h-screen bg-[#F5F5F5] font-sans selection:bg-[#F9CA6B] selection:text-black">
     <TravelNavbar current-page="main" @navigate="handleNavigate" />
-
-    <section class="editor-card">
-      <h2 class="page-title">여행 기록 작성</h2>
+    <div class="pt-28 max-w-[1440px] mx-auto px-6 pb-12">
+    <section class="mt-20 flex flex-col gap-6 bg-white rounded-2xl shadow-lg p-8">
+      <h2 class="text-2xl font-bold mb-6">여행 기록 작성</h2>
 
       <!-- 제목 -->
       <input
         type="text"
         v-model="title"
         placeholder="여행 기록 제목을 입력하세요"
-        class="title-input"
+        class="w-full mb-6 px-4 py-3 text-lg border border-gray-300 rounded-xl
+               focus:outline-none focus:ring-2 focus:ring-gray-400"
       />
 
       <!-- 에디터 -->
-      <ContentEditor v-model="postContent" />
+      <div class="min-h-[360px] mb-6">
+        <ContentEditor v-model="postContent" />
+      </div>
 
-      <!-- 옵션 영역 -->
-      <div class="options">
-        <label>
+      <!-- 옵션 -->
+      <div class="flex justify-end mb-6">
+        <label class="flex items-center text-sm font-medium text-gray-700">
           공개 범위
-          <select v-model="visibility">
+          <select
+            v-model="visibility"
+            class="ml-2 px-3 py-1 border border-gray-300 rounded-lg
+                   focus:outline-none focus:ring-2 focus:ring-gray-400"
+          >
             <option value="PUBLIC">전체 공개</option>
             <option value="PRIVATE">비공개</option>
           </select>
@@ -28,9 +35,12 @@
       </div>
 
       <!-- 저장 버튼 -->
-      <div class="actions">
+      <div class="flex justify-end">
         <button
-          class="submit-btn"
+          class="px-6 py-3 rounded-full font-bold text-white
+                 bg-gray-900 hover:bg-gray-800
+                 disabled:bg-gray-400 disabled:cursor-not-allowed
+                 transition"
           :disabled="!isFormValid || isSubmitting"
           @click="submitPost"
         >
@@ -38,15 +48,17 @@
         </button>
       </div>
     </section>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ContentEditor from '@/components/post-write/ContentEditor.vue'
+import ContentEditor from '@/components/log-write/ContentEditor.vue'
 import { useNavigate } from '@/composables/common/useNavagation'
 import { postTripLogCreate } from '@/apis/trip-log/index'
+import TravelNavbar from '@/components/common/TravelNavbar.vue'
 
 const { handleNavigate } = useNavigate()
 const route = useRoute()
@@ -99,67 +111,3 @@ const submitPost = async () => {
   }
 }
 </script>
-
-<style scoped>
-.post-create-page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 24px;
-}
-
-.editor-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-.page-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.title-input {
-  width: 100%;
-  padding: 14px;
-  font-size: 1.1rem;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
-
-.options {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.options select {
-  margin-left: 8px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 24px;
-}
-
-.submit-btn {
-  padding: 12px 20px;
-  font-weight: 700;
-  border-radius: 999px;
-  background: #2c2c2c;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-}
-
-.submit-btn:disabled {
-  background: #aaa;
-  cursor: not-allowed;
-}
-</style>

@@ -3,10 +3,12 @@ export async function uploadToS3(
   presignedUrl: string,
   file: File
 ): Promise<void> {
+  console.warn(file.type)
   const response = await fetch(presignedUrl, {
     method: 'PUT',
     headers: {
       'Content-Type': file.type,
+      'x-amz-acl': 'public-read',
     },
     body: file,
   })
@@ -15,7 +17,6 @@ export async function uploadToS3(
     throw new Error('S3 upload failed')
   }
 }
-
 // 영구 URL 추출
 export function getPublicImageUrl(presignedUrl: string): string {
   return presignedUrl.split('?')[0]!

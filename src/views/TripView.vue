@@ -74,7 +74,7 @@
       :trip="selectedTrip"
       @close="selectedTrip = null"
       @edit="handleEditFromModal"
-      @write="handleWritePostFromModal"
+      @write="handleWriteLogFromModal"
     />
 
     <ScrollToTop />
@@ -91,7 +91,7 @@ import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { useRouter } from 'vue-router'
 import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index' // Added getTripDetail
-import type { TripResponseDto, TripDetailResponseDto } from '@/apis/trip/types' // Added TripDetailResponseDto
+import type { TripResponseDto, TripDetailResponseDto, TripItemResponseDto } from '@/apis/trip/types' // Added TripDetailResponseDto
 import { TripStatus } from '@/types/common'
 
 // TODO: TripCard에서 필요한 spots, tags, spotPreviews, completedDate 필드가 TripResponseDto에 없음.
@@ -104,13 +104,14 @@ const router = useRouter()
 const activeTab = ref<TripStatus | 'all' | 'saved'>('all')
 const tripsList = ref<TripResponseDto[]>([]) // Changed to TripResponseDto[]
 
+
 onMounted(async () => {
   try {
     const response = await getMyTrips()
     tripsList.value = response
   } catch (error) {
     console.error('내 여행 목록 조회 실패:', error)
-    // 에러 처리 로직 추가 (예: 사용자에게 알림)
+    alert('내 여행 목록 조회에 실패했습니다.')
   }
 })
 
@@ -143,7 +144,7 @@ const displayTrips = computed(() => {
   return filteredTrips
 })
 
-const tabs = [
+const tabs: { id: TripStatus | 'all' | 'saved'; label: string }[] = [
   { id: 'all', label: '전체' },
   { id: TripStatus.PLANNED, label: '계획중' },
   { id: TripStatus.COMPLETED, label: '완료' },
@@ -195,7 +196,7 @@ const handleOpenModal = async (tripId: number) => {
       // description은 tripItems에서 파생
       description:
         detail.tripItems && detail.tripItems.length > 0
-          ? detail.tripItems.map((item : any) => item.spot.name).join(' → ')
+          ? detail.tripItems.map((item : TripItemResponseDto) => item.spot.name).join(' → ')
           : '장소 없음',
       // duration, views, imageUrl은 TripDetailResponseDto에 없으므로 mock data 유지 또는 제거
       duration: '반나절', // Mock Data
@@ -210,22 +211,17 @@ const handleOpenModal = async (tripId: number) => {
 }
 
 // 2. 모달 안에서 [수정] 버튼 클릭 시 -> TripPlanView로 이동 + 수정 모드 ON
-const handleEditFromModal = (trip: any) => {
+const handleEditFromModal = (trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string }) => {
   selectedTrip.value = null
   handleNavigate('trip-edit', { id: trip.id })
 }
 
-const handleWritePostFromModal = (trip: any) => {
+const handleWriteLogFromModal = (trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string }) => {
   selectedTrip.value = null // 모달 닫기
-
-  // router.push 또는 handleNavigate를 사용하여 글 작성/수정 라우트로 이동
-  // 'post-write'는 글 작성 페이지의 라우트 이름이라고 가정합니다.
   router.push({
-    name: 'post-write', // 라우터에 등록된 글 작성 페이지의 이름 (예: PostCreateView)
-    params: { tripId: trip.id } // 여행 ID를 파라미터로 넘김
+    name: 'log-write',
+    params: { tripId: trip.id }
   })
-
-  console.log(`여행 ID ${trip.id}에 대한 글 작성 페이지로 이동합니다.`)
 }
 </script>
 

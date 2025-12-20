@@ -127,6 +127,5 @@ export async function getPresignedUrl(
       fileName: file.name,
     }
   )
-
   return response.data
 }

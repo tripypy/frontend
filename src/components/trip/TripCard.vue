@@ -35,7 +35,7 @@
       </div>
 
       <div class="overflow-hidden relative group/text w-full">
-        <h3 
+        <h3
           ref="titleRef"
           class="font-black text-2xl tracking-tight leading-tight text-[#2C2C2C] font-sans whitespace-nowrap block transition-none group-hover/text:transition-transform group-hover/text:ease-linear"
           :class="{ 'group-hover/text:-translate-x-[var(--scroll-amount)]': isOverflowing }"
@@ -113,7 +113,7 @@ import type { TripResponseDto } from '@/apis/trip/types'
 import { TripStatus } from '@/types/common'
 
 const props = withDefaults(defineProps<{
-  trip: TripResponseDto, // Use TripResponseDto type
+  trip: TripResponseDto,
   isEditable?: boolean
 }>(),
   {

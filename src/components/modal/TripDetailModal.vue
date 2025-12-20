@@ -96,10 +96,16 @@
           </button>
 
           <button
-            v-if="activeTab === 'log' && !logLoading && tripLog"
+            v-if="activeTab === 'log' && !logLoading && tripLog && trip.isOwner"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
             <Edit :size="16" :stroke-width="3" /> EDIT
+          </button>
+          <button
+            v-if="activeTab === 'log' && !logLoading && tripLog && trip.isOwner"
+            class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
+          >
+            <Edit :size="16" :stroke-width="3" /> DELETE
           </button>
         </div>
       </div>
@@ -208,7 +214,7 @@
           <div v-else class="text-center mb-20 p-12 flex flex-col justify-center items-center">
               <p class="text-lg font-bold text-gray-700 mb-6">아직 로그를 작성하지 않았어요!</p>
               <button
-                  @click="handleWritePostClick"
+                  @click="handleWriteLogClick"
                   class="flex items-center gap-2 px-6 py-3 bg-white border-[2px] border-[#2C2C2C] rounded-full font-bold shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase focus:outline-none"
               >
                   <Pencil :size="16" :stroke-width="3" /> 글 쓰기
@@ -243,11 +249,11 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'edit', 'write'])
 const activeTab = ref<'map' | 'log'>('map')  // 탭 상태(기본은 'map'으로 설정)
 const tripLog = ref<TripLogDetail | null>(null) // 로그 데이터 상태
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const kakaoMapRef = ref<any>(null)
 const activeDay = ref(1)
 const selectedPlace = ref<SpotResponseDto | null>(null)
 const selectedMarkerId = ref<number | string | null>(null)
-const tripLogId = ref<number | null>(null)
 
 const days = computed<DayPlanDisplay[]>(() => {
   const grouped = props.trip.tripItems.reduce((acc, item) => {
@@ -309,11 +315,11 @@ const fetchTripLog = async (tripId: number) => {
     logLoading.value = true;
     tripLog.value = null;
     try {
-        // 실제 API 호출 (가정)
-        // 백엔드에서 TripId로 로그를 조회하고, 없으면 404 또는 null 응답을 준다고 가정
         const response = await getTripLogDetail(tripId);
         tripLog.value = response; // 로그 데이터 저장
-    } catch {
+    } catch (error: any) {
+        if (error?.response?.status === 404) return
+        else alert('로그를 불러오는 중 오류가 발생했습니다.')
     } finally {
         logLoading.value = false;
     }
@@ -329,7 +335,7 @@ const handleTabClick = (tab: 'map' | 'log') => {
 }
 
 
-const handleWritePostClick = () => {
+const handleWriteLogClick = () => {
   emit('write', props.trip)
 }
 

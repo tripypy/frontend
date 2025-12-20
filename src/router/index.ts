@@ -65,8 +65,8 @@ const router = createRouter({
       component: () => import('@/views/SettingsView.vue'),
     },
     {
-      path: '/post-write/:tripId',
-      name: 'post-write',
+      path: '/log-write/:tripId',
+      name: 'log-write',
       component: () => import('@/views/PostCreateView.vue'),
       props:true
     },
