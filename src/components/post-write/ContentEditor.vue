@@ -45,7 +45,8 @@
 
 <script setup lang="ts">
 import { ref, watch, type Ref } from 'vue'
-import { uploadImage } from '@/apis/image'
+import { getPresignedUrl} from '@/apis/trip-log/index'
+import { uploadToS3, getPublicImageUrl } from '@/composables/trip-log/useImageUpload'
 import type { UploadingImage } from '@/types/image/image.model'
 
 interface Props {
@@ -79,6 +80,16 @@ const validateImage = (file: File) => {
   return true
 }
 
+const uploadImageAndGetUrl = async (
+  file: File
+): Promise<string> => {
+  const { presignedUrl } = await getPresignedUrl(file)
+  // S3에 PUT 업로드
+  await uploadToS3(presignedUrl, file)
+  // 영구 URL 반환
+  return getPublicImageUrl(presignedUrl)
+}
+
 /* ---------------- core upload logic ---------------- */
 const uploadAndInsertImage = async (file: File) => {
   if (!quillInstance.value || !validateImage(file)) return
@@ -97,7 +108,7 @@ const uploadAndInsertImage = async (file: File) => {
   }, 100)
 
   try {
-    const { url } = await uploadImage(file)
+    const url = await uploadImageAndGetUrl(file)
 
     clearInterval(timer)
     item.progress = 100
