@@ -5,7 +5,7 @@ import type {
   TripItemsReplaceRequestDto,
   TripUpdateRequestDto,
   TripResponseDto,
-  TripSummaryResponseDto,
+
   TripScrapResponseDto
 } from '@/apis/trip/types'
 
@@ -80,14 +80,7 @@ export const getMyTrips = async (status?: TripStatus): Promise<TripResponseDto[]
   return response.data
 }
 
-/**
- * 내 여행 요약 목록을 조회합니다 (카드용).
- * @returns 내 여행 요약 목록 (TripSummaryResponseDto 배열)
- */
-export const getMyTripSummaries = async (): Promise<TripSummaryResponseDto[]> => {
-  const response = await apiClient.get<TripSummaryResponseDto[]>('/trips/summary')
-  return response.data
-}
+
 
 /**
  * 여행일지 스크랩을 요청합니다.

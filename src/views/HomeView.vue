@@ -188,8 +188,8 @@ import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { getTripLogFeed } from '@/apis/trip-log/index';
 import { dailyMissions } from '@/data/mockData'
 import { spotApi } from '@/apis/spot'
-import { getMyTripSummaries } from '@/apis/trip'
-import type { TripSummaryResponseDto } from '@/apis/trip/types'
+import { getMyTrips } from '@/apis/trip'
+import type { TripResponseDto } from '@/apis/trip/types'
 import { differenceInCalendarDays, isAfter, isSameDay, startOfDay, parseISO } from 'date-fns'
 
 const router = useRouter()
@@ -216,25 +216,27 @@ const handleKeywordClick = (keyword: string) => {
 const hotPlaces = ref<any[]>([])
 
 // My Trips
-const myTrips = ref<TripSummaryResponseDto[]>([])
+const myTrips = ref<TripResponseDto[]>([])
 
 // Filtered Upcoming Trips
 const upcomingTrips = computed(() => {
   const now = startOfDay(new Date())
   return myTrips.value
     .filter(trip => {
+      if (!trip.startDate) return false
       const start = parseISO(trip.startDate)
       return isAfter(start, now) || isSameDay(start, now)
     })
     .map(trip => {
-      const start = parseISO(trip.startDate)
+      // safe because of filter
+      const start = parseISO(trip.startDate!)
       const diff = differenceInCalendarDays(start, now)
       const dDay = diff === 0 ? 'D-Day' : `D-${diff}`
       
       return {
         id: trip.id,
         title: trip.title,
-        date: trip.startDate,
+        date: trip.startDate!,
         dDay: dDay
       }
     })
@@ -262,8 +264,8 @@ onMounted(async () => {
 
   // Load My Trips
   try {
-    const summaries = await getMyTripSummaries()
-    myTrips.value = summaries
+    const trips = await getMyTrips()
+    myTrips.value = trips
   } catch (error) {
     console.error('Failed to load my trips:', error)
   }
