@@ -27,7 +27,9 @@ export const spotApi = {
         }
     },
 
+    // Upsert: KakaoPlaceId로 조회하여 없으면 생성, 있으면 반환
     createSpot: async (data: SpotRequestDto): Promise<SpotResponseDto> => {
+        // 백엔드에서 200(Found) or 201(Created) 반환
         const response = await http.post<SpotResponseDto>('/spots', data)
         return response.data
     },

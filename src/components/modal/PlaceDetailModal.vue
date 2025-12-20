@@ -368,23 +368,20 @@ const showConfirm = (message: string, onConfirm: () => void, title = '확인') =
 
 const fetchSpotData = async () => {
     try {
-        // 1. 해당 장소가 이미 등록되어 있는지 조회
-        let spot = await spotApi.getSpotByKakaoPlaceId(props.place.kakaoPlaceId)
-
-        // 2. 등록되어 있지 않다면 생성
-        if (!spot) {
-             const createData: SpotRequestDto = {
-                kakaoPlaceId: props.place.kakaoPlaceId,
-                name: props.place.name,
-                address: props.place.location || props.place.address || '',
-                category: props.place.category || '기타',
-                lat: props.place.lat || 0,
-                lng: props.place.lng || 0,
-                placeUrl: props.place.placeUrl || '',
-                thumbnailUrl: ''
-            }
-            spot = await spotApi.createSpot(createData)
+        // 1. 장소 생성 (Upsert) - 없으면 생성, 있으면 조회됨 (Upsert)
+        const createData: SpotRequestDto = {
+            kakaoPlaceId: props.place.kakaoPlaceId,
+            name: props.place.name,
+            address: props.place.location || props.place.address || '',
+            category: props.place.category || '기타',
+            lat: props.place.lat || 0,
+            lng: props.place.lng || 0,
+            placeUrl: props.place.placeUrl || '',
+            thumbnailUrl: ''
         }
+        
+        // POST /spots 호출 (200 OK or 201 Created)
+        let spot = await spotApi.createSpot(createData)
 
         if (spot) {
             spotId.value = spot.id
