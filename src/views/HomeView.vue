@@ -13,7 +13,7 @@
             <h3 class="text-xl font-black mb-4 uppercase flex items-center gap-2" style="font-family: 'Bebas Neue', sans-serif">
               <span class="text-[#E88555]">#</span> TRAVEL KEYWORD
             </h3>
-            <div class="flex flex-wrap gap-2 max-h-[66px] overflow-hidden">
+            <div class="flex flex-wrap gap-2 overflow-y-auto custom-scrollbar max-h-[85px] p-2 -m-2">
               <button
                 v-for="keyword in keywords"
                 :key="keyword"
