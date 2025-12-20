@@ -17,6 +17,7 @@
               <button
                 v-for="keyword in keywords"
                 :key="keyword"
+                @click="handleKeywordClick(keyword)"
                 class="px-3 py-1 bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-lg text-xs font-bold hover:bg-[#F9CA6B] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all"
               >
                 {{ keyword }}
@@ -101,7 +102,7 @@
           
           <!-- New Plan Card (CTA) -->
           <button
-            @click="handleNavigate('trip')"
+            @click="handleNavigate('create-trip')"
             class="w-full bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-xl p-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all text-left group relative overflow-hidden"
           >
              <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
@@ -176,7 +177,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
@@ -184,8 +186,13 @@ import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
 import { Plus, MapPin, Calendar, ExternalLink, TrendingUp, TrendingDown, Minus } from 'lucide-vue-next'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { getTripLogFeed } from '@/apis/trip-log/index';
-import { allPlaces, dailyMissions } from '@/data/mockData'
+import { dailyMissions } from '@/data/mockData'
+import { spotApi } from '@/apis/spot'
+import { getMyTripSummaries } from '@/apis/trip'
+import type { TripSummaryResponseDto } from '@/apis/trip/types'
+import { differenceInCalendarDays, isAfter, isSameDay, startOfDay, parseISO } from 'date-fns'
 
+const router = useRouter()
 const { handleNavigate } = useNavigate()
 
 // 상태 관리
@@ -198,15 +205,83 @@ const hasNext = ref(true)
 // Daily Mission Logic
 const currentMission = ref(dailyMissions[Math.floor(Math.random() * dailyMissions.length)])
 
-// Mock Data for Sidebars
+// Keywords
 const keywords = ['성수동','반려견동반','오션뷰','캠핑로그','제주맛집','호캉스','파리올림픽']
 
-const hotPlaces = allPlaces.slice(0, 10) // Show Top 10
+const handleKeywordClick = (keyword: string) => {
+  router.push({ path: '/search', query: { q: keyword } })
+}
 
-const upcomingTrips = ref([
-  { id: 1, title: '여름 휴가 🌊', date: '2024.08.15', dDay: 'D-25' },
-  { id: 2, title: '주말 글램핑', date: '2024.07.27', dDay: 'D-4' }
-])
+// Hot Places
+const hotPlaces = ref<any[]>([])
+
+// My Trips
+const myTrips = ref<TripSummaryResponseDto[]>([])
+
+// Filtered Upcoming Trips
+const upcomingTrips = computed(() => {
+  const now = startOfDay(new Date())
+  return myTrips.value
+    .filter(trip => {
+      const start = parseISO(trip.startDate)
+      return isAfter(start, now) || isSameDay(start, now)
+    })
+    .map(trip => {
+      const start = parseISO(trip.startDate)
+      const diff = differenceInCalendarDays(start, now)
+      const dDay = diff === 0 ? 'D-Day' : `D-${diff}`
+      
+      return {
+        id: trip.id,
+        title: trip.title,
+        date: trip.startDate,
+        dDay: dDay
+      }
+    })
+    .sort((a, b) => {
+        return a.date.localeCompare(b.date)
+    })
+    .slice(0, 3) 
+})
+
+
+// Initial Data Load
+onMounted(async () => {
+  loadMore()
+
+  // Load Hot Places
+  try {
+    const places = await spotApi.getHotPlaces()
+    hotPlaces.value = places.slice(0, 10).map((place: any) => ({
+        ...place,
+        location: place.address || '위치 정보 없음'
+    }))
+  } catch (error) {
+    console.error('Failed to load hot places:', error)
+  }
+
+  // Load My Trips
+  try {
+    const summaries = await getMyTripSummaries()
+    myTrips.value = summaries
+  } catch (error) {
+    console.error('Failed to load my trips:', error)
+  }
+
+  // Observer Setup
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting && hasNext.value) { 
+        loadMore()
+      }
+    },
+    { threshold: 1.0 },
+  )
+
+  if (observerTarget.value) {
+    observer.observe(observerTarget.value)
+  }
+})
 
 // 무한 스크롤 로직
 const loadMore = async () => {
@@ -232,23 +307,6 @@ const loadMore = async () => {
 
 // Observer Logic
 let observer: IntersectionObserver | null = null;
-
-onMounted(() => {
-  loadMore()
-
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0]?.isIntersecting && hasNext.value) { 
-        loadMore()
-      }
-    },
-    { threshold: 1.0 },
-  )
-
-  if (observerTarget.value) {
-    observer.observe(observerTarget.value)
-  }
-})
 
 onUnmounted(() => {
   if (observer) observer.disconnect()
