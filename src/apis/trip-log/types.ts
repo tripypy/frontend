@@ -1,3 +1,4 @@
+import type { TripVisibility } from '@/types/trip/trip.model'
 /**
  * Feed 관련 타입
  */
@@ -51,4 +52,11 @@ export interface TripLogCommentResponse {
 
 export interface TripLogCommentRequest {
   content: string
+}
+
+export interface TripLogCreateRequestDto {
+  tripId: number;
+  title: string;
+  content: string;
+  visibility: TripVisibility;
 }

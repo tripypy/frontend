@@ -3,9 +3,10 @@ import type {
     TripLogCommentRequest,
     TripLogCommentResponse,
     TripLogLikeResponse,
-    TripLogFeedResponseDto 
+    TripLogFeedResponseDto,
+    TripLogCreateRequestDto
 } from '@/apis/trip-log/types'
-  
+
 import type { TripLogDetail } from '@/types/trip/trip.model'
 
 /**
@@ -84,7 +85,7 @@ export async function getTripLogFeed(
   const cursorParam = params.cursor !== null && params.cursor !== undefined
     ? { cursor: params.cursor }
     : {};
-  
+
   const response = await apiClient.get<TripLogFeedResponseDto>('/trip-logs/feed', {
     params: {
       ...cursorParam,
@@ -93,4 +94,20 @@ export async function getTripLogFeed(
   });
 
   return response.data;
+}
+
+/**
+ * 여행 로그 생성 API 함수
+ * @param payload 여행 로그 생성 요청 데이터
+ * @returns 생성된 로그 ID
+ */
+export const postTripLogCreate = async (
+  payload: TripLogCreateRequestDto,
+): Promise<{ logId: number }> => {
+  const response = await apiClient.post<{ logId: number }>(
+    '/trip-logs',
+    payload,
+  )
+
+  return response.data
 }

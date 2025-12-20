@@ -1,118 +1,165 @@
 <template>
   <div class="post-create-page">
-    <h2>새 글 작성</h2>
+    <TravelNavbar current-page="main" @navigate="handleNavigate" />
 
-    <input
-      type="text"
-      v-model="title"
-      placeholder="제목을 입력하세요"
-      class="title-input"
-    />
+    <section class="editor-card">
+      <h2 class="page-title">여행 기록 작성</h2>
 
-    <ContentEditor v-model="postContent" />
+      <!-- 제목 -->
+      <input
+        type="text"
+        v-model="title"
+        placeholder="여행 기록 제목을 입력하세요"
+        class="title-input"
+      />
 
-    <button @click="submitPost" :disabled="!isFormValid">
-      글 저장하기
-    </button>
+      <!-- 에디터 -->
+      <ContentEditor v-model="postContent" />
 
-    <h3 style="margin-top: 20px;">현재 Post Content (HTML):</h3>
-    <pre style="white-space: pre-wrap; background: #f4f4f4; padding: 10px; border: 1px solid #ddd; max-height: 200px; overflow-y: auto;">{{ postContent }}</pre>
+      <!-- 옵션 영역 -->
+      <div class="options">
+        <label>
+          공개 범위
+          <select v-model="visibility">
+            <option value="PUBLIC">전체 공개</option>
+            <option value="PRIVATE">비공개</option>
+          </select>
+        </label>
+      </div>
 
+      <!-- 저장 버튼 -->
+      <div class="actions">
+        <button
+          class="submit-btn"
+          :disabled="!isFormValid || isSubmitting"
+          @click="submitPost"
+        >
+          {{ isSubmitting ? '저장 중...' : '기록 저장하기' }}
+        </button>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-// @/components/post/ContentEditor.vue 경로는 프로젝트 구조에 따라 수정하세요.
-import ContentEditor from '@/components/post/ContentEditor.vue';
-// import axios from 'axios'; // 실제 서버 통신 시 주석 해제
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import ContentEditor from '@/components/post-write/ContentEditor.vue'
+import { useNavigate } from '@/composables/common/useNavagation'
+import { postTripLogCreate } from '@/apis/trip-log/index'
 
-// -------------------------------------------
-// 1. 상태 (State) 정의
-// -------------------------------------------
-const title = ref('');
-const postContent = ref(''); // ContentEditor로부터 받은 HTML 내용 저장
+const { handleNavigate } = useNavigate()
+const route = useRoute()
+const router = useRouter()
 
-// -------------------------------------------
-// 2. 유효성 검사 (Computed)
-// -------------------------------------------
-const isFormValid = computed<boolean>(() => {
-    // 제목과 내용 모두 비어있지 않아야 유효
-    return title.value.trim() !== '' && postContent.value.trim() !== '';
-});
+// ----------------------------
+// 상태
+// ----------------------------
+const title = ref('')
+const postContent = ref('')
+const visibility = ref<'PUBLIC' | 'PRIVATE'>('PUBLIC')
+const isSubmitting = ref(false)
 
-// -------------------------------------------
-// 3. Mock API 함수 (백엔드 테스트 전)
-// -------------------------------------------
+// tripId는 route param 기준
+const tripId = Number(route.params.tripId)
 
-/**
- * [TEST] 실제 서버 통신 대신 사용하는 Mock 함수
- */
-const mockSubmitApi = (data: { title: string, content: string }): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        // 1초 딜레이를 주어 API 통신 중인 것처럼 시뮬레이션
-        setTimeout(() => {
-            if (Math.random() > 0.1) { // 90% 확률로 성공
-                console.log('✅ Mock API Success:', data);
-                resolve();
-            } else { // 10% 확률로 실패 시뮬레이션
-                console.error('❌ Mock API Failed');
-                reject(new Error('Mock server internal error'));
-            }
-        }, 1000);
-    });
-};
+// ----------------------------
+// 유효성
+// ----------------------------
+const isFormValid = computed(() => {
+  return title.value.trim() !== '' && postContent.value.trim() !== ''
+})
 
 
-// -------------------------------------------
-// 4. 글 저장 로직 (Handler)
-// -------------------------------------------
+// ----------------------------
+// 제출 로직
+// ----------------------------
 const submitPost = async () => {
-    if (!isFormValid.value) {
-        alert('제목과 내용을 입력해주세요.');
-        return;
+  if (!isFormValid.value || isSubmitting.value) return
+
+  isSubmitting.value = true
+
+  try {
+    const payload = {
+      tripId,
+      title: title.value,
+      content: postContent.value,
+      visibility: visibility.value,
     }
 
-    const postData = {
-        title: title.value,
-        content: postContent.value, // Quill이 만든 HTML 내용
-        // TODO: category, tags 등 추가 데이터 필드를 여기에 추가하세요.
-    };
+    const { logId } = await postTripLogCreate(payload)
 
-    try {
-        // 💡 [TEST] 백엔드 준비 전: Mock 함수 사용
-        await mockSubmitApi(postData);
-
-        // ----------------------------------------------------
-        // 🚀 백엔드 준비 완료 후: 실제 API 호출 사용
-        // ----------------------------------------------------
-        // const response = await axios.post('/api/posts', postData);
-        // console.log('글 저장 성공:', response.data);
-
-        alert('글이 성공적으로 저장되었습니다.');
-        // router.push('/'); // 저장 후 페이지 이동
-
-    } catch (error) {
-        console.error('글 저장 실패:', error);
-        alert(`글 저장 중 오류가 발생했습니다: ${error.message}`);
-    }
-};
+    // 성공 시 해당 로그 페이지로 이동
+    router.push(`/trip-logs/${logId}`)
+  } catch (err) {
+    console.error('글 작성 실패', err)
+    alert('글 저장 중 오류가 발생했습니다.')
+  } finally {
+    isSubmitting.value = false
+  }
+}
 </script>
 
 <style scoped>
 .post-create-page {
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
 }
+
+.editor-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
 .title-input {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 20px;
-  font-size: 1.5em;
+  padding: 14px;
+  font-size: 1.1rem;
   border: 1px solid #ddd;
-  box-sizing: border-box;
+  border-radius: 10px;
+  margin-bottom: 20px;
 }
-/* ContentEditor 컴포넌트가 height를 가지고 있어야 에디터가 보입니다. */
-/* ContentEditor.vue의 <style>에서 높이를 지정했는지 확인해 주세요. */
+
+.options {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.options select {
+  margin-left: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.submit-btn {
+  padding: 12px 20px;
+  font-weight: 700;
+  border-radius: 999px;
+  background: #2c2c2c;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.submit-btn:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
 </style>
