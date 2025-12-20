@@ -4,7 +4,8 @@ import type {
     TripLogCommentResponse,
     TripLogLikeResponse,
     TripLogFeedResponseDto,
-    TripLogCreateRequestDto
+    TripLogCreateRequestDto,
+    UploadImageResponse,
 } from '@/apis/trip-log/types'
 
 import type { TripLogDetail } from '@/types/trip/trip.model'
@@ -107,6 +108,24 @@ export const postTripLogCreate = async (
   const response = await apiClient.post<{ logId: number }>(
     '/trip-logs',
     payload,
+  )
+
+  return response.data
+}
+
+/**
+ * 여행 로그 이미지 처리 API 함수
+ * @returns 영구 이미지 url
+ */
+
+export async function getPresignedUrl(
+  file: File
+): Promise<UploadImageResponse> {
+  const response = await apiClient.post<UploadImageResponse>(
+    '/trip-logs/images/presigned-url',
+    {
+      fileName: file.name,
+    }
   )
 
   return response.data

@@ -4,3 +4,4 @@ export interface UploadingImage {
   progress: number
   url?: string
 }
+

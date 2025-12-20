@@ -60,3 +60,7 @@ export interface TripLogCreateRequestDto {
   content: string;
   visibility: TripVisibility;
 }
+
+export interface UploadImageResponse {
+  presignedUrl: string
+}
