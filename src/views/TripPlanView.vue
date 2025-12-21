@@ -89,6 +89,16 @@
         />
       </div>
     </div>
+
+    <!-- AI Chatbot Floating Button -->
+    <TripAiChat 
+      :fetch-candidates="fetchCandidates" 
+      :highlight-candidate="highlightCandidate"
+      :trip-title="trip.tripTitle.value"
+      :formatted-date="trip.formattedDate.value"
+      :all-selected-places="trip.allSelectedPlaces.value"
+      @search-spot="handleChatSpotSearch"
+    />
   </div>
 </template>
 
@@ -106,14 +116,67 @@ import type { Place } from '@/types/trip/place.model'
 import { useResizablePanel } from '@/composables/common/useResizablePanel'
 import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 import { useTripPlan } from '@/composables/trip/useTripPlan'
-import { useMapInteraction } from '@/composables/trip/useMapInteraction' // [NEW]
+import { useMapInteraction } from '@/composables/trip/useMapInteraction'
+import TripAiChat from '@/components/trip/TripAiChat.vue' // [NEW]
 
-// 1. UI Resizer
-const { width: panelWidth, startResize } = useResizablePanel({
-  initialWidth: 380,
-  minWidth: 280,
-  maxWidth: 600,
-})
+// [NEW] AI 추천을 위한 주변 후보 장소 검색 (Frontend Kakao SDK 사용)
+// 다양한 카테고리 검색 (관광지, 문화시설, 음식점, 카페, 공원)
+const fetchCandidates = async (): Promise<any[]> => {
+  return new Promise((resolve) => {
+    if (!kakaoMapRef.value?.map || !(window as any).kakao?.maps?.services) {
+      resolve([])
+      return
+    }
+
+    const map = kakaoMapRef.value.map
+    const center = map.getCenter()
+    const ps = new (window as any).kakao.maps.services.Places()
+
+    // 검색할 카테고리 코드 목록 (다양하게)
+    const categories = ['AT4', 'CT1', 'FD6', 'CE7', 'PK6'] 
+    const combinedResults: any[] = []
+    let completedCount = 0
+
+    categories.forEach(category => {
+      ps.categorySearch(category, (data: any[], status: any) => {
+        if (status === (window as any).kakao.maps.services.Status.OK) {
+          combinedResults.push(...data)
+        }
+        completedCount++
+        
+        if (completedCount === categories.length) {
+          const uniqueResults = Array.from(new Map(combinedResults.map(item => [item.id, item])).values())
+          
+          // 상위 30개 반환 (다양성 확보)
+          resolve(uniqueResults.slice(0, 30).map((item: any) => ({
+             id: item.id, // For map linking
+             name: item.place_name,
+             category: item.category_group_name || '기타',
+             address: item.road_address_name || item.address_name,
+             lat: item.y,
+             lng: item.x,
+             placeUrl: item.place_url
+          })))
+        }
+      }, {
+        location: center,
+        radius: 2000, 
+        sort: (window as any).kakao.maps.services.SortBy.DISTANCE
+      })
+    })
+  })
+}
+
+const highlightCandidate = (candidate: any) => {
+  if (candidate && candidate.lat && candidate.lng) {
+     // 1. 마커를 표시하기 위해 검색 결과에 추가 (기존 검색 결과 덮어씌움)
+     searchResults.value = [candidate]
+     isSearchPanelOpen.value = true // 마커 표시 트리거
+
+     // 2. 하단 상세 패널 열기 및 지도 이동
+     showDetailAndPan(candidate)
+  }
+}
 
 // 2. 검색 로직
 const {
@@ -142,6 +205,8 @@ const mapInteraction = useMapInteraction({
 // 템플릿에서 ref를 쓰기 위해 꺼내줌 (구조분해 해도 되지만, mapInteraction.xxx로 쓰는 게 출처가 명확함)
 // 단, ref="kakaoMapRef" 연결을 위해 이것만 별도로 꺼내줍니다.
 const { kakaoMapRef } = mapInteraction
+
+
 
 const selectedPlaceForDetail = ref<Place | null>(null)
 
@@ -177,6 +242,13 @@ const handleAddPlace = (place: Place) => {
     // 추가된 장소는 바로 패널을 띄우고 중심으로 이동
     showDetailAndPan(newPlace)
   }
+}
+
+// Ai Chat Search Handler
+const handleChatSpotSearch = (keyword: string) => {
+  searchQuery.value = keyword
+  isSearchPanelOpen.value = true
+  mapInteraction.triggerSearch()
 }
 
 // 저장/뒤로가기 연결

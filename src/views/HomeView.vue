@@ -11,12 +11,13 @@
           <!-- Keywords Section -->
           <div class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-5 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)]">
             <h3 class="text-xl font-black mb-4 uppercase flex items-center gap-2" style="font-family: 'Bebas Neue', sans-serif">
-              <span class="text-[#E88555]">#</span> Trending Now
+              <span class="text-[#E88555]">#</span> TRAVEL KEYWORD
             </h3>
-            <div class="flex flex-wrap gap-2 max-h-[66px] overflow-hidden">
+            <div class="flex flex-wrap gap-2 overflow-y-auto custom-scrollbar max-h-[85px] p-2 -m-2">
               <button
                 v-for="keyword in keywords"
                 :key="keyword"
+                @click="handleKeywordClick(keyword)"
                 class="px-3 py-1 bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-lg text-xs font-bold hover:bg-[#F9CA6B] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all"
               >
                 {{ keyword }}
@@ -31,7 +32,7 @@
             </h3>
 
             <div class="space-y-3">
-              <div v-for="(place, idx) in hotPlaces" :key="idx" class="flex items-center gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+              <div v-for="(place, idx) in hotPlaces" :key="idx" @click="handlePlaceClick(place)" class="flex items-center gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
                 <!-- Rank -->
                 <span class="text-lg font-black italic text-[#2C2C2C] w-6 text-center shadow-[2px_2px_0px_0px_rgba(207,245,0,0.5)] bg-white border border-[#2C2C2C] rounded flex-shrink-0">
                   {{ idx + 1 }}
@@ -53,7 +54,7 @@
               @click="handleNavigate('search')"
               class="w-full mt-4 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs uppercase hover:bg-[#F5F5F5] transition-colors"
             >
-              View Full Chart
+              EXPLORE MORE
             </button>
           </div>
         </div>
@@ -101,7 +102,7 @@
 
           <!-- New Plan Card (CTA) -->
           <button
-            @click="handleNavigate('trip')"
+            @click="handleCreateTrip"
             class="w-full bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-xl p-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all text-left group relative overflow-hidden"
           >
              <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
@@ -127,7 +128,12 @@
             </div>
 
             <div v-if="upcomingTrips.length > 0" class="space-y-3">
-              <div v-for="trip in upcomingTrips" :key="trip.id" class="group cursor-pointer bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-lg p-3 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all">
+              <div
+                v-for="trip in upcomingTrips"
+                :key="trip.id"
+                class="group cursor-pointer bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-lg p-3 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all"
+                @click="handleNavigateToTrip(trip.id)"
+              >
                 <div class="flex justify-between items-start mb-2">
                    <div class="flex items-center gap-1.5">
                       <Calendar class="w-3.5 h-3.5 text-gray-500" />
@@ -171,22 +177,123 @@
       </div>
     </div>
 
+    <PlaceDetailModal
+      v-if="selectedPlaceForDetail"
+      ref="placeDetailModalRef"
+      :place="selectedPlaceForDetail"
+      @close="selectedPlaceForDetail = null"
+      @open-trip-log="handleOpenTripLog"
+    />
+
+    <DiaryCommentModal
+        v-if="selectedLogId"
+        :log-id="selectedLogId"
+        @close="handleLogClose"
+        @update="handleLogUpdate"
+    />
+
+    <TripDetailModal
+        v-if="selectedTrip"
+        :trip="selectedTrip"
+        @close="selectedTrip = null"
+        @edit="handleEditFromModal"
+    />
+
     <ScrollToTop />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
+import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
+import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
+import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
 import { Plus, Calendar} from 'lucide-vue-next'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { getTripLogFeed } from '@/apis/trip-log/index';
-import { allPlaces, dailyMissions } from '@/data/mockData'
+import { dailyMissions } from '@/data/mockData'
+import { spotApi } from '@/apis/spot'
+import { getMyTrips, createTrip, getTripDetail } from '@/apis/trip' // Added getTripDetail
+import type { TripResponseDto } from '@/apis/trip/types'
+import { differenceInCalendarDays, isAfter, isSameDay, startOfDay, parseISO } from 'date-fns'
 
+const router = useRouter()
 const { handleNavigate } = useNavigate()
+
+const selectedPlaceForDetail = ref<any>(null) // For PlaceDetailModal
+const placeDetailModalRef = ref<any>(null)
+const selectedLogId = ref<number | null>(null)
+const hasLogUpdates = ref(false)
+const selectedTrip = ref<any>(null)
+
+const handleOpenTripLog = (logId: number) => {
+    selectedLogId.value = logId
+}
+
+const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
+    hasLogUpdates.value = true
+    if (placeDetailModalRef.value) {
+        placeDetailModalRef.value.updateTripLogState(payload.logId, { likeCount: payload.likeCount, liked: payload.liked })
+    }
+}
+
+const handleLogClose = () => {
+    selectedLogId.value = null
+    if (hasLogUpdates.value) {
+        if (placeDetailModalRef.value) {
+            placeDetailModalRef.value.refreshWithEffect()
+        }
+        hasLogUpdates.value = false
+    }
+}
+
+const handleNavigateToTrip = async (tripId: number) => {
+    try {
+        const detail = await getTripDetail(tripId)
+        selectedTrip.value = {
+            ...detail,
+             description:
+                detail.tripItems && detail.tripItems.length > 0
+                ? detail.tripItems.map((item : any) => item.spot.name).join(' → ')
+                : '장소 없음',
+            duration: '반나절', // Mock
+            views: 1240, // Mock
+            imageUrl: '', // Mock
+        }
+    } catch (error) {
+        console.error('Failed to fetch trip detail:', error)
+        alert('여행 정보를 불러오는데 실패했습니다.')
+    }
+}
+
+const handleEditFromModal = (trip: any) => {
+    selectedTrip.value = null
+    handleNavigate('trip-edit', { id: trip.id })
+}
+
+const handleCreateTrip = async () => {
+    try {
+        const newTrip = await createTrip()
+        handleNavigate('trip-edit', { id: newTrip.id })
+    } catch (error) {
+        console.error('Failed to create trip:', error)
+        alert('여행 계획 생성에 실패했습니다.')
+    }
+}
+
+const handlePlaceClick = (place: any) => {
+    // Open Place Detail Modal directly
+    selectedPlaceForDetail.value = place
+}
+
+const handleKeywordClick = (keyword: string) => {
+  router.push({ path: '/search', query: { q: keyword } })
+}
 
 // 상태 관리
 const diaryEntries = ref<TripLogFeedItemDto[]>([])
@@ -198,15 +305,81 @@ const hasNext = ref(true)
 // Daily Mission Logic
 const currentMission = ref(dailyMissions[Math.floor(Math.random() * dailyMissions.length)])
 
-// Mock Data for Sidebars
-const keywords = ['성수동','반려견동반','오션뷰','캠핑로그','제주맛집','호캉스','파리올림픽']
+// Keywords
+const keywords = ['동네산책', '책방투어', 'LP바', '성수카페', '팝업스토어', '자전거라이딩', '클라이밍', '야시장']
 
-const hotPlaces = allPlaces.slice(0, 10) // Show Top 10
+// Hot Places
+const hotPlaces = ref<any[]>([])
 
-const upcomingTrips = ref([
-  { id: 1, title: '여름 휴가 🌊', date: '2024.08.15', dDay: 'D-25' },
-  { id: 2, title: '주말 글램핑', date: '2024.07.27', dDay: 'D-4' }
-])
+// My Trips
+const myTrips = ref<TripResponseDto[]>([])
+
+// Filtered Upcoming Trips
+const upcomingTrips = computed(() => {
+  const now = startOfDay(new Date())
+  return myTrips.value
+    .filter(trip => {
+      if (!trip.startDate) return false
+      const start = parseISO(trip.startDate)
+      return isAfter(start, now) || isSameDay(start, now)
+    })
+    .map(trip => {
+      // safe because of filter
+      const start = parseISO(trip.startDate!)
+      const diff = differenceInCalendarDays(start, now)
+      const dDay = diff === 0 ? 'D-Day' : `D-${diff}`
+
+      return {
+        id: trip.id,
+        title: trip.title,
+        date: trip.startDate!,
+        dDay: dDay
+      }
+    })
+    .sort((a, b) => {
+        return a.date.localeCompare(b.date)
+    })
+    .slice(0, 3)
+})
+
+
+// Initial Data Load
+onMounted(async () => {
+  loadMore()
+
+  // Load Hot Places
+  try {
+    const places = await spotApi.getHotPlaces()
+    hotPlaces.value = places.slice(0, 10).map((place: any) => ({
+        ...place,
+        location: place.address || '위치 정보 없음'
+    }))
+  } catch (error) {
+    console.error('Failed to load hot places:', error)
+  }
+
+  // Load My Trips
+  try {
+    const trips = await getMyTrips()
+    myTrips.value = trips
+  } catch (error) {
+    console.error('Failed to load my trips:', error)
+  }
+
+  // Observer Setup
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting && hasNext.value) {
+        loadMore()
+      }
+    },
+    { threshold: 1.0 },
+  )
+
+  if (observerTarget.value) {
+    observer.observe(observerTarget.value)
+  }
+})
 
 // 무한 스크롤 로직
 const loadMore = async () => {
@@ -232,23 +405,6 @@ const loadMore = async () => {
 
 // Observer Logic
 let observer: IntersectionObserver | null = null;
-
-onMounted(() => {
-  loadMore()
-
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0]?.isIntersecting && hasNext.value) {
-        loadMore()
-      }
-    },
-    { threshold: 1.0 },
-  )
-
-  if (observerTarget.value) {
-    observer.observe(observerTarget.value)
-  }
-})
 
 onUnmounted(() => {
   if (observer) observer.disconnect()
