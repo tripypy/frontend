@@ -6,48 +6,73 @@
         @click.stop
       >
         <!-- Header Section -->
-        <div class="p-6 border-b-[3px] border-[#2C2C2C] bg-white relative">
-          <button
-            @click="emit('close')"
-            class="absolute top-6 right-6 p-2 border-[2px] border-[#2C2C2C] rounded-lg bg-white hover:bg-gray-50 transition-colors"
-          >
-            <X class="w-5 h-5 text-[#2C2C2C]" stroke-width="2" />
-          </button>
+        <!-- Header Section -->
+        <div class="relative w-full min-h-[250px] flex flex-col justify-end overflow-hidden" 
+             :class="localPlace.imageUrl ? 'bg-gray-900' : 'bg-white border-b-[3px] border-[#2C2C2C]'">
+             
+             <!-- Background Image -->
+             <div v-if="localPlace.imageUrl" class="absolute inset-0 z-0">
+                <img :src="localPlace.imageUrl" class="w-full h-full object-cover opacity-90" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+             </div>
 
-          <div class="pr-12">
-             <div class="flex flex-wrap gap-2 mb-3">
-              <span
-                v-for="(tag, index) in localPlace.tags"
-                :key="index"
-                class="px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-[#9BCCC4] text-xs font-black text-[#2C2C2C]"
+             <!-- Close Button -->
+             <button
+                @click="emit('close')"
+                class="absolute top-6 right-6 p-2 border-[2px] border-[#2C2C2C] rounded-lg bg-white hover:bg-gray-50 transition-colors z-20 shadow-sm"
               >
-                #{{ tag }}
-              </span>
-            </div>
-            <h2 class="text-3xl font-black tracking-tight font-sans text-[#2C2C2C] leading-tight mb-2">
-              {{ localPlace.name }}
-            </h2>
-          </div>
-          
-          <!-- Compact Info Bar -->
-           <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold text-gray-600 mt-4">
-             <div class="flex items-center gap-1.5">
-               <MapPin class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-               <span class="truncate max-w-[200px]">{{ localPlace.address || '주소 정보 없음' }}</span>
+                <X class="w-5 h-5 text-[#2C2C2C]" stroke-width="2" />
+              </button>
+
+             <!-- Header Content -->
+             <div class="p-6 relative z-10 w-full pt-16">
+                  <div class="pr-12">
+                     <div class="flex flex-wrap gap-2 mb-3">
+                      <span
+                        v-for="(tag, index) in localPlace.tags"
+                        :key="index"
+                        :class="[
+                            'px-2.5 py-1 border-[2px] rounded-full text-xs font-black',
+                            localPlace.imageUrl 
+                                ? 'bg-white/90 border-transparent text-[#2C2C2C]' 
+                                : 'bg-[#9BCCC4] border-[#2C2C2C] text-[#2C2C2C]'
+                        ]"
+                      >
+                        #{{ tag }}
+                      </span>
+                    </div>
+                    
+                    <h2 
+                        class="text-4xl font-black tracking-tight font-sans leading-tight mb-3"
+                        :class="localPlace.imageUrl ? 'text-white drop-shadow-md' : 'text-[#2C2C2C]'"
+                    >
+                      {{ localPlace.name }}
+                    </h2>
+                  </div>
+                  
+                  <!-- Compact Info Bar -->
+                   <div 
+                        class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold"
+                        :class="localPlace.imageUrl ? 'text-gray-200' : 'text-gray-600'"
+                    >
+                     <div class="flex items-center gap-1.5">
+                       <MapPin class="w-4 h-4" :class="localPlace.imageUrl ? 'text-white' : 'text-[#2C2C2C]'" stroke-width="2.5" />
+                       <span class="truncate max-w-[200px]">{{ localPlace.address || '주소 정보 없음' }}</span>
+                     </div>
+                     
+                     <div v-if="localPlace.phone" class="flex items-center gap-1.5">
+                       <Phone class="w-4 h-4" :class="localPlace.imageUrl ? 'text-white' : 'text-[#2C2C2C]'" stroke-width="2.5" />
+                       <span>{{ localPlace.phone }}</span>
+                     </div>
+                     
+                     <div v-if="localPlace.website" class="flex items-center gap-1.5">
+                       <Globe class="w-4 h-4" :class="localPlace.imageUrl ? 'text-white' : 'text-[#2C2C2C]'" stroke-width="2.5" />
+                       <a :href="localPlace.website" target="_blank" class="hover:text-[#E88555] hover:underline truncate max-w-[150px]">
+                         {{ truncateUrl(localPlace.website) }}
+                       </a>
+                     </div>
+                   </div>
              </div>
-             
-             <div v-if="localPlace.phone" class="flex items-center gap-1.5">
-               <Phone class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-               <span>{{ localPlace.phone }}</span>
-             </div>
-             
-             <div v-if="localPlace.website" class="flex items-center gap-1.5">
-               <Globe class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-               <a :href="localPlace.website" target="_blank" class="hover:text-[#E88555] hover:underline truncate max-w-[150px]">
-                 {{ truncateUrl(localPlace.website) }}
-               </a>
-             </div>
-           </div>
         </div>
 
         <div class="flex-1 overflow-y-auto bg-[#FAFAFA]">
@@ -331,6 +356,7 @@ const localPlace = computed(() => {
     address: props.place.location || props.place.address,
     phone: props.place.phone,
     website: props.place.website || props.place.placeUrl,
+    imageUrl: props.place.imageUrl
   }
 
   // API 응답이 있으면 덮어쓰기 (실제 DB 데이터 우선)
@@ -462,7 +488,7 @@ const fetchSpotData = async () => {
             lat: props.place.lat || 0,
             lng: props.place.lng || 0,
             placeUrl: props.place.placeUrl || '',
-            thumbnailUrl: ''
+            thumbnailUrl: props.place.imageUrl || ''
         }
         
         // POST /spots 호출 (200 OK or 201 Created)
