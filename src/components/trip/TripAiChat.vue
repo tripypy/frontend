@@ -78,6 +78,30 @@
                   : 'bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm',
                 (msg as any).relatedSpot ? 'cursor-pointer hover:brightness-95 active:scale-95 transition-all' : ''
               ]"
+              v-if="!(msg as any).relatedSpot"
+            >
+              <template v-for="(part, pIndex) in parseMessage(msg.text)" :key="pIndex">
+                <span 
+                  v-if="part.type === 'link'" 
+                  class="font-bold text-[#FF6B6B] cursor-pointer hover:underline hover:text-[#FF8787] transition-colors"
+                  @click="handleSpotClick(part.text)"
+                >
+                  {{ part.text }}
+                </span>
+                <span v-else v-html="formatMessage(part.text)"></span>
+              </template>
+            </div>
+
+            <!-- Recommendation Bubble (Special Case) -->
+            <div 
+              v-else
+              :class="[
+                'max-w-[85%] p-3.5 text-sm leading-relaxed shadow-sm',
+                msg.isUser 
+                  ? 'bg-[#9BCCC4] text-white rounded-2xl rounded-tr-sm' 
+                  : 'bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm',
+                'cursor-pointer hover:brightness-95 active:scale-95 transition-all'
+              ]"
               v-html="formatMessage(msg.text)"
               @click="(msg as any).relatedSpot && props.highlightCandidate && props.highlightCandidate((msg as any).relatedSpot)"
             >
@@ -155,6 +179,10 @@ const props = defineProps<{
   tripTitle?: string
   formattedDate?: string
   allSelectedPlaces?: any[]
+}>()
+
+const emit = defineEmits<{
+  (e: 'search-spot', keyword: string): void
 }>()
 
 const isOpen = ref(false)
@@ -256,6 +284,7 @@ const getSystemPrompt = (): ChatMessageDto => ({
   content: `
 당신은 여행 전문가 AI 'TRIT'입니다. 사용자에게 친절하고 유익한 여행 정보를 제공합니다.
 한국어로 대답하세요. 반말을 사용해 친근하게 대화하세요.
+중요: 답변에 특정 장소 이름이 나오면 반드시 대괄호 두 개로 감싸주세요. 예: [[경복궁]], [[성심당]].
 `
 })
 
@@ -317,13 +346,31 @@ const sendMessage = async () => {
 
 const formatMessage = (text: string) => {
   if (!text) return ''
-  // 1. Newlines to <br>
   let formatted = text.replace(/\n/g, '<br>')
-  
-  // 2. **Bold** to <b>Bold</b>
   formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-  
   return formatted
+}
+
+const parseMessage = (text: string) => {
+  if (!text) return []
+  // Split by [[...]]
+  const parts = text.split(/(\[\[.*?\]\])/g)
+  return parts.map(part => {
+    if (part.startsWith('[[') && part.endsWith(']]')) {
+      return {
+        type: 'link',
+        text: part.slice(2, -2) // Remove [[ and ]]
+      }
+    }
+    return {
+      type: 'text',
+      text: part
+    }
+  })
+}
+
+const handleSpotClick = (keyword: string) => {
+   emit('search-spot', keyword)
 }
 
 const handleRecommend = async () => {

@@ -97,6 +97,7 @@
       :trip-title="trip.tripTitle.value"
       :formatted-date="trip.formattedDate.value"
       :all-selected-places="trip.allSelectedPlaces.value"
+      @search-spot="handleChatSpotSearch"
     />
   </div>
 </template>
@@ -241,6 +242,13 @@ const handleAddPlace = (place: Place) => {
     // 추가된 장소는 바로 패널을 띄우고 중심으로 이동
     showDetailAndPan(newPlace)
   }
+}
+
+// Ai Chat Search Handler
+const handleChatSpotSearch = (keyword: string) => {
+  searchQuery.value = keyword
+  isSearchPanelOpen.value = true
+  mapInteraction.triggerSearch()
 }
 
 // 저장/뒤로가기 연결
