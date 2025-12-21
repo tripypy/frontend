@@ -75,10 +75,17 @@
                 'max-w-[85%] p-3.5 text-sm leading-relaxed shadow-sm',
                 msg.isUser 
                   ? 'bg-[#9BCCC4] text-white rounded-2xl rounded-tr-sm' 
-                  : 'bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm'
+                  : 'bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm',
+                (msg as any).relatedSpot ? 'cursor-pointer hover:brightness-95 active:scale-95 transition-all' : ''
               ]"
               v-html="formatMessage(msg.text)"
+              @click="(msg as any).relatedSpot && props.highlightCandidate && props.highlightCandidate((msg as any).relatedSpot)"
             >
+            </div>
+            
+            <!-- Map Link Indicator -->
+            <div v-if="(msg as any).relatedSpot" class="text-[10px] text-gray-400 mt-1 ml-1 flex items-center gap-1">
+               <span class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">지도에서 위치 보기 📍</span>
             </div>
 
           </div>
@@ -91,6 +98,24 @@
               <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
             </div>
           </div>
+        </div>
+
+        <!-- Quick Actions (Menu) -->
+        <div class="px-4 py-2 bg-white flex justify-center gap-2 border-t border-gray-100">
+           <button 
+            @click="handleRecommend"
+            class="px-3 py-1.5 rounded-full bg-white border border-[#9BCCC4] text-[#9BCCC4] text-xs font-semibold hover:bg-[#9BCCC4] hover:text-white transition-colors flex items-center gap-1 shadow-sm"
+            :disabled="isLoading"
+          >
+            ✨ 장소 추천
+          </button>
+          <button 
+            @click="handleCheckCourse"
+            class="px-3 py-1.5 rounded-full bg-white border border-[#2C2C2C] text-[#2C2C2C] text-xs font-semibold hover:bg-[#2C2C2C] hover:text-white transition-colors flex items-center gap-1 shadow-sm"
+            :disabled="isLoading"
+          >
+            ✅ 코스 점검
+          </button>
         </div>
 
         <!-- Input Area -->
@@ -120,14 +145,23 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { MessageCircle, X, Send, Bot } from 'lucide-vue-next'
-import { sendAiChat } from '@/apis/ai'
-import type { ChatMessageDto, AiChatSpotDto } from '@/apis/ai/types'
+import { sendAiChat, recommendSpot, checkCourse } from '@/apis/ai'
+import type { ChatMessageDto, AiChatSpotDto, RecommendSpotDto } from '@/apis/ai/types'
 import { useTripPlan } from '@/composables/trip/useTripPlan'
+
+const props = defineProps<{
+  fetchCandidates?: () => Promise<RecommendSpotDto[]>
+  highlightCandidate?: (candidate: any) => void
+}>()
 
 const isOpen = ref(false)
 const inputMessage = ref('')
 const isLoading = ref(false)
-const messages = ref<({ text: string; isUser: boolean } | { isTyping: boolean; isUser: false })[]>([
+const messages = ref<({ 
+  text: string; 
+  isUser: boolean; 
+  relatedSpot?: any 
+} | { isTyping: boolean; isUser: false })[]>([
   { text: '안녕하세요! 여행 계획을 도와드릴까요?', isUser: false }
 ])
 
@@ -271,6 +305,99 @@ const formatMessage = (text: string) => {
   formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
   
   return formatted
+}
+
+const handleRecommend = async () => {
+  if (isLoading.value) return
+  if (!props.fetchCandidates) {
+    messages.value.push({ text: '지도 정보를 불러올 수 없습니다.', isUser: false })
+    return
+  }
+
+  messages.value.push({ text: '주변에 갈만한 좋은 장소 있어?', isUser: true })
+  isLoading.value = true
+  scrollToBottom()
+
+  try {
+    // 1. Fetch Candidates
+    const candidates = await props.fetchCandidates()
+    
+    if (candidates.length === 0) {
+       messages.value.push({ text: '주변에 추천할 만한 곳이 안 보이네. 지도를 조금 움직여볼래?', isUser: false })
+       isLoading.value = false
+       return
+    }
+
+    // 2. Prepare Current Spots
+    const currentSpots: RecommendSpotDto[] = (allSelectedPlaces.value || []).map((p: any) => ({
+      name: p.name || '',
+      category: p.category || '',
+      address: p.address || ''
+    }))
+
+    // 3. Call AI API
+    const response = await recommendSpot({
+      currentSpots,
+      candidateSpots: candidates 
+    })
+
+    // 4. Find matched candidate for linking
+    const matched = candidates.find(c => c.name === response.recommendedSpotName)
+
+    // 5. Show Result with Clickable Link if matched
+    let aiText = `추천 장소: **${response.recommendedSpotName}**\n\n${response.reason}`
+    
+    // Add custom field to message for interactivity
+    messages.value.push({ 
+      text: aiText, 
+      isUser: false,
+      relatedSpot: matched // Store spot data
+    })
+    
+     // Auto-highlight if matched
+    if (matched && props.highlightCandidate) {
+        props.highlightCandidate(matched)
+    }
+
+  } catch (error) {
+    console.error('Recommend Error:', error)
+    messages.value.push({ text: '추천을 받아오는 중 오류가 발생했습니다.', isUser: false })
+  } finally {
+    isLoading.value = false
+    scrollToBottom()
+  }
+}
+
+const handleCheckCourse = async () => {
+  if (isLoading.value) return
+  
+  if (!allSelectedPlaces.value || allSelectedPlaces.value.length === 0) {
+     messages.value.push({ text: '코스 점검을 하시려면 먼저 여행 장소를 추가해 주세요!', isUser: false })
+     return
+  }
+
+  messages.value.push({ text: '현재 코스 좀 점검해줄래?', isUser: true })
+  isLoading.value = true
+  scrollToBottom()
+  
+  try {
+     const spots: RecommendSpotDto[] = allSelectedPlaces.value.map((p: any) => ({
+      name: p.name || '',
+      category: p.category || '',
+      address: p.address || ''
+    }))
+
+    const response = await checkCourse({ spots })
+    
+    messages.value.push({ text: response.text, isUser: false })
+
+  } catch (error) {
+    console.error('Check Course Error:', error)
+     messages.value.push({ text: '코스 점검 중 오류가 발생했습니다.', isUser: false })
+  } finally {
+    isLoading.value = false
+    scrollToBottom()
+  }
 }
 
 const scrollToBottom = () => {

@@ -18,3 +18,23 @@ export interface AiChatRequestDto {
 export interface AiChatResponseDto {
     text: string
 }
+
+export interface RecommendSpotDto {
+    name: string
+    category: string
+    address: string
+}
+
+export interface AiSpotRecommendRequestDto {
+    currentSpots: RecommendSpotDto[]
+    candidateSpots: RecommendSpotDto[]
+}
+
+export interface AiSpotRecommendResponseDto {
+    recommendedSpotName: string
+    reason: string
+}
+
+export interface AiCourseCheckRequestDto {
+    spots: RecommendSpotDto[]
+}
