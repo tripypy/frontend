@@ -355,7 +355,7 @@ const localPlace = computed(() => {
     address: props.place.location || props.place.address,
     phone: props.place.phone,
     website: props.place.website || props.place.placeUrl,
-    imageUrl: props.place.imageUrl
+    imageUrl: props.place.imageUrl || props.place.thumbnailUrl
   }
 
   // API 응답이 있으면 덮어쓰기 (실제 DB 데이터 우선)
@@ -487,7 +487,7 @@ const fetchSpotData = async () => {
             lat: props.place.lat || 0,
             lng: props.place.lng || 0,
             placeUrl: props.place.placeUrl || '',
-            thumbnailUrl: props.place.imageUrl || ''
+            thumbnailUrl: props.place.imageUrl || props.place.thumbnailUrl || ''
         }
         
         // POST /spots 호출 (200 OK or 201 Created)
