@@ -65,10 +65,11 @@
 
         <!-- Chat Area -->
         <div class="flex-1 overflow-y-auto p-4 bg-white space-y-4 custom-scrollbar">
-          <div v-for="(msg, index) in messages" :key="index" :class="[
-            'flex',
-            msg.isUser ? 'justify-end' : 'justify-start'
-          ]">
+          <template v-for="(msg, index) in messages" :key="index">
+            <div v-if="!(msg as any).isHidden" :class="[
+              'flex',
+              msg.isUser ? 'justify-end' : 'justify-start'
+            ]">
             <div 
               :class="[
                 'max-w-[85%] p-3.5 text-sm leading-relaxed shadow-sm',
@@ -90,6 +91,7 @@
             </div>
 
           </div>
+          </template>
 
           <!-- Loading (Typing) Indicator -->
           <div v-if="isLoading" class="flex justify-start">
@@ -170,7 +172,8 @@ const isLoading = ref(false)
 const messages = ref<({ 
   text: string; 
   isUser: boolean; 
-  relatedSpot?: any 
+  relatedSpot?: any;
+  isHidden?: boolean;
 } | { isTyping: boolean; isUser: false })[]>([
   { text: '안녕! 여행 계획 도와줄까?', isUser: false }
 ])
@@ -270,6 +273,11 @@ const getSystemPrompt = (): ChatMessageDto => ({
 2. 장소 이름에는 **절대로** 볼드(**)를 사용하지 마세요. 오직 [[ ]]만 사용하세요.
 3. 목록을 나열할 때도 장소 이름만 깔끔하게 감싸주세요.
    - 예: 1. [[성수동 카페거리]] - 분위기 좋은 카페가 많아.
+4. **장소 추천 시 주의사항**: 
+   - 사용자가 장소 추천을 원하거나, 구체적인 장소를 제안해야 할 상황이라면 **절대로 스스로 장소를 지어내지 마세요.**
+   - 대신, 반드시 아래 **JSON**만 딱 출력하여 클라이언트에게 주변 장소 정보를 요청하세요.
+     \`{"request": "GET_CANDIDATES"}\`
+   - 클라이언트가 후보 장소 데이터를 보내주면, 그때 그 장소들 중에서 가장 알맞은 곳을 골라 **[[장소명]]** 형식으로 추천해주세요.
 `
 })
 
@@ -318,6 +326,58 @@ const sendMessage = async () => {
     }
 
     const response = await sendAiChat(payload)
+    
+    // --- Tool Use Handler (GET_CANDIDATES) ---
+    // Extract JSON if embedded in text/markdown
+    let jsonCmd = null
+    const jsonMatch = response.text.match(/\{[\s\S]*"request"[\s\S]*:[\s\S]*"GET_CANDIDATES"[\s\S]*\}/)
+    
+    if (jsonMatch) {
+        try {
+            jsonCmd = JSON.parse(jsonMatch[0])
+        } catch (e) {
+            console.warn('Failed to parse extracted JSON', e)
+        }
+    } else {
+        // Try direct parse if no regex match (fallback)
+        try {
+            const parsed = JSON.parse(response.text)
+            if (parsed.request === 'GET_CANDIDATES') jsonCmd = parsed
+        } catch (e) {}
+    }
+
+    if (jsonCmd && jsonCmd.request === 'GET_CANDIDATES') {
+         // 1. Fetch Candidates (Hidden)
+         if (!props.fetchCandidates) {
+             // If no fetcher, just show the original text (fallback)
+             messages.value.push({ text: response.text, isUser: false })
+             return
+         }
+         
+         const candidates = await props.fetchCandidates()
+         const candidateContext = candidates.length > 0 
+            ? `주변 후보 장소 목록:\n${JSON.stringify(candidates.map(c => ({ id: c.id, name: c.name, category: c.category })))}`
+            : `주변에 후보 장소가 없습니다. 이 사실을 사용자에게 알리고, 다른 지역으로 지도를 이동해보라고 조언해주세요.`
+
+         // 2. Send Candidates back to AI (Recursion)
+         // Add hidden system message to history for context
+         history.push({ role: 'assistant', content: response.text }) // Previous AI request
+         history.push({ role: 'user', content: candidateContext })   // Tool Output
+         
+         const followUpPayload = {
+            messages: [
+                getSystemPrompt(),
+                getTripContext(),
+                ...history.slice(-12) // Keep context
+            ]
+         }
+         
+         const followUpResponse = await sendAiChat(followUpPayload)
+         messages.value.push({ text: followUpResponse.text, isUser: false })
+         return
+    }
+    // ------------------------------------------
+
     messages.value.push({ text: response.text, isUser: false })
 
   } catch (error) {
