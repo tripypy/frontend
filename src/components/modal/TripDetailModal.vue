@@ -291,6 +291,7 @@ const displayDuration = computed(() => {
 
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
+    if (showPlaceDetailModal.value) return
     emit('close')
   }
 }
