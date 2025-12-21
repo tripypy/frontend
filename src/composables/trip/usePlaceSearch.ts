@@ -20,7 +20,6 @@ export function usePlaceSearch() {
     isSearching.value = true
     searchResults.value = [];
 
-    // autoload=false일 경우 load 메서드를 통해 호출해야 함
     (window as any).kakao.maps.load(() => {
       if (!(window as any).kakao.maps.services) {
         alert('카카오맵 Services 라이브러리가 로드되지 않았습니다.')
@@ -29,39 +28,59 @@ export function usePlaceSearch() {
       }
 
       const ps = new (window as any).kakao.maps.services.Places()
-      let searchOption = {}
 
-      // 지도 객체가 넘어왔다면 현재 보고 있는 범위(Bounds)를 옵션에 추가
-      if (mapInstance) {
-        const bounds = mapInstance.getBounds()
-        searchOption = { bounds }
+      // 내부 검색 함수 (재귀적 호출 또는 fallback 처리용)
+      const executeSearch = (options: any, isFallbackAttempt: boolean) => {
+        ps.keywordSearch(
+          searchQuery.value,
+          (data: any[], status: any) => {
+            // 1. 성공 시
+            if (status === (window as any).kakao.maps.services.Status.OK) {
+              isSearching.value = false
+              console.log('Kakao Search Results:', data)
+              searchResults.value = data.map((item: any) => ({
+                id: Number(item.id),
+                kakaoPlaceId: item.id,
+                name: item.place_name,
+                address: item.road_address_name || item.address_name,
+                category: item.category_group_name || '기타',
+                lat: Number(item.y),
+                lng: Number(item.x),
+                phone: item.phone,
+                placeUrl: item.place_url,
+              }))
+            }
+            // 2. 결과 없음 (ZERO_RESULT)
+            else if (status === (window as any).kakao.maps.services.Status.ZERO_RESULT) {
+              // Fallback: 위치 제한이 있었고, 첫 시도였다면 -> 제한 없이 재검색
+              if (options.bounds && !isFallbackAttempt) {
+                console.log('No results in current bounds. Retrying globally...')
+                executeSearch({}, true) // 재귀 호출 (옵션 제거)
+              } else {
+                // 진짜 결과 없음
+                isSearching.value = false
+                searchResults.value = []
+              }
+            }
+            // 3. 에러
+            else {
+              isSearching.value = false
+              alert('검색 중 오류가 발생했습니다.')
+            }
+          },
+          options,
+        )
       }
 
-      ps.keywordSearch(
-        searchQuery.value,
-        (data: any[], status: any) => {
-          isSearching.value = false
-          if (status === (window as any).kakao.maps.services.Status.OK) {
-            console.log('Kakao Search Results:', data) // 디버깅용 로그
-            searchResults.value = data.map((item: any) => ({
-              id: Number(item.id),
-              kakaoPlaceId: item.id, // 카카오 ID를 문자열로 저장
-              name: item.place_name,
-              address: item.road_address_name || item.address_name,
-              category: item.category_group_name || '기타',
-              lat: Number(item.y),
-              lng: Number(item.x),
-              phone: item.phone,
-              placeUrl: item.place_url,
-            }))
-          } else if (status === (window as any).kakao.maps.services.Status.ZERO_RESULT) {
-            searchResults.value = []
-          } else {
-            alert('검색 중 오류가 발생했습니다.')
-          }
-        },
-        searchOption,
-      )
+      // 초기 검색 옵션 설정
+      let initialOptions: any = {}
+      if (mapInstance) {
+        const bounds = mapInstance.getBounds()
+        initialOptions = { bounds }
+      }
+
+      // 첫 검색 실행 (Local First)
+      executeSearch(initialOptions, false)
     })
   }
 
