@@ -121,7 +121,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { MessageCircle, X, Send, Bot } from 'lucide-vue-next'
 import { sendAiChat } from '@/apis/ai'
-import type { AiChatHistory } from '@/apis/ai/types'
+import type { ChatMessageDto, AiChatSpotDto } from '@/apis/ai/types'
 import { useTripPlan } from '@/composables/trip/useTripPlan'
 
 const isOpen = ref(false)
@@ -224,19 +224,25 @@ const sendMessage = async () => {
   try {
     // 2. Prepare Payload
     // Convert current messages to history format
-    const history: AiChatHistory[] = messages.value
+    const history: ChatMessageDto[] = messages.value
       .filter((m) => !('isTyping' in m)) // Exclude typing indicators if any
       .map((m: any) => ({
         role: m.isUser ? 'user' : 'assistant',
         content: m.text
       }))
 
+    // Map context to AiChatSpotDto
+    const context: AiChatSpotDto[] = (allSelectedPlaces.value || []).map((p: any) => ({
+      name: p.name || '',
+      category: p.category || '',
+      address: p.address || ''
+    }))
+
     // 3. Call API
     const response = await sendAiChat({
-      message: text, // Send current message explicitly
-      mode: 'CHAT',
+      message: text,
       history,
-      tripContext: allSelectedPlaces.value || []
+      tripContext: context
     })
 
     // 4. Add AI Response
