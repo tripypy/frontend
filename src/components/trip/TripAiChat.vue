@@ -145,8 +145,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { MessageCircle, X, Send, Bot } from 'lucide-vue-next'
-import { sendAiChat, recommendSpot, checkCourse } from '@/apis/ai'
-import type { ChatMessageDto, AiChatSpotDto, RecommendSpotDto } from '@/apis/ai/types'
+import { sendAiChat } from '@/apis/ai'
+import type { ChatMessageDto, RecommendSpotDto } from '@/apis/ai/types'
 import { useTripPlan } from '@/composables/trip/useTripPlan'
 
 const props = defineProps<{
@@ -166,7 +166,7 @@ const messages = ref<({
 ])
 
 // Trip Context
-const { allSelectedPlaces } = useTripPlan()
+const { allSelectedPlaces, tripTitle, formattedDate } = useTripPlan()
 
 // Dragging Logic
 const containerRef = ref<HTMLElement | null>(null)
@@ -243,53 +243,67 @@ const toggleChat = () => {
 }
 
 // *** API Integration ***
-const sendMessage = async () => {
-  const text = inputMessage.value.trim()
-  if (!text || isLoading.value) return
+// --- Prompt Builders ---
 
-  // 1. Add User Message
-  messages.value.push({ text, isUser: true })
+// 1. System Prompt (기본 성격 + 응답 규칙)
+const getSystemPrompt = (): ChatMessageDto => ({
+  role: 'system',
+  content: `
+당신은 여행 전문가 AI 'TRIT'입니다. 사용자에게 친절하고 유익한 여행 정보를 제공합니다.
+한국어로 대답하세요. 반말을 사용해 친근하게 대화하세요.
+`
+})
+
+// 2. Trip Context (현재 여행 정보)
+const getTripContext = (): ChatMessageDto => {
+  const tripInfo = `
+여행 제목: ${tripTitle.value || '제목 없음'}
+여행 날짜: ${formattedDate.value}
+현재 일정:
+${(allSelectedPlaces.value || []).map((p, i) => `${i + 1}. ${p.name} (${p.category}) - ${p.address}`).join('\n')}
+`
+  return {
+    role: 'user', // 문맥을 유저 메시지로 주입 (또는 system에 포함 가능)
+    content: `현재 나의 여행 계획이야:\n${tripInfo}`
+  }
+}
+
+// --- Handlers ---
+
+const sendMessage = async () => {
+  if (!inputMessage.value.trim() || isLoading.value) return
+
+  const userText = inputMessage.value
+  messages.value.push({ text: userText, isUser: true })
   inputMessage.value = ''
   isLoading.value = true
-
-  // Scroll to bottom
   scrollToBottom()
 
   try {
-    // 2. Prepare Payload
-    // Convert current messages to history format
+    // Build Chat History
+    // (Actual implementation should manage history size/tokens, simplifed here)
     const history: ChatMessageDto[] = messages.value
-      .filter((m) => !('isTyping' in m)) // Exclude typing indicators if any
-      .map((m: any) => ({
+      .filter(m => m.text && !('isTyping' in m)) // Filter out UI typing
+      .map(m => ({
         role: m.isUser ? 'user' : 'assistant',
         content: m.text
       }))
 
-    // Map context to AiChatSpotDto
-    const context: AiChatSpotDto[] = (allSelectedPlaces.value || []).map((p: any) => ({
-      name: p.name || '',
-      category: p.category || '',
-      address: p.address || ''
-    }))
+    // Construct Payload
+    const payload = {
+      messages: [
+        getSystemPrompt(),
+        getTripContext(),
+        ...history.slice(-10), // 최근 10개 대화만 유지
+      ]
+    }
 
-    // 3. Call API
-    const response = await sendAiChat({
-      message: text,
-      history,
-      tripContext: context
-    })
+    const response = await sendAiChat(payload)
+    messages.value.push({ text: response.text, isUser: false })
 
-    // 4. Add AI Response
-    messages.value.push({
-      text: response.text,
-      isUser: false
-    })
   } catch (error) {
-    console.error('AI Chat Error:', error)
-    messages.value.push({
-      text: '죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
-      isUser: false
-    })
+    console.error('Chat Error:', error)
+    messages.value.push({ text: '오류가 발생했어. 잠시 후 다시 시도해줄래?', isUser: false })
   } finally {
     isLoading.value = false
     scrollToBottom()
@@ -310,58 +324,85 @@ const formatMessage = (text: string) => {
 const handleRecommend = async () => {
   if (isLoading.value) return
   if (!props.fetchCandidates) {
-    messages.value.push({ text: '지도 정보를 불러올 수 없습니다.', isUser: false })
+    messages.value.push({ text: '지도 정보를 불러올 수 없어 ㅠㅠ', isUser: false })
     return
   }
 
-  messages.value.push({ text: '주변에 갈만한 좋은 장소 있어?', isUser: true })
+  messages.value.push({ text: '어떤 장소를 추가하면 좋을까?', isUser: true })
   isLoading.value = true
   scrollToBottom()
 
   try {
-    // 1. Fetch Candidates
     const candidates = await props.fetchCandidates()
     
     if (candidates.length === 0) {
-       messages.value.push({ text: '주변에 추천할 만한 곳이 안 보이네. 지도를 조금 움직여볼래?', isUser: false })
+       messages.value.push({ text: '주변에 추천할 만한 곳이 없네. 지도를 조금 이동해볼래?', isUser: false })
        isLoading.value = false
        return
     }
 
-    // 2. Prepare Current Spots
-    const currentSpots: RecommendSpotDto[] = (allSelectedPlaces.value || []).map((p: any) => ({
-      name: p.name || '',
-      category: p.category || '',
-      address: p.address || ''
-    }))
+    // Recommendation Prompt
+    const prompt = `
+나의 현재 여행 일정과 스타일을 고려해서, 아래 후보 장소 목록 중 **가장 잘 어울리는 장소 1곳**을 추천해줘.
+이유는 3줄 이내로, 사용자가 꼭 가보고 싶게 매력적으로(반말, 친근하게) 작성해줘.
+응답은 반드시 아래 **JSON 형식**으로만 해줘. 다른 설명은 붙이지 마.
 
-    // 3. Call AI API
-    const response = await recommendSpot({
-      currentSpots,
-      candidateSpots: candidates 
-    })
+후보 장소 목록:
+${JSON.stringify(candidates.map(c => ({ id: c.id, name: c.name, category: c.category })))}
 
-    // 4. Find matched candidate for linking
-    const matched = candidates.find(c => c.name === response.recommendedSpotName)
+[JSON 응답 형식]
+{
+  "recommendation": {
+    "spotId": "후보 장소의 id (그대로 반환)",
+    "name": "장소명",
+    "reason": "추천 이유 (매력적인 설명)"
+  }
+}
+`
+    const payload = {
+      messages: [
+        getSystemPrompt(),
+        getTripContext(),
+        { role: 'user', content: prompt }
+      ]
+    }
 
-    // 5. Show Result with Clickable Link if matched
-    let aiText = `추천 장소: **${response.recommendedSpotName}**\n\n${response.reason}`
+    const response = await sendAiChat(payload as any)
     
-    // Add custom field to message for interactivity
-    messages.value.push({ 
-      text: aiText, 
-      isUser: false,
-      relatedSpot: matched // Store spot data
-    })
+    // Parse JSON
+    let content = response.text
+    // Remove markdown code blocks if present
+    content = content.replace(/```json/g, '').replace(/```/g, '').trim()
     
-     // Auto-highlight if matched
-    if (matched && props.highlightCandidate) {
-        props.highlightCandidate(matched)
+    try {
+        const parsed = JSON.parse(content)
+        const rec = parsed.recommendation
+        
+        const aiText = `✨ **${rec.name}** 어때?\n\n${rec.reason}`
+        
+        // Find candidate object for map linking
+        const matchedCandidate = candidates.find(c => String(c.id) === String(rec.spotId)) || 
+                                 candidates.find(c => c.name === rec.name)
+
+        messages.value.push({
+            text: aiText,
+            isUser: false,
+            relatedSpot: matchedCandidate
+        })
+        
+        if (matchedCandidate && props.highlightCandidate) {
+            props.highlightCandidate(matchedCandidate)
+        }
+
+    } catch (e) {
+        console.error('JSON Parse Error', e)
+        // Fallback: show raw text if parsing fails
+        messages.value.push({ text: response.text, isUser: false })
     }
 
   } catch (error) {
     console.error('Recommend Error:', error)
-    messages.value.push({ text: '추천을 받아오는 중 오류가 발생했습니다.', isUser: false })
+    messages.value.push({ text: '추천을 받아오는 중 오류가 발생했어.', isUser: false })
   } finally {
     isLoading.value = false
     scrollToBottom()
@@ -372,7 +413,7 @@ const handleCheckCourse = async () => {
   if (isLoading.value) return
   
   if (!allSelectedPlaces.value || allSelectedPlaces.value.length === 0) {
-     messages.value.push({ text: '코스 점검을 하시려면 먼저 여행 장소를 추가해 주세요!', isUser: false })
+     messages.value.push({ text: '먼저 여행 장소를 담아줘!', isUser: false })
      return
   }
 
@@ -381,19 +422,27 @@ const handleCheckCourse = async () => {
   scrollToBottom()
   
   try {
-     const spots: RecommendSpotDto[] = allSelectedPlaces.value.map((p: any) => ({
-      name: p.name || '',
-      category: p.category || '',
-      address: p.address || ''
-    }))
+    const prompt = `
+현재 나의 여행 코스를 전문가 시각에서 진단해줘. 아래 항목들을 포함해서 친근하게(반말) 조언해줘.
 
-    const response = await checkCourse({ spots })
-    
+1. **🚩 동선 효율성**: 이동 경로가 합리적인지 봐줘.
+2. **⚖️ 밸런스**: 식사, 관광, 휴식(카페) 배분이 적절한지 분석해줘.
+3. **💡 개선 팁**: 너무 빡빡하진 않은지, 더 추가하면 좋을 테마가 있는지 제안해줘.
+`
+    const payload = {
+       messages: [
+         getSystemPrompt(),
+         getTripContext(),
+         { role: 'user', content: prompt }
+       ]
+    }
+
+    const response = await sendAiChat(payload as any)
     messages.value.push({ text: response.text, isUser: false })
 
   } catch (error) {
     console.error('Check Course Error:', error)
-     messages.value.push({ text: '코스 점검 중 오류가 발생했습니다.', isUser: false })
+     messages.value.push({ text: '코스 점검 중 오류가 발생했어.', isUser: false })
   } finally {
     isLoading.value = false
     scrollToBottom()

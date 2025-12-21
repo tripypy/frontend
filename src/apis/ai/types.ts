@@ -1,18 +1,10 @@
 export interface ChatMessageDto {
-    role: 'user' | 'assistant'
+    role: 'user' | 'assistant' | 'system'
     content: string
 }
 
-export interface AiChatSpotDto {
-    name: string
-    category: string
-    address: string
-}
-
 export interface AiChatRequestDto {
-    message: string
-    history: ChatMessageDto[]
-    tripContext: AiChatSpotDto[]
+    messages: ChatMessageDto[]
 }
 
 export interface AiChatResponseDto {
@@ -20,21 +12,13 @@ export interface AiChatResponseDto {
 }
 
 export interface RecommendSpotDto {
+    id?: number | string
     name: string
     category: string
     address: string
+    lat?: number
+    lng?: number
 }
 
-export interface AiSpotRecommendRequestDto {
-    currentSpots: RecommendSpotDto[]
-    candidateSpots: RecommendSpotDto[]
-}
 
-export interface AiSpotRecommendResponseDto {
-    recommendedSpotName: string
-    reason: string
-}
 
-export interface AiCourseCheckRequestDto {
-    spots: RecommendSpotDto[]
-}
