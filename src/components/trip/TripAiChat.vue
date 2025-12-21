@@ -77,8 +77,18 @@
                   ? 'bg-[#9BCCC4] text-white rounded-2xl rounded-tr-sm' 
                   : 'bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm'
               ]"
+              v-html="formatMessage(msg.text)"
             >
-              {{ msg.text }}
+            </div>
+
+          </div>
+
+          <!-- Loading (Typing) Indicator -->
+          <div v-if="isLoading" class="flex justify-start">
+            <div class="bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm p-4 shadow-sm flex items-center gap-1 w-16 h-[46px]">
+              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
             </div>
           </div>
         </div>
@@ -108,14 +118,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { MessageCircle, X, Send, Bot } from 'lucide-vue-next'
+import { sendAiChat } from '@/apis/ai'
+import type { AiChatHistory } from '@/apis/ai/types'
+import { useTripPlan } from '@/composables/trip/useTripPlan'
 
 const isOpen = ref(false)
 const inputMessage = ref('')
-const messages = ref([
-  { text: 'HELLO! 여행 계획 도움이 필요하신가요?', isUser: false }
+const isLoading = ref(false)
+const messages = ref<({ text: string; isUser: boolean } | { isTyping: boolean; isUser: false })[]>([
+  { text: '안녕하세요! 여행 계획을 도와드릴까요?', isUser: false }
 ])
+
+// Trip Context
+const { allSelectedPlaces } = useTripPlan()
 
 // Dragging Logic
 const containerRef = ref<HTMLElement | null>(null)
@@ -191,23 +208,72 @@ const toggleChat = () => {
   isDragGesture = false
 }
 
-const sendMessage = () => {
-  if (!inputMessage.value.trim()) return
+// *** API Integration ***
+const sendMessage = async () => {
+  const text = inputMessage.value.trim()
+  if (!text || isLoading.value) return
 
-  messages.value.push({
-    text: inputMessage.value,
-    isUser: true
-  })
-
-  const userText = inputMessage.value
+  // 1. Add User Message
+  messages.value.push({ text, isUser: true })
   inputMessage.value = ''
+  isLoading.value = true
 
-  setTimeout(() => {
+  // Scroll to bottom
+  scrollToBottom()
+
+  try {
+    // 2. Prepare Payload
+    // Convert current messages to history format
+    const history: AiChatHistory[] = messages.value
+      .filter((m) => !('isTyping' in m)) // Exclude typing indicators if any
+      .map((m: any) => ({
+        role: m.isUser ? 'user' : 'assistant',
+        content: m.text
+      }))
+
+    // 3. Call API
+    const response = await sendAiChat({
+      message: text, // Send current message explicitly
+      mode: 'CHAT',
+      history,
+      tripContext: allSelectedPlaces.value || []
+    })
+
+    // 4. Add AI Response
     messages.value.push({
-      text: `Let me check on "${userText}"... (AI Coming Soon)`,
+      text: response.text,
       isUser: false
     })
-  }, 1000)
+  } catch (error) {
+    console.error('AI Chat Error:', error)
+    messages.value.push({
+      text: '죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+      isUser: false
+    })
+  } finally {
+    isLoading.value = false
+    scrollToBottom()
+  }
+}
+
+const formatMessage = (text: string) => {
+  if (!text) return ''
+  // 1. Newlines to <br>
+  let formatted = text.replace(/\n/g, '<br>')
+  
+  // 2. **Bold** to <b>Bold</b>
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+  
+  return formatted
+}
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    const chatArea = containerRef.value?.querySelector('.custom-scrollbar')
+    if (chatArea) {
+      chatArea.scrollTop = chatArea.scrollHeight
+    }
+  })
 }
 </script>
 
