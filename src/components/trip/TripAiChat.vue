@@ -39,7 +39,7 @@
     >
       <div
         v-if="isOpen"
-        class="absolute bottom-20 right-0 w-[360px] h-[550px] bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden pointer-events-auto border border-gray-100"
+        class="absolute bottom-20 right-0 w-[420px] h-[650px] bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden pointer-events-auto border border-gray-100"
       >
         <!-- Header -->
         <div 
