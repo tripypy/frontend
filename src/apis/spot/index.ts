@@ -42,5 +42,10 @@ export const spotApi = {
     getSpotById: async (spotId: number): Promise<SpotResponseDto> => {
         const response = await http.get<SpotResponseDto>(`/spots/${spotId}`)
         return response.data
+    },
+
+    generateSpotThumbnail: async (spotId: number): Promise<SpotResponseDto> => {
+        const response = await http.post<SpotResponseDto>(`/spots/${spotId}/thumbnail`)
+        return response.data
     }
 }
