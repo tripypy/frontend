@@ -3,27 +3,27 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden
+  overflow: hidden;
+  position: relative;
 }
 
 :deep(.ql-container) {
   border: none !important;
-  flex-grow: 1;
+  flex: 1 1 0%;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 :deep(.ql-editor) {
-  flex-grow: 1;
+  flex: 1 1 0%;
   padding: 32px;
   font-size: 18px;
   line-height: 1.8;
   color: #2d3748;
-
-  overflow-y: auto;
+  overflow-y: auto !important;
   min-height: 0;
-  padding-bottom: 1000px;
 }
 
 :deep(.ql-editor img) {
@@ -47,9 +47,11 @@
 
 :deep(.ql-toolbar) {
   border: none !important;
-  border-bottom: 1px solid #f7f7f7 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
   padding: 12px 24px !important;
   background: white;
+  flex-shrink: 0;
+  z-index: 10;
 }
 </style>
 
@@ -359,16 +361,30 @@ const onReady = (quill: Quill) => {
   })
 
   quill.root.addEventListener('click', (e: MouseEvent) => {
-    const img = e.target as HTMLImageElement
-    if (img.tagName === 'IMG') {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'IMG') {
+      // 이미지 클릭 시 브라우저 기본 동작 방지
+      e.preventDefault();
+      e.stopPropagation();
+
       if (confirm('이미지를 삭제할까요?')) {
-        const blot = Quill.find(img)
-        if (blot && !(blot instanceof Quill)) {
-          const index = quillInstance.value?.getIndex(blot) ?? -1
+        const blot = Quill.find(target);
+        if (blot) {
+          const index = quill.getIndex(blot);
           if (index >= 0) {
-            quill.deleteText(index, 1, 'user')
-            quill.focus()
+            console.log('[Debug] 이미지 삭제 시도 (인덱스):', index);
+            quill.deleteText(index, 1, 'user');
+            quill.focus();
+            return;
           }
+        }
+
+        // [Fallback] Quill 모델에서 찾지 못하는 경우 DOM에서 직접 제거
+        if (quill.root.contains(target)) {
+          console.warn('[Debug] Quill 모델에서 이미지를 못 찾아 DOM 직접 제거 시도.');
+          target.remove();
+          quill.update('user');
+          updateContent(quill.root.innerHTML);
         }
       }
     }

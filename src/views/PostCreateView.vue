@@ -100,10 +100,11 @@ const submitPost = async () => {
       visibility: visibility.value,
     }
 
+    console.log(payload)
     const { logId } = await postTripLogCreate(payload)
-
+    console.log(logId + "로그 생성 완료! ")
     // 성공 시 해당 로그 페이지로 이동
-    router.push(`/trip-logs/${logId}`)
+    router.push(`/trips`)
   } catch (err) {
     console.error('글 작성 실패', err)
     alert('글 저장 중 오류가 발생했습니다.')

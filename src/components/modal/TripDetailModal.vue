@@ -200,7 +200,7 @@
           </div>
         </div>
         <!-- log content -->
-        <div v-if="activeTab === 'log'" class="flex-1 overflow-y-auto flex items-center justify-center bg-gray-50">
+        <div v-if="activeTab === 'log'" class="p-1 flex-1 overflow-y-auto flex items-center justify-center bg-gray-50">
           <div v-if="logLoading" class="text-center text-lg font-bold text-gray-600">
             로그를 불러오는 중...
           </div>
