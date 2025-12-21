@@ -94,6 +94,9 @@
     <TripAiChat 
       :fetch-candidates="fetchCandidates" 
       :highlight-candidate="highlightCandidate"
+      :trip-title="trip.tripTitle.value"
+      :formatted-date="trip.formattedDate.value"
+      :all-selected-places="trip.allSelectedPlaces.value"
     />
   </div>
 </template>

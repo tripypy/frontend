@@ -147,11 +147,14 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { MessageCircle, X, Send, Bot } from 'lucide-vue-next'
 import { sendAiChat } from '@/apis/ai'
 import type { ChatMessageDto, RecommendSpotDto } from '@/apis/ai/types'
-import { useTripPlan } from '@/composables/trip/useTripPlan'
+
 
 const props = defineProps<{
   fetchCandidates?: () => Promise<RecommendSpotDto[]>
   highlightCandidate?: (candidate: any) => void
+  tripTitle?: string
+  formattedDate?: string
+  allSelectedPlaces?: any[]
 }>()
 
 const isOpen = ref(false)
@@ -165,8 +168,10 @@ const messages = ref<({
   { text: '안녕! 여행 계획 도와줄까?', isUser: false }
 ])
 
-// Trip Context
-const { allSelectedPlaces, tripTitle, formattedDate } = useTripPlan()
+// Trip Context (From Props)
+const allSelectedPlaces = computed(() => props.allSelectedPlaces || [])
+const tripTitle = computed(() => props.tripTitle || '')
+const formattedDate = computed(() => props.formattedDate || '')
 
 // Dragging Logic
 const containerRef = ref<HTMLElement | null>(null)
