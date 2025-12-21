@@ -10,7 +10,7 @@ export function useNavigate() {
         router.push('/')
         break
       case 'search':
-        router.push('/search')
+        router.push({ path: '/search', query: params?.query })
         break
       case 'trips':
         router.push('/trips')

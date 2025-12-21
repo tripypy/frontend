@@ -299,12 +299,13 @@
          But wait, DiaryCommentModal is for existing Diary. 
          TripLog data is different. I'll comment it out to avoid type errors.
     -->
-    <!-- 
+    <!-- Diary Modal (Log Detail) -->
     <DiaryCommentModal
-      v-if="selectedLog"
-      ...
-    /> 
-    -->
+      v-if="selectedLogId"
+      :log-id="selectedLogId"
+      @close="handleLogClose"
+      @update="handleLogUpdate"
+    />
 
     <!-- Course/Trip Modal -->
     <TripDetailModal
@@ -315,7 +316,13 @@
     />
 
     <!-- Place Detail Modal -->
-    <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
+    <PlaceDetailModal 
+      v-if="selectedPlace" 
+      ref="placeDetailModalRef"
+      :place="selectedPlace" 
+      @close="selectedPlace = null" 
+      @open-trip-log="handleOpenTripLog"
+    />
   </div>
 </template>
 
@@ -352,11 +359,14 @@ const currentSearchQuery = ref('')
 const hasSearched = ref(false)
 const activeTab = ref<'all' | 'places' | 'trips' | 'logs'>('all')
 
-const selectedLog = ref<TripLogSearchDoc | null>(null)
+const selectedLogId = ref<number | null>(null)
 // selectedTrip type is effectively 'any' because TripDetailModal expects a complex object (TripResponseDto-ish + UI fields)
 // We will assign a mapped object to it.
 const selectedTrip = ref<any>(null)
 const selectedPlace = ref<any>(null)
+const placeDetailModalRef = ref<any>(null)
+const selectedCategory = ref<string>('')
+const hasLogUpdates = ref(false)
 
 // API Results
 const filteredTrips = ref<TripSearchDoc[]>([])
@@ -436,10 +446,28 @@ const handleImageError = (event: Event) => {
 }
 
 const handleLogClick = (log: TripLogSearchDoc) => {
-  // selectedLog.value = log 
-  // Need to implement Log detail view/modal or navigation
-  // For now just set select for potential modal use
-  selectedLog.value = log
+  selectedLogId.value = log.log_id
+}
+
+const handleOpenTripLog = (logId: number) => {
+    selectedLogId.value = logId
+}
+
+const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
+    hasLogUpdates.value = true
+    if (placeDetailModalRef.value) {
+        placeDetailModalRef.value.updateTripLogState(payload.logId, { likeCount: payload.likeCount, liked: payload.liked })
+    }
+}
+
+const handleLogClose = () => {
+    selectedLogId.value = null
+    if (hasLogUpdates.value) {
+        if (placeDetailModalRef.value) {
+            placeDetailModalRef.value.refreshWithEffect()
+        }
+        hasLogUpdates.value = false
+    }
 }
 
 const handleTripClick = async (trip: TripSearchDoc) => {
@@ -696,22 +724,32 @@ const allDiaries = [
 
 const hotPlaces = ref<any[]>([])
 
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
 onMounted(async () => {
-  try {
-    const places = await spotApi.getHotPlaces()
-    hotPlaces.value = places.map((place : any) => ({
-        ...place,
-        imageUrl: place.thumbnailUrl, // Map thumbnail to imageUrl
-        location: place.address,      // Map address to location
-        rating: 0.0,                  // Default (API missing)
-        views: 0,                     // Default (API missing)
-        tags: place.category ? place.category.split(' > ').slice(-1) : ['핫플레이스'] // Generate tag from category
-    }))
-  } catch (e) {
-      console.error("Failed to fetch hot places", e)
-      // Fallback empty or keep empty
-      hotPlaces.value = []
-  }
+    // 1. Check for query param 'q' (Keyword Search)
+    if (route.query.q) {
+        searchQuery.value = route.query.q as string
+        handleSearch()
+    }
+
+    // 2. Load Hot Places
+    try {
+        const places = await spotApi.getHotPlaces()
+        hotPlaces.value = places.map((place: any) => ({
+            ...place,
+            imageUrl: place.thumbnailUrl,
+            location: place.address,
+            rating: 0.0,
+            views: 0,
+            tags: place.category ? place.category.split(' > ').slice(-1) : ['핫플레이스']
+        }))
+    } catch (e) {
+        console.error("Failed to fetch hot places", e)
+        hotPlaces.value = []
+    }
 })
 
 // Clean up Mock Data - filteredCourses logic removed

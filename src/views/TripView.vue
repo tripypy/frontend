@@ -89,7 +89,7 @@ import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { useRouter } from 'vue-router'
-import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index' // Added getTripDetail
+import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index' // Keep getTripDetail for own modal usage
 import type { TripResponseDto, TripDetailResponseDto } from '@/apis/trip/types' // Added TripDetailResponseDto
 import { TripStatus } from '@/types/common'
 
@@ -121,7 +121,7 @@ const handleCreateNewTrip = async () => {
   try {
     const newTrip = await createTrip() // API 호출
     console.log('newTrip:', newTrip) // newTrip 값 확인
-    router.push(`/trips/${newTrip.id}`) // 생성된 여행의 상세 페이지로 이동 (newTrip.id 사용)
+    handleNavigate('trip-edit', { id: newTrip.id })
   } catch (error) {
     console.error('여행 계획 생성 실패:', error)
     alert('여행 계획 생성에 실패했습니다.')

@@ -1,11 +1,11 @@
 import apiClient from '@/apis/http'
 import type {
-    TripLogCommentRequest,
-    TripLogCommentResponse,
-    TripLogLikeResponse,
-    TripLogFeedResponseDto 
+  TripLogCommentRequest,
+  TripLogCommentResponse,
+  TripLogLikeResponse,
+  TripLogFeedResponseDto
 } from '@/apis/trip-log/types'
-  
+
 import type { TripLogDetail } from '@/types/trip/trip.model'
 
 /**
@@ -84,12 +84,37 @@ export async function getTripLogFeed(
   const cursorParam = params.cursor !== null && params.cursor !== undefined
     ? { cursor: params.cursor }
     : {};
-  
+
   const response = await apiClient.get<TripLogFeedResponseDto>('/trip-logs/feed', {
     params: {
       ...cursorParam,
       limit: params.limit ?? 10,
     },
+  });
+
+  return response.data;
+}
+
+/**
+ * 특정 장소가 포함된 여행 기록을 조회하는 API 함수 (무한 스크롤)
+ * @param spotId 장소 ID
+ * @param params.cursor 다음 페이지를 위한 커서 값
+ * @param params.limit 페이지 당 항목 수 (기본 10)
+ */
+export async function getTripLogsBySpot(
+  spotId: number,
+  params: GetTripLogFeedParams
+): Promise<TripLogFeedResponseDto> {
+  const cursorParam = params.cursor !== null && params.cursor !== undefined
+    ? { cursor: params.cursor }
+    : {};
+
+  const response = await apiClient.get<TripLogFeedResponseDto>('/trip-logs', {
+    params: {
+      spotId,
+      ...cursorParam,
+      limit: params.limit ?? 10,
+    }
   });
 
   return response.data;

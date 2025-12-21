@@ -67,17 +67,6 @@ export interface TripResponseDto {
   comments?: number
 }
 
-// 여행 요약 응답 DTO 인터페이스 (새로 추가됨)
-export interface TripSummaryResponseDto {
-  id: number
-  title: string
-  startDate: string
-  endDate: string
-  status: TripStatus
-  visibility: TripVisibility
-  day1Items: TripItemResponseDto[]
-}
-
 // 여행 정보 수정 요청 DTO
 export interface TripUpdateRequestDto {
   title?: string

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
 const apiClient = axios.create({
-  baseURL: 'https://tritt.o-r.kr/api', // Standard Spring Boot port
+  baseURL: 'http://localhost:8080/api', // Standard Spring Boot port
   headers: {
     'Content-Type': 'application/json',
   },
@@ -10,7 +10,7 @@ const apiClient = axios.create({
 });
 
 export const refreshClient = axios.create({
-  baseURL: 'https://tritt.o-r.kr/api',
+  baseURL: 'http://localhost:8080/api',
   withCredentials: true,
 })
 
