@@ -12,7 +12,8 @@ export interface Place {
     phone?: string
     placeUrl?: string
     memo?: string // 아이템 메모
-    url?: string 
+    url?: string
+    thumbnailUrl?: string // 썸네일 이미지 URL
 }
 
 /**
@@ -22,6 +23,5 @@ export interface DayPlan {
     dayNumber: number
     places: Place[]
 }
-  
 
-  
+

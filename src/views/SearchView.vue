@@ -378,8 +378,8 @@ const filteredPlaces = computed(() => {
   return searchResults.value.map(place => ({
     id: place.id,
     name: place.name,
-    // API에서 이미지가 오지 않으므로 null 설정 (UI에서 아이콘으로 대체)
-    imageUrl: null,
+    // API에서 이미지가 오면 사용, 없으면 null
+    imageUrl: place.thumbnailUrl || null,
     // 평점 정보 없음
     rating: 0.0,
     location: place.address,
