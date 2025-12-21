@@ -1,0 +1,230 @@
+<template>
+  <div 
+    ref="containerRef"
+    class="fixed z-50 font-sans transition-opacity duration-200"
+    :class="{ 'pointer-events-none': !isOpen && !isDragging, 'cursor-move': isDragging }"
+    :style="containerStyle"
+  >
+    <!-- Floating Button (Anchor) -->
+    <button
+      @mousedown="startDrag"
+      @click="toggleChat"
+      class="group relative w-14 h-14 pointer-events-auto cursor-grab active:cursor-grabbing"
+      :class="{ 'scale-95': isDragging }"
+    > 
+      <div class="absolute inset-0 bg-[#2C2C2C] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.2)] group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)] transition-all duration-300"></div>
+      
+      <div class="absolute inset-0 flex items-center justify-center text-white">
+        <MessageCircle 
+          v-if="!isOpen" 
+          class="w-7 h-7 group-hover:scale-110 transition-transform duration-300" 
+          stroke-width="2"
+        />
+        <X 
+          v-else 
+          class="w-7 h-7" 
+          stroke-width="2"
+        />
+      </div>
+    </button>
+
+    <!-- Chat Window (Absolute Positioned Upwards) -->
+    <transition
+      enter-active-class="transition-all duration-300 ease-out origin-bottom-right"
+      enter-from-class="opacity-0 scale-90 translate-y-4"
+      enter-to-class="opacity-100 scale-100 translate-y-0"
+      leave-active-class="transition-all duration-200 ease-in origin-bottom-right"
+      leave-from-class="opacity-100 scale-100 translate-y-0"
+      leave-to-class="opacity-0 scale-90 translate-y-4"
+    >
+      <div
+        v-if="isOpen"
+        class="absolute bottom-20 right-0 w-[360px] h-[550px] bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden pointer-events-auto border border-gray-100"
+      >
+        <!-- Header -->
+        <div class="bg-[#2C2C2C] p-4 flex justify-between items-center text-white">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <Bot class="w-5 h-5 text-white" />
+            </div>
+            <div class="flex flex-col">
+              <span class="font-bold text-sm tracking-wide">Trip AI Assistant</span>
+              <span class="text-[10px] text-gray-300">Always here to help</span>
+            </div>
+          </div>
+          <button 
+            @click.stop="isOpen = false" 
+            class="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="flex-1 overflow-y-auto p-4 bg-white space-y-4 custom-scrollbar">
+          <div v-for="(msg, index) in messages" :key="index" :class="[
+            'flex',
+            msg.isUser ? 'justify-end' : 'justify-start'
+          ]">
+            <!-- Message Bubble -->
+            <div 
+              :class="[
+                'max-w-[85%] p-3.5 text-sm leading-relaxed shadow-sm',
+                msg.isUser 
+                  ? 'bg-[#9BCCC4] text-white rounded-2xl rounded-tr-sm' 
+                  : 'bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm'
+              ]"
+            >
+              {{ msg.text }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-white border-t border-gray-100">
+          <div class="relative flex items-center gap-2">
+            <input
+              v-model="inputMessage"
+              @keyup.enter="sendMessage"
+              type="text"
+              placeholder="Ask anything about your trip..."
+              class="w-full pl-5 pr-12 py-3.5 bg-[#F8F9FA] border border-transparent rounded-full text-sm placeholder:text-gray-400 focus:outline-none focus:bg-white focus:border-[#9BCCC4] focus:ring-2 focus:ring-[#9BCCC4]/20 transition-all shadow-inner"
+            />
+            <button 
+              @click="sendMessage"
+              class="absolute right-2 p-2 bg-[#2C2C2C] text-white rounded-full hover:bg-black hover:scale-105 active:scale-95 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              :disabled="!inputMessage.trim()"
+            >
+              <Send class="w-4 h-4 ml-0.5" stroke-width="2.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { MessageCircle, X, Send, Bot } from 'lucide-vue-next'
+
+const isOpen = ref(false)
+const inputMessage = ref('')
+const messages = ref([
+  { text: 'HELLO! 여행 계획 도움이 필요하신가요?', isUser: false }
+])
+
+// Dragging Logic
+const containerRef = ref<HTMLElement | null>(null)
+const position = ref({ x: 0, y: 0 })
+const isDragging = ref(false)
+const dragOffset = ref({ x: 0, y: 0 })
+let isDragGesture = false 
+
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    position.value = {
+      x: window.innerWidth - 80, 
+      y: window.innerHeight - 80
+    }
+  }
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  window.removeEventListener('mousemove', onDrag)
+  window.removeEventListener('mouseup', stopDrag)
+})
+
+const handleResize = () => {
+  // Keep position safe? 
+}
+
+const containerStyle = computed(() => {
+  return {
+     left: `${position.value.x}px`,
+     top: `${position.value.y}px`
+  }
+})
+
+const startDrag = (e: MouseEvent) => {
+  isDragging.value = true
+  isDragGesture = false
+  dragOffset.value = {
+    x: e.clientX - position.value.x,
+    y: e.clientY - position.value.y
+  }
+  
+  window.addEventListener('mousemove', onDrag)
+  window.addEventListener('mouseup', stopDrag)
+}
+
+const onDrag = (e: MouseEvent) => {
+  if (!isDragging.value) return
+  isDragGesture = true
+  
+  let newX = e.clientX - dragOffset.value.x
+  let newY = e.clientY - dragOffset.value.y
+  
+  const maxX = window.innerWidth - 60
+  const maxY = window.innerHeight - 60
+  
+  newX = Math.max(10, Math.min(newX, maxX))
+  newY = Math.max(10, Math.min(newY, maxY))
+  
+  position.value = { x: newX, y: newY }
+}
+
+const stopDrag = () => {
+  isDragging.value = false
+  window.removeEventListener('mousemove', onDrag)
+  window.removeEventListener('mouseup', stopDrag)
+}
+
+const toggleChat = () => {
+  if (isDragGesture) return
+  isOpen.value = !isOpen.value
+  isDragGesture = false
+}
+
+const sendMessage = () => {
+  if (!inputMessage.value.trim()) return
+
+  messages.value.push({
+    text: inputMessage.value,
+    isUser: true
+  })
+
+  const userText = inputMessage.value
+  inputMessage.value = ''
+
+  setTimeout(() => {
+    messages.value.push({
+      text: `Let me check on "${userText}"... (AI Coming Soon)`,
+      isUser: false
+    })
+  }, 1000)
+}
+</script>
+
+<style scoped>
+.font-sans {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 99px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #D1D5DB;
+}
+</style>

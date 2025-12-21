@@ -89,6 +89,9 @@
         />
       </div>
     </div>
+
+    <!-- AI Chatbot Floating Button -->
+    <TripAiChat />
   </div>
 </template>
 
@@ -106,7 +109,8 @@ import type { Place } from '@/types/trip/place.model'
 import { useResizablePanel } from '@/composables/common/useResizablePanel'
 import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 import { useTripPlan } from '@/composables/trip/useTripPlan'
-import { useMapInteraction } from '@/composables/trip/useMapInteraction' // [NEW]
+import { useMapInteraction } from '@/composables/trip/useMapInteraction'
+import TripAiChat from '@/components/trip/TripAiChat.vue' // [NEW]
 
 // 1. UI Resizer
 const { width: panelWidth, startResize } = useResizablePanel({
