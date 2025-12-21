@@ -36,6 +36,7 @@
       />
 
       <div
+        v-if="trip.isEditMode.value"
         class="w-[6px] -ml-[3px] z-30 cursor-col-resize flex items-center justify-center hover:bg-[#9BCCC4] transition-colors opacity-0 hover:opacity-100 active:opacity-100 active:bg-[#9BCCC4]"
         @mousedown="startResize"
       >
@@ -111,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { RotateCw } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
@@ -127,6 +128,14 @@ import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 import { useTripPlan } from '@/composables/trip/useTripPlan'
 import { useMapInteraction } from '@/composables/trip/useMapInteraction'
 import TripAiChat from '@/components/trip/TripAiChat.vue' // [NEW]
+
+// 1. 패널 리사이징 로직
+const initialPanelWidth = 300
+const { width: panelWidth, startResize } = useResizablePanel({
+  initialWidth: initialPanelWidth,
+  minWidth: 200,
+  maxWidth: 300
+})
 
 // [NEW] AI 추천을 위한 주변 후보 장소 검색 (Frontend Kakao SDK 사용)
 // 다양한 카테고리 검색 (관광지, 문화시설, 음식점, 카페, 공원)
@@ -199,6 +208,12 @@ const {
 
 // 3. 여행 데이터 로직
 const trip = useTripPlan()
+
+watch(() => trip.isEditMode.value, (newVal) => {
+    if (!newVal) {
+        panelWidth.value = initialPanelWidth
+    }
+})
 
 // 4. [NEW] 지도 인터랙션 로직 (위의 상태들을 주입해서 연결)
 const mapInteraction = useMapInteraction({
