@@ -6,7 +6,6 @@
         @click.stop
       >
         <!-- Header Section -->
-        <!-- Header Section -->
         <div class="relative w-full min-h-[250px] flex flex-col justify-end overflow-hidden" 
              :class="localPlace.imageUrl ? 'bg-gray-900' : 'bg-white border-b-[3px] border-[#2C2C2C]'">
              

@@ -48,7 +48,7 @@
 
       <div class="flex-1 flex overflow-hidden">
         <div
-          class="w-[320px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0"
+          class="w-[400px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0"
         >
           <div class="p-4 border-b-[2px] border-gray-200">
             <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
@@ -133,10 +133,22 @@
           </div>
 
           <!-- Place Detail Panel -->
-          <PlaceDetailPanel :place="selectedPlace" @close="selectedPlace = null" />
+          <PlaceDetailPanel 
+              :place="selectedPlace" 
+              @close="selectedPlace = null" 
+              @open-detail="handleOpenPlaceDetailModal"
+          />
         </div>
       </div>
     </div>
+    
+    <!-- Nested Place Detail Modal (z-index should be higher than this modal if not using teleport, but fixed inset-0 inside fixed inset-0 is tricky without teleport or high z-index) -->
+    <!-- Assuming PlaceDetailModal has high z-index (z-[60] vs this z-50) -->
+    <PlaceDetailModal 
+        v-if="showPlaceDetailModal && detailedPlace" 
+        :place="detailedPlace" 
+        @close="showPlaceDetailModal = false" 
+    />
   </div>
 </template>
 
@@ -145,6 +157,7 @@ import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
 import { Calendar, MapPin, Edit, ListChecks, Shield } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
+import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
 
 interface DayPlanDisplay {
@@ -163,6 +176,8 @@ const kakaoMapRef = ref<any>(null)
 const activeDay = ref(1)
 const selectedPlace = ref<SpotResponseDto | null>(null)
 const selectedMarkerId = ref<number | string | null>(null)
+const showPlaceDetailModal = ref(false)
+const detailedPlace = ref<SpotResponseDto | null>(null)
 
 const days = computed<DayPlanDisplay[]>(() => {
   const grouped = props.trip.tripItems.reduce((acc, item) => {
@@ -258,6 +273,11 @@ const handleMarkerClick = (id: number | string) => {
   if (place) {
     handlePlaceClick(place)
   }
+}
+
+const handleOpenPlaceDetailModal = (place: SpotResponseDto) => {
+    detailedPlace.value = place
+    showPlaceDetailModal.value = true
 }
 
 const displayDuration = computed(() => {
