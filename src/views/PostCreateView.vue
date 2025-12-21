@@ -1,53 +1,54 @@
 <template>
-  <div class="min-h-screen bg-[#F5F5F5] font-sans selection:bg-[#F9CA6B] selection:text-black">
+  <div class="h-screen bg-[#F5F5F5] font-sans selection:bg-[#F9CA6B] selection:text-black flex flex-col overflow-hidden">
     <TravelNavbar current-page="main" @navigate="handleNavigate" />
-    <div class="pt-28 max-w-[1440px] mx-auto px-6 pb-12">
-    <section class="mt-20 flex flex-col gap-6 bg-white rounded-2xl shadow-lg p-8">
-      <h2 class="text-2xl font-bold mb-6">여행 기록 작성</h2>
 
-      <!-- 제목 -->
-      <input
-        type="text"
-        v-model="title"
-        placeholder="여행 기록 제목을 입력하세요"
-        class="w-full mb-6 px-4 py-3 text-lg border border-gray-300 rounded-xl
-               focus:outline-none focus:ring-2 focus:ring-gray-400"
-      />
+    <div class="flex-grow pt-24 max-w-[1700px] mx-auto w-full px-4 pb-0 flex flex-col box-border overflow-hidden">
+      <section class="flex flex-col flex-grow bg-white rounded-t-2xl shadow-sm p-4 md:p-8 overflow-hidden h-full">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold text-gray-800">여행 기록 작성</h2>
+          <div class="flex items-center gap-4">
+            <label class="flex items-center text-sm font-medium text-gray-600">
+              공개 범위
+              <select
+                v-model="visibility"
+                class="ml-2 px-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50
+                      focus:outline-none focus:ring-1 focus:ring-black"
+              >
+                <option value="PUBLIC">전체 공개</option>
+                <option value="PRIVATE">비공개</option>
+              </select>
+            </label>
+            <button
+              class="px-8 py-2.5 rounded-full font-bold text-white
+                    bg-black hover:bg-gray-800
+                    disabled:bg-gray-300 disabled:cursor-not-allowed
+                    transition-all active:scale-95 shadow-md"
+              :disabled="!isFormValid || isSubmitting"
+              @click="submitPost"
+            >
+              {{ isSubmitting ? '저장 중...' : '기록 저장하기' }}
+            </button>
+          </div>
+        </div>
 
-      <!-- 에디터 -->
-      <div class="min-h-[360px] mb-6">
-        <ContentEditor v-model="postContent" />
-      </div>
+        <input
+          type="text"
+          v-model="title"
+          placeholder="여행 기록 제목을 입력하세요"
+          class="w-full px-4 py-4 text-3xl font-bold border-b border-gray-50
+                focus:outline-none focus:border-black transition-colors mb-4"
+        />
 
-      <!-- 옵션 -->
-      <div class="flex justify-end mb-6">
-        <label class="flex items-center text-sm font-medium text-gray-700">
-          공개 범위
-          <select
-            v-model="visibility"
-            class="ml-2 px-3 py-1 border border-gray-300 rounded-lg
-                   focus:outline-none focus:ring-2 focus:ring-gray-400"
-          >
-            <option value="PUBLIC">전체 공개</option>
-            <option value="PRIVATE">비공개</option>
-          </select>
-        </label>
-      </div>
+        <div class="flex-grow flex flex-col min-h-0 relative h-full">
+          <ContentEditor v-model="postContent" class="h-full" />
+        </div>
 
-      <!-- 저장 버튼 -->
-      <div class="flex justify-end">
-        <button
-          class="px-6 py-3 rounded-full font-bold text-white
-                 bg-gray-900 hover:bg-gray-800
-                 disabled:bg-gray-400 disabled:cursor-not-allowed
-                 transition"
-          :disabled="!isFormValid || isSubmitting"
-          @click="submitPost"
-        >
-          {{ isSubmitting ? '저장 중...' : '기록 저장하기' }}
-        </button>
-      </div>
-    </section>
+        <!-- Debug HTML View (Real-time) -->
+        <div class="mt-4 p-4 bg-gray-900 text-green-400 rounded-xl overflow-auto min-h-48 text-xs font-mono">
+          <h3 class="text-white font-bold mb-2 uppercase tracking-wider">[실시간 HTML 데이터 확인]</h3>
+          <pre>{{ postContent }}</pre>
+        </div>
+      </section>
     </div>
   </div>
 </template>

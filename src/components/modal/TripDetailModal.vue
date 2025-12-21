@@ -81,7 +81,7 @@
                 <span> {{ tripLog.likeCount }}</span>
               </div>
               <div class="flex items-center gap-2 border-2 border-black rounded-full px-[7px] py-[2px]">
-                <Bubbles :size="18" :stroke-width="2.5" />
+                <MessageCircle :size="18" :stroke-width="2.5" />
                 <span> {{ tripLog.commentCount }}</span>
               </div>
             </div>
@@ -103,9 +103,9 @@
           </button>
           <button
             v-if="activeTab === 'log' && !logLoading && tripLog && trip.isOwner"
-            class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
+            class="flex items-center gap-2 px-5 py-2.5 bg-[#ff856c] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
-            <Edit :size="16" :stroke-width="3" /> DELETE
+            <Trash :size="16" :stroke-width="3" /> DELETE
           </button>
         </div>
       </div>
@@ -229,7 +229,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield, Pencil, User, Heart, Bubbles } from 'lucide-vue-next'
+import { Calendar, MapPin, Edit, ListChecks, Shield, Pencil, User, Heart, MessageCircle, Trash } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
