@@ -91,10 +91,10 @@ export function useTripPlan() {
       tripId.value = Number(route.params.id)
       await reloadTripData()
 
-      isEditMode.value = true
-      if (tripVisibility.value === 'PUBLIC') {
-        // Changed from tripStatus to tripVisibility
+      if (route.query.edit === 'true') {
         enterEditMode()
+      } else {
+        isEditMode.value = false
       }
     }
   }

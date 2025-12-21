@@ -86,220 +86,93 @@
         <div class="space-y-4">
           <!-- All Tab or Places Tab -->
           <template v-if="activeTab === 'all' || activeTab === 'places'">
-            <div v-if="filteredPlaces.length > 0">
-              <h4
-                v-if="activeTab === 'all'"
-                class="text-xl font-black mb-4 uppercase tracking-tight"
-              >
-                장소
-              </h4>
-              <div class="space-y-3">
-                <div
-                  v-for="(place, index) in filteredPlaces"
+            <div v-if="filteredPlaces.length > 0 || (activeTab === 'all' && totalResultsCount > 0)">
+              <div class="flex items-center justify-between mb-4">
+                <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
+                  PLACE
+                </h4>
+                <button
+                  v-if="activeTab === 'all'"
+                  @click="activeTab = 'places'"
+                  class="text-sm font-bold text-gray-500 hover:text-[#2C2C2C] transition-colors"
+                >
+                  + 더보기
+                </button>
+              </div>
+              <div v-if="filteredPlaces.length > 0" class="space-y-3">
+                <SearchPlaceItem
+                  v-for="(place, index) in activeTab === 'all'
+                    ? filteredPlaces.slice(0, 3)
+                    : filteredPlaces"
                   :key="place.id"
+                  :place="place"
                   @click="handlePlaceClick(place, index)"
-                  class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
-                >
-                  <div class="flex items-center gap-4">
-                    <!-- Image -->
-                    <div
-                      class="w-24 h-24 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
-                    >
-                      <img
-                        :src="place.imageUrl"
-                        :alt="place.name"
-                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        @error="handleImageError"
-                      />
-                    </div>
-                    <!-- Content -->
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-start justify-between mb-1">
-                        <h5 class="text-xl font-black group-hover:text-[#9BCCC4] transition-colors">
-                          {{ place.name }}
-                        </h5>
-                        <div
-                          class="flex items-center gap-1 px-2.5 py-1 bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-full flex-shrink-0 ml-2"
-                        >
-                          <Star :size="14" :stroke-width="2" class="fill-current text-[#2C2C2C]" />
-                          <span class="text-xs font-black">{{ place.rating }}</span>
-                        </div>
-                      </div>
-                      <div class="flex items-center gap-2 text-xs font-bold mb-2 text-gray-600">
-                        <MapPin :size="14" :stroke-width="2" />
-                        <span>{{ place.location }}</span>
-                      </div>
-                      <p class="text-sm font-medium text-gray-700 mb-2 line-clamp-2">
-                        {{ place.description }}
-                      </p>
-                      <div class="flex items-center justify-between">
-                        <div class="flex gap-1.5 flex-wrap">
-                          <span
-                            v-for="(tag, idx) in place.tags"
-                            :key="idx"
-                            class="px-2.5 py-0.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-full text-xs font-black"
-                          >
-                            #{{ tag }}
-                          </span>
-                        </div>
-                        <div class="text-xs font-bold text-gray-500">
-                          {{ place.views.toLocaleString() }} 조회
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                />
+              </div>
+              <div v-else class="text-center py-8 text-gray-400 font-bold text-sm bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  검색 결과가 없습니다.
               </div>
             </div>
           </template>
 
-          <!-- All Tab or Courses Tab -->
-          <template v-if="activeTab === 'all' || activeTab === 'courses'">
-            <div v-if="filteredCourses.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
-              <h4
-                v-if="activeTab === 'all'"
-                class="text-xl font-black mb-4 uppercase tracking-tight"
-              >
-                코스
-              </h4>
-              <div class="space-y-3">
-                <div
-                  v-for="course in filteredCourses"
-                  :key="course.id"
-                  @click="handleCourseClick(course)"
-                  class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
+          <!-- All Tab or Trips Tab -->
+          <template v-if="activeTab === 'all' || activeTab === 'trips'">
+            <div v-if="filteredTrips.length > 0 || (activeTab === 'all' && totalResultsCount > 0)" :class="{ 'mt-8': activeTab === 'all' }">
+              <div class="flex items-center justify-between mb-4">
+                <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
+                  TRIP
+                </h4>
+                <button
+                  v-if="activeTab === 'all'"
+                  @click="activeTab = 'trips'"
+                  class="text-sm font-bold text-gray-500 hover:text-[#2C2C2C] transition-colors"
                 >
-                  <div class="flex items-center gap-4">
-                    <!-- Image -->
-                    <div
-                      class="w-24 h-24 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
-                    >
-                      <img
-                        :src="course.imageUrl"
-                        :alt="course.title"
-                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        @error="handleImageError"
-                      />
-                    </div>
-                    <!-- Content -->
-                    <div class="flex-1 min-w-0">
-                      <h5
-                        class="text-xl font-black mb-1 group-hover:text-[#E88555] transition-colors"
-                      >
-                        {{ course.title }}
-                      </h5>
-                      <div class="flex items-center gap-2 text-xs font-bold mb-2 text-gray-600">
-                        <MapPin :size="14" :stroke-width="2" />
-                        <span>{{ course.spots }}개 장소</span>
-                        <span class="text-gray-400">•</span>
-                        <span>{{ course.duration }}</span>
-                      </div>
-                      <p class="text-sm font-medium text-gray-700 mb-2 line-clamp-2">
-                        {{ course.description }}
-                      </p>
-                      <div class="flex items-center justify-between">
-                        <div class="flex gap-1.5 flex-wrap">
-                          <span
-                            v-for="(tag, idx) in course.tags"
-                            :key="idx"
-                            class="px-2.5 py-0.5 bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-full text-xs font-black"
-                          >
-                            #{{ tag }}
-                          </span>
-                        </div>
-                        <div class="text-xs font-bold text-gray-500">
-                          {{ course.views.toLocaleString() }} 조회
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  + 더보기
+                </button>
+              </div>
+              <div v-if="filteredTrips.length > 0" class="space-y-3">
+                <SearchTripItem
+                  v-for="trip in activeTab === 'all'
+                    ? filteredTrips.slice(0, 3)
+                    : filteredTrips"
+                  :key="trip.trip_id"
+                  :trip="trip"
+                  @click="handleTripClick(trip)"
+                />
+              </div>
+              <div v-else class="text-center py-8 text-gray-400 font-bold text-sm bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  검색 결과가 없습니다.
               </div>
             </div>
           </template>
 
-          <!-- All Tab or Diaries Tab -->
-          <template v-if="activeTab === 'all' || activeTab === 'diaries'">
-            <div v-if="filteredDiaries.length > 0" :class="{ 'mt-8': activeTab === 'all' }">
-              <h4
-                v-if="activeTab === 'all'"
-                class="text-xl font-black mb-4 uppercase tracking-tight"
-              >
-                다이어리
-              </h4>
-              <div class="space-y-3">
-                <div
-                  v-for="diary in filteredDiaries"
-                  :key="diary.id"
-                  @click="handleDiaryClick(diary)"
-                  class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-4 hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] transition-all cursor-pointer group"
+          <!-- All Tab or Logs Tab -->
+          <template v-if="activeTab === 'all' || activeTab === 'logs'">
+            <div v-if="filteredLogs.length > 0 || (activeTab === 'all' && totalResultsCount > 0)" :class="{ 'mt-8': activeTab === 'all' }">
+              <div class="flex items-center justify-between mb-4">
+                <h4 v-if="activeTab === 'all'" class="text-xl font-black uppercase tracking-tight">
+                  LOG
+                </h4>
+                <button
+                  v-if="activeTab === 'all'"
+                  @click="activeTab = 'logs'"
+                  class="text-sm font-bold text-gray-500 hover:text-[#2C2C2C] transition-colors"
                 >
-                  <div class="flex gap-4">
-                    <!-- Images Grid -->
-                    <div class="w-32 h-32 flex-shrink-0">
-                      <div
-                        v-if="diary.images && diary.images.length === 1"
-                        class="w-full h-full border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
-                      >
-                        <img
-                          :src="diary.images[0]"
-                          :alt="diary.title"
-                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          @error="handleImageError"
-                        />
-                      </div>
-                      <div
-                        v-else-if="diary.images && diary.images.length > 1"
-                        class="grid grid-cols-2 gap-1 w-full h-full"
-                      >
-                        <div
-                          v-for="(img, idx) in diary.images.slice(0, 4)"
-                          :key="idx"
-                          class="border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden"
-                        >
-                          <img
-                            :src="img"
-                            :alt="`${diary.title} ${idx + 1}`"
-                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            @error="handleImageError"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Content -->
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2 mb-2">
-                        <div
-                          class="w-6 h-6 rounded-full bg-[#9BCCC4] border-[2px] border-[#2C2C2C]"
-                        ></div>
-                        <span class="text-sm font-black">{{ diary.author }}</span>
-                        <span class="text-xs font-bold text-gray-500">{{ diary.date }}</span>
-                      </div>
-                      <h5
-                        class="text-lg font-black mb-1 group-hover:text-[#9BCCC4] transition-colors"
-                      >
-                        {{ diary.title }}
-                      </h5>
-                      <div class="flex items-center gap-2 text-xs font-bold mb-2 text-gray-600">
-                        <MapPin :size="14" :stroke-width="2" />
-                        <span>{{ diary.location }}</span>
-                      </div>
-                      <p class="text-sm font-medium text-gray-700 mb-3 line-clamp-2">
-                        {{ diary.content }}
-                      </p>
-                      <div class="flex items-center gap-4 text-xs font-bold text-gray-600">
-                        <div class="flex items-center gap-1">
-                          <Heart :size="14" :stroke-width="2" />
-                          <span>{{ diary.likes }}</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                          <MessageCircle :size="14" :stroke-width="2" />
-                          <span>{{ diary.comments }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  + 더보기
+                </button>
+              </div>
+              <div v-if="filteredLogs.length > 0" class="space-y-3">
+                <SearchLogItem
+                  v-for="log in activeTab === 'all'
+                    ? filteredLogs.slice(0, 3)
+                    : filteredLogs"
+                  :key="log.log_id"
+                  :log="log"
+                  @click="handleLogClick(log)"
+                />
+              </div>
+              <div v-else class="text-center py-8 text-gray-400 font-bold text-sm bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  검색 결과가 없습니다.
               </div>
             </div>
           </template>
@@ -309,8 +182,8 @@
             v-if="
               (activeTab === 'all' && totalResultsCount === 0) ||
               (activeTab === 'places' && filteredPlaces.length === 0) ||
-              (activeTab === 'courses' && filteredCourses.length === 0) ||
-              (activeTab === 'diaries' && filteredDiaries.length === 0)
+              (activeTab === 'trips' && filteredTrips.length === 0) ||
+              (activeTab === 'logs' && filteredLogs.length === 0)
             "
             class="text-center py-12"
           >
@@ -382,14 +255,14 @@
                     <span class="text-sm font-black">{{ place.rating }}</span>
                   </div>
                 </div>
-                <div class="flex items-center gap-2 text-sm font-bold mb-2 text-gray-700">
+                
+                <div class="flex items-center gap-2 text-sm font-bold mb-4 text-gray-700">
                   <MapPin :size="16" :stroke-width="2" />
                   <span>{{ place.location }}</span>
                 </div>
-                <p class="text-sm mb-3 font-medium text-gray-700 leading-relaxed">
-                  {{ place.description }}
-                </p>
+                
                 <div class="flex items-center justify-between">
+                  <!-- Tags -->
                   <div class="flex gap-2 flex-wrap">
                     <span
                       v-for="(tag, idx) in place.tags"
@@ -399,6 +272,8 @@
                       #{{ tag }}
                     </span>
                   </div>
+                  
+                  <!-- Views -->
                   <div class="text-xs font-bold text-gray-500">
                     {{ place.views.toLocaleString() }} 조회
                   </div>
@@ -413,62 +288,151 @@
     <ScrollToTop />
 
     <!-- Diary Modal -->
+    <!-- Diary Modal (Needs update if reuse is desired, or use new Log Detail Modal) -->
+    <!-- For now, disable modal loop or adapt if needed. 
+         DiaryCommentModal expects specific props. 
+         Let's assume we might just want to view it for now or skipping detail integration as not requested explicitly?
+         Actually, let's keep it commented out or remove if not compatible. 
+         User only asked for "Card Integration". Detail view wasn't specifying LOGS Detail Modal update.
+         I'll leave it but using selectedLog which might not match props. 
+         Safest is to not render it or implement a placeholder if user clicks. 
+         But wait, DiaryCommentModal is for existing Diary. 
+         TripLog data is different. I'll comment it out to avoid type errors.
+    -->
+    <!-- Diary Modal (Log Detail) -->
     <DiaryCommentModal
-      v-if="selectedDiary"
-      :log-id="selectedDiary.id"
-      :author="selectedDiary.author"
-      :author-avatar="selectedDiary.authorAvatar"
-      :location="selectedDiary.location"
-      :date="selectedDiary.date"
-      :title="selectedDiary.title"
-      :content="selectedDiary.content"
-      :images="selectedDiary.images"
-      :likes="selectedDiary.likes"
-      :comments="selectedDiary.comments"
-      :course="selectedDiary.course"
-      @close="selectedDiary = null"
+      v-if="selectedLogId"
+      :log-id="selectedLogId"
+      @close="handleLogClose"
+      @update="handleLogUpdate"
     />
 
     <!-- Course/Trip Modal -->
     <TripDetailModal
-      v-if="selectedCourse"
-      :trip="selectedCourse"
-      @close="selectedCourse = null"
-      @edit="handleCourseEdit"
+      v-if="selectedTrip"
+      :trip="selectedTrip"
+      @close="selectedTrip = null"
+      @edit="handleTripEdit"
     />
 
     <!-- Place Detail Modal -->
-    <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
+    <PlaceDetailModal 
+      v-if="selectedPlace" 
+      ref="placeDetailModalRef"
+      :place="selectedPlace" 
+      @close="selectedPlace = null" 
+      @open-trip-log="handleOpenTripLog"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
-import { Search, MapPin, Star, Heart, MessageCircle } from 'lucide-vue-next'
+import { Search, MapPin, Star, Heart, MessageCircle, Map, BookOpen } from 'lucide-vue-next'
 import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
+import SearchPlaceItem from '@/components/search/SearchPlaceItem.vue'
+import SearchTripItem from '@/components/search/SearchTripItem.vue'
+import SearchLogItem from '@/components/search/SearchLogItem.vue'
+import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
+import { searchApi, type TripSearchDoc, type TripLogSearchDoc } from '@/apis/search'
+import { getTripDetail } from '@/apis/trip'
+import { spotApi } from '@/apis/spot'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
-const searchQuery = ref('')
+const {
+  searchQuery,
+  searchResults,
+  isSearching,
+  searchPlaces
+} = usePlaceSearch()
+
+// UI에서 표시할 쿼리 (검색 완료 후 업데이트)
 const currentSearchQuery = ref('')
+// 검색 실행 여부
 const hasSearched = ref(false)
-const activeTab = ref<'all' | 'places' | 'courses' | 'diaries'>('all')
-const selectedDiary = ref<any>(null)
-const selectedCourse = ref<any>(null)
+const activeTab = ref<'all' | 'places' | 'trips' | 'logs'>('all')
+
+const selectedLogId = ref<number | null>(null)
+// selectedTrip type is effectively 'any' because TripDetailModal expects a complex object (TripResponseDto-ish + UI fields)
+// We will assign a mapped object to it.
+const selectedTrip = ref<any>(null)
 const selectedPlace = ref<any>(null)
+const placeDetailModalRef = ref<any>(null)
+const selectedCategory = ref<string>('')
+const hasLogUpdates = ref(false)
+
+// API Results
+const filteredTrips = ref<TripSearchDoc[]>([])
+const filteredLogs = ref<TripLogSearchDoc[]>([])
+
+// Computed - Filtered Results
+// 장소: API 결과 사용
+const filteredPlaces = computed(() => {
+  return searchResults.value.map(place => ({
+    id: place.id,
+    name: place.name,
+    // API에서 이미지가 오지 않으므로 null 설정 (UI에서 아이콘으로 대체)
+    imageUrl: null,
+    // 평점 정보 없음
+    rating: 0.0,
+    location: place.address,
+    description: place.address, // 상세 설명이 없으므로 주소로 대체
+    // 카테고리를 태그로 사용
+    tags: place.category ? place.category.split(' > ').slice(-1) : ['장소'],
+    views: 0, // 조회수 정보 없음
+    phone: place.phone,
+    website: place.placeUrl,
+    kakaoPlaceId: place.kakaoPlaceId,
+    lat: place.lat,
+    lng: place.lng
+  }))
+})
 
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
     currentSearchQuery.value = searchQuery.value
     hasSearched.value = true
     activeTab.value = 'all'
+    
+    // Call API
+    searchPlaces()
+    searchTrips()
+    searchLogs()
+  } else {
+    // 검색어가 비어있을 경우 초기화
+    hasSearched.value = false
+    currentSearchQuery.value = ''
+    searchQuery.value = ''
+    activeTab.value = 'all'
+    searchResults.value = []
+    filteredTrips.value = []
+    filteredLogs.value = []
   }
+}
+
+const searchLogs = async () => {
+    try {
+        filteredLogs.value = await searchApi.searchTripLogs(currentSearchQuery.value)
+    } catch (e) {
+        console.error(e)
+        filteredLogs.value = []
+    }
+}
+
+const searchTrips = async () => {
+    try {
+        filteredTrips.value = await searchApi.searchTrips(currentSearchQuery.value)
+    } catch (e) {
+        console.error(e)
+        filteredTrips.value = []
+    }
 }
 
 const searchByKeyword = (keyword: string) => {
@@ -481,24 +445,72 @@ const handleImageError = (event: Event) => {
   target.src = '/images/no-image.jpg'
 }
 
-const handleDiaryClick = (diary: any) => {
-  selectedDiary.value = diary
+const handleLogClick = (log: TripLogSearchDoc) => {
+  selectedLogId.value = log.log_id
 }
 
-const handleCourseClick = (course: any) => {
-  selectedCourse.value = course
+const handleOpenTripLog = (logId: number) => {
+    selectedLogId.value = logId
 }
 
-const handleCourseEdit = (course: any) => {
+const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
+    hasLogUpdates.value = true
+    if (placeDetailModalRef.value) {
+        placeDetailModalRef.value.updateTripLogState(payload.logId, { likeCount: payload.likeCount, liked: payload.liked })
+    }
+}
+
+const handleLogClose = () => {
+    selectedLogId.value = null
+    if (hasLogUpdates.value) {
+        if (placeDetailModalRef.value) {
+            placeDetailModalRef.value.refreshWithEffect()
+        }
+        hasLogUpdates.value = false
+    }
+}
+
+const handleTripClick = async (trip: TripSearchDoc) => {
+  try {
+    const detail = await getTripDetail(trip.trip_id)
+      selectedTrip.value = {
+      ...detail,
+      // Manual mapping for fields that might be missing or need UI transform
+      description: detail.tripItems && detail.tripItems.length > 0 
+          ? detail.tripItems.map((item:any) => item.spot.name).join(' → ') 
+          : '장소 없음',
+      // UI fields Mock/Calculated
+      duration: calculateDuration(detail.startDate, detail.endDate),
+      views: 0, // Mock for now
+      imageUrl: '', // Mock
+    }
+  } catch (e) {
+      console.error(e)
+      alert("여행 상세 정보를 불러오는데 실패했습니다.")
+  }
+}
+
+const calculateDuration = (start?: string, end?: string) => {
+    if (!start || !end) return ''
+    const s = new Date(start)
+    const e = new Date(end)
+    const diffTime = Math.abs(e.getTime() - s.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 
+    return `${diffDays} Days`
+}
+
+const handleTripEdit = (trip: any) => {
   // 편집 모드로 이동
-  router.push(`/create-trip?id=${course.id}`)
-  selectedCourse.value = null
+  router.push(`/create-trip?id=${trip.trip_id}`)
+  selectedTrip.value = null
 }
 
 const handlePlaceClick = (place: any, index?: number) => {
   selectedPlace.value = {
     number: index !== undefined ? index + 1 : 1,
     name: place.name,
+    // API 결과에 맞게 추가 매핑 필요시 여기서 처리
+    ...place
   }
 }
 
@@ -710,60 +722,58 @@ const allDiaries = [
   },
 ]
 
-const hotPlaces = allPlaces.slice(0, 10)
+const hotPlaces = ref<any[]>([])
 
-// Computed - Filtered Results
-const filteredPlaces = computed(() => {
-  if (!currentSearchQuery.value) return []
-  const query = currentSearchQuery.value.toLowerCase()
-  return allPlaces.filter(
-    (place) =>
-      place.name.toLowerCase().includes(query) ||
-      place.location.toLowerCase().includes(query) ||
-      place.description.toLowerCase().includes(query) ||
-      place.tags.some((tag) => tag.toLowerCase().includes(query)),
-  )
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
+onMounted(async () => {
+    // 1. Check for query param 'q' (Keyword Search)
+    if (route.query.q) {
+        searchQuery.value = route.query.q as string
+        handleSearch()
+    }
+
+    // 2. Load Hot Places
+    try {
+        const places = await spotApi.getHotPlaces()
+        hotPlaces.value = places.map((place: any) => ({
+            ...place,
+            imageUrl: place.thumbnailUrl,
+            location: place.address,
+            rating: 0.0,
+            views: 0,
+            tags: place.category ? place.category.split(' > ').slice(-1) : ['핫플레이스']
+        }))
+    } catch (e) {
+        console.error("Failed to fetch hot places", e)
+        hotPlaces.value = []
+    }
 })
 
-const filteredCourses = computed(() => {
-  if (!currentSearchQuery.value) return []
-  const query = currentSearchQuery.value.toLowerCase()
-  return allCourses.filter(
-    (course) =>
-      course.title.toLowerCase().includes(query) ||
-      course.description.toLowerCase().includes(query) ||
-      course.tags.some((tag) => tag.toLowerCase().includes(query)),
-  )
-})
+// Clean up Mock Data - filteredCourses logic removed
 
-const filteredDiaries = computed(() => {
-  if (!currentSearchQuery.value) return []
-  const query = currentSearchQuery.value.toLowerCase()
-  return allDiaries.filter(
-    (diary) =>
-      diary.title.toLowerCase().includes(query) ||
-      diary.content.toLowerCase().includes(query) ||
-      diary.location.toLowerCase().includes(query) ||
-      diary.author.toLowerCase().includes(query),
-  )
-})
+
+// Clean up Mock Data - filteredDiaries logic removed
+
 
 const totalResultsCount = computed(() => {
-  return filteredPlaces.value.length + filteredCourses.value.length + filteredDiaries.value.length
+  return filteredPlaces.value.length + filteredTrips.value.length + filteredLogs.value.length
 })
 
 const tabs = [
-  { id: 'all' as const, label: '전체' },
-  { id: 'places' as const, label: '장소' },
-  { id: 'courses' as const, label: '코스' },
-  { id: 'diaries' as const, label: '다이어리' },
+  { id: 'all' as const, label: 'ALL' },
+  { id: 'places' as const, label: 'PLACE' },
+  { id: 'trips' as const, label: 'TRIP' },
+  { id: 'logs' as const, label: 'LOG' },
 ]
 
 const getTabCount = (tabId: string) => {
   if (tabId === 'all') return totalResultsCount.value
   if (tabId === 'places') return filteredPlaces.value.length
-  if (tabId === 'courses') return filteredCourses.value.length
-  if (tabId === 'diaries') return filteredDiaries.value.length
+  if (tabId === 'trips') return filteredTrips.value.length
+  if (tabId === 'logs') return filteredLogs.value.length
   return 0
 }
 </script>

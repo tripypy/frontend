@@ -12,7 +12,7 @@ export interface Place {
 export const allPlaces: Place[] = [
     {
         id: 1,
-        name: '성수동 카페 투어',
+        name: '포이렛(Pilet)',
         location: '서울 성동구',
         description: '대림창고부터 그리노 성수까지, 트렌디한 카페를 돌아보는 오후 산책',
         rating: 4.8,
@@ -34,7 +34,7 @@ export const allPlaces: Place[] = [
     },
     {
         id: 3,
-        name: '연남동 골목길 산책',
+        name: '연트럴파크',
         location: '서울 마포구',
         description: '히든트랙과 작은 갤러리를 구경하며 여유롭게 걷는 코스',
         rating: 4.9,
@@ -67,7 +67,7 @@ export const allPlaces: Place[] = [
     },
     {
         id: 6,
-        name: '을지로 레트로 골목',
+        name: '만선호프',
         location: '서울 중구',
         description: '인쇄골목과 레스토랑 소공을 거쳐 옛 서울의 정취를 느끼는 코스',
         rating: 4.5,
@@ -89,7 +89,7 @@ export const allPlaces: Place[] = [
     },
     {
         id: 8,
-        name: '강남 청담동 거리',
+        name: '도산공원',
         location: '서울 강남구',
         description: '청담동 에르메스부터 압구정 감성 카페까지 럭셔리 거리 투어',
         rating: 4.8,
