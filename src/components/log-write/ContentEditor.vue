@@ -35,6 +35,7 @@
     display: block;
     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     transition: all 0.2s ease;
+    margin-bottom: 16px;
 }
 
 :deep(.ql-editor img.uploading) {
@@ -88,7 +89,7 @@
 
 
 <script setup lang="ts">
-import Quill from 'quill'
+import { Quill } from '@vueup/vue-quill'
 import { ref, watch, computed, type Ref } from 'vue'
 import { getPresignedUrl} from '@/apis/trip-log/index'
 import { uploadToS3, getPublicImageUrl } from '@/composables/trip-log/useImageUpload'
@@ -127,14 +128,20 @@ Image.formats = function(domNode: HTMLElement) {
 
 // 프로토타입의 format 메서드도 확장합니다 (속성 쓰기용).
 const originalFormat = Image.prototype.format;
-Image.prototype.format = function(name: string, value: any) {
+Image.prototype.format = function(name: string, value: string | null) {
   if (name === 'upload-id') {
     if (value) {
       this.domNode.setAttribute('data-upload-id', value);
     } else {
       this.domNode.removeAttribute('data-upload-id');
     }
-  } else {
+  } else if (name === 'uploading') {
+    if (value) {
+      this.domNode.classList.add('uploading');
+    } else {
+      this.domNode.classList.remove('uploading');
+    }
+  } else if (originalFormat) {
     originalFormat.call(this, name, value);
   }
 };
@@ -154,6 +161,7 @@ const content = ref(props.modelValue)
 const quillInstance: Ref<Quill | null> = ref(null)
 const isUploading = ref(false)
 const uploadingImages = ref<UploadingImage[]>([])
+const isInitialized = ref(false)
 
 const avgProgress = computed(() => {
   if (uploadingImages.value.length === 0) return 0
@@ -184,7 +192,7 @@ const uploadImageAndGetUrl = async (file: File): Promise<string> => {
   }
   await uploadToS3(data.presignedUrl, file)
 
-  const publicUrl = (data as any).imageUrl || getPublicImageUrl(data.presignedUrl)
+  const publicUrl = (data as { imageUrl?: string }).imageUrl || getPublicImageUrl(data.presignedUrl)
   if (!publicUrl) {
     throw new Error('이미지 URL 추출에 실패했습니다.')
   }
@@ -222,33 +230,19 @@ const uploadAndInsertImage = async (file: File) => {
     console.log('[Debug] 임시 이미지 삽입 시도:', localUrl)
 
     // insertEmbed 실행 (이제 sanitize가 패치되었으므로 blob 주소가 유지되어야 함)
-    quill.insertEmbed(insertIndex, 'image', localUrl, 'user') // <--- 첫 번째 삽입만 유지
+    // 인덱스 1만큼 삽입
+    quill.insertEmbed(insertIndex, 'image', localUrl, 'user')
 
-    // 2️⃣ ID 부여 및 스타일링
-    // insertEmbed 직후 해당 인덱스의 Leaf(Blot)를 찾는 것이 가장 안전
-    const [leaf] = quill.getLeaf(insertIndex)
-    if (leaf && leaf.domNode instanceof HTMLElement) {
-        leaf.domNode.setAttribute('data-upload-id', item.id)
-        leaf.domNode.classList.add('uploading')
+    // 2️⃣ ID 부여 및 스타일링 (Quill의 포맷 시스템 사용 - 델타에 저장됨)
+    quill.formatText(insertIndex, 1, 'upload-id', item.id, 'user')
+    quill.formatText(insertIndex, 1, 'uploading', 'true', 'user')
 
-        // leaf.format 호출은 제거하고, 중복 호출된 insertEmbed 제거
-        console.log('[Debug] 이미지 삽입 및 ID 부여 성공:', item.id)
-    }
+    console.log('[Debug] 이미지 삽입 및 ID 부여 성공:', item.id)
 
-    // 커서 정리 (⭐ 이 부분을 수정합니다.)
-    // 이미지 Blot은 길이 1. Quill이 자동으로 뒤에 문단(P) 블록을 만들어주므로
-    // 명시적인 \n 추가 없이 커서를 이미지 다음 위치(새 문단 시작)로 옮깁니다.
-    // 만약 Quill이 \n을 자동으로 추가한다면, cur + 2 위치가 가장 안전합니다.
-    // 하지만 대부분은 cur + 1로 커서를 옮긴 후 사용자가 엔터를 치게 유도하는 게 좋습니다.
-
-    // 1. 이미지가 삽입된 위치: cur
-    // 2. 이미지 Blot의 길이: 1
-    // 3. 커서가 위치할 곳: cur + 1
-    quill.setSelection(cur + 1, 0, 'silent');
+    // 커서 정리: 이미지 다음으로 이동
+    quill.setSelection(insertIndex + 1, 0, 'silent');
 
     // 3️⃣ S3 업로드
-    // ... (S3 업로드 로직은 동일) ...
-
     const resizedFile = await resizeImage(file, 1000, 1000, 0.8)
     const finalUrl = await uploadImageAndGetUrl(resizedFile)
 
@@ -256,62 +250,76 @@ const uploadAndInsertImage = async (file: File) => {
     item.progress = 100
 
     // 4️⃣ 이미지 교체
-    // ... (이미지 교체 로직은 동일) ...
     console.log('[Debug] 교체 프로세스 시작. 아이디:', item.id);
 
-    // DOM에서 찾기
-    const targetImg = quill.root.querySelector(`img[data-upload-id="${item.id}"]`)
+    // [중요] 교체 직전 에디터 모델 동기화 (레이스 컨디션 방지)
+    quill.update('user');
 
-    if (targetImg) {
-       // 이제 src가 //:0 이 아니라 blob:... 일 것이므로 Quill.find가 동작할 확률 매우 높음
-        let blot = Quill.find(targetImg)
+    // 1. Blot 트리 전체를 순회하여 ID가 일치하는 이미지를 직접 찾음 (가장 정확한 모델 탐색)
+    let targetBlot: any = null;
+    const images = (quill as any).scroll.descendants(Image);
+    for (const blot of images) {
+      if (blot.domNode && (blot.domNode as HTMLElement).getAttribute('data-upload-id') === item.id) {
+        targetBlot = blot;
+        break;
+      }
+    }
 
-        // 만약 Quill.find가 실패하면 최후의 수단으로 index 기반 탐색 (Fallback)
-        if (!blot && cur !== null) {
-            console.warn('[Debug] Quill.find 실패, 인덱스로 재시도');
-            const [fallbackLeaf] = quill.getLeaf(cur);
-            if (fallbackLeaf && fallbackLeaf.domNode === targetImg) {
-                blot = fallbackLeaf;
+    let foundIndex = -1;
+    if (targetBlot) {
+      foundIndex = quill.getIndex(targetBlot);
+    }
+
+    if (foundIndex >= 0) {
+      console.log('[Debug] 이미지 위치 찾음:', foundIndex);
+      // Quill API로 교체
+      quill.deleteText(foundIndex, 1, 'user')
+      quill.insertEmbed(foundIndex, 'image', finalUrl, 'user')
+
+      quill.setSelection(foundIndex + 1, 0, 'silent');
+      quill.focus();
+    } else {
+      // 2. 모델에서 못 찾은 경우 DOM에서 직접 탐색 (최후의 보루)
+      const targetImg = quill.root.querySelector(`img[data-upload-id="${item.id}"]`) as HTMLImageElement | null;
+      if (targetImg) {
+        console.warn('[Debug] Blot 탐색 실패. DOM 직접 교체 시도.');
+        const parent = targetImg.parentNode;
+        if (parent) {
+          const replacement = document.createElement('img');
+          replacement.src = finalUrl;
+          replacement.className = targetImg.className;
+          replacement.classList.remove('uploading');
+          parent.replaceChild(replacement, targetImg);
+
+          quill.update('user');
+          updateContent(quill.root.innerHTML);
+        }
+      } else {
+        console.error('[Debug] 이미지를 완전히 찾을 수 없음. 마지막에 추가함.');
+        quill.insertEmbed(quill.getLength(), 'image', finalUrl, 'user');
+      }
+    }
+
+    URL.revokeObjectURL(localUrl)
+  } catch (e) {
+    console.error('업로드 실패:', e)
+
+    // 실패 시 임시 이미지 제거 시도
+    if (cur !== null) {
+        const targetImg = quill.root.querySelector(`img[data-upload-id="${item.id}"]`)
+        if (targetImg) {
+            const blot = Quill.find(targetImg)
+            if (blot) {
+                const index = quill.getIndex(blot)
+                quill.deleteText(index, 1, 'user')
             }
         }
-
-    if (blot) {
-        const index = quill.getIndex(blot)
-        console.log('[Debug] Blot 인덱스 확인:', index);
-
-        // 기존 이미지 삭제 후 새 이미지 삽입
-        quill.deleteText(index, 1, 'user')
-        quill.insertEmbed(index, 'image', finalUrl, 'user')
-
-        // ✅ 수정: 교체 후 커서 안정화
-        quill.setSelection(index + 1, 0, 'silent');
-        quill.focus(); // 포커스 재설정else {
-        console.warn('[Debug] 이미지가 DOM에서 사라짐.');
-    }
-
-    URL.revokeObjectURL(localUrl)
-
-    }
-  }catch (e) {
-    console.error('업로드 실패:', e)
-    alert('이미지 업로드 실패')
-
-    // ✅ 수정: cur이 유효한지 확인하고, deleteText 호출 전에 포커스를 설정하여 안전성을 높임
-    if (cur !== null) {
-        const length = quill.getLength();
-        // 삭제 범위가 현재 문서 길이를 초과하지 않도록 보장
-        const deleteLength = Math.min(2, length - cur);
-
-        if (deleteLength > 0) {
-             quill.focus(); // 삭제 전에 에디터에 포커스를 줍니다.
-             quill.deleteText(cur, deleteLength, 'user')
-        }
     }
     URL.revokeObjectURL(localUrl)
-  }finally {
+  } finally {
     uploadingImages.value = uploadingImages.value.filter(img => img.id !== item.id)
     if (uploadingImages.value.length === 0) isUploading.value = false
-    }
+  }
 }
 
 /* ---------------- handlers ---------------- */
@@ -333,13 +341,20 @@ const handleToolbarImage = () => {
 }
 
 const onReady = (quill: Quill) => {
+  if (isInitialized.value) return;
+  isInitialized.value = true;
+
   quillInstance.value = quill;
-  const toolbar = quill.getModule('toolbar') as any;
+  const toolbar = quill.getModule('toolbar') as { addHandler: (name: string, handler: () => void) => void } | null;
   if(toolbar) toolbar.addHandler('image', handleToolbarImage);
 
-  quill.root.addEventListener('dragover', (e: DragEvent) => e.preventDefault())
+  quill.root.addEventListener('dragover', (e: DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  })
   quill.root.addEventListener('drop', (e: DragEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     handleDrop(e)
   })
 
