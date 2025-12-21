@@ -42,7 +42,10 @@
         class="absolute bottom-20 right-0 w-[360px] h-[550px] bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden pointer-events-auto border border-gray-100"
       >
         <!-- Header -->
-        <div class="bg-[#2C2C2C] p-4 flex justify-between items-center text-white">
+        <div 
+          @mousedown="startDrag"
+          class="bg-[#2C2C2C] p-4 flex justify-between items-center text-white cursor-grab active:cursor-grabbing"
+        >
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
               <Bot class="w-5 h-5 text-white" />
