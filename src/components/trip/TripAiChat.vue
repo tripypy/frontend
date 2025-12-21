@@ -69,47 +69,24 @@
             'flex',
             msg.isUser ? 'justify-end' : 'justify-start'
           ]">
-            <!-- Message Bubble -->
             <div 
               :class="[
                 'max-w-[85%] p-3.5 text-sm leading-relaxed shadow-sm',
                 msg.isUser 
                   ? 'bg-[#9BCCC4] text-white rounded-2xl rounded-tr-sm' 
-                  : 'bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm',
-                (msg as any).relatedSpot ? 'cursor-pointer hover:brightness-95 active:scale-95 transition-all' : ''
+                  : 'bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm'
               ]"
-              v-if="!(msg as any).relatedSpot"
             >
               <template v-for="(part, pIndex) in parseMessage(msg.text)" :key="pIndex">
                 <span 
                   v-if="part.type === 'link'" 
-                  class="font-bold text-[#FF6B6B] cursor-pointer hover:underline hover:text-[#FF8787] transition-colors"
+                  class="font-bold text-[#0D9488] cursor-pointer hover:underline hover:text-[#0F766E] transition-colors"
                   @click="handleSpotClick(part.text)"
                 >
                   {{ part.text }}
                 </span>
                 <span v-else v-html="formatMessage(part.text)"></span>
               </template>
-            </div>
-
-            <!-- Recommendation Bubble (Special Case) -->
-            <div 
-              v-else
-              :class="[
-                'max-w-[85%] p-3.5 text-sm leading-relaxed shadow-sm',
-                msg.isUser 
-                  ? 'bg-[#9BCCC4] text-white rounded-2xl rounded-tr-sm' 
-                  : 'bg-[#F5F5F5] text-[#2C2C2C] rounded-2xl rounded-tl-sm',
-                'cursor-pointer hover:brightness-95 active:scale-95 transition-all'
-              ]"
-              v-html="formatMessage(msg.text)"
-              @click="(msg as any).relatedSpot && props.highlightCandidate && props.highlightCandidate((msg as any).relatedSpot)"
-            >
-            </div>
-            
-            <!-- Map Link Indicator -->
-            <div v-if="(msg as any).relatedSpot" class="text-[10px] text-gray-400 mt-1 ml-1 flex items-center gap-1">
-               <span class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">지도에서 위치 보기 📍</span>
             </div>
 
           </div>
@@ -128,17 +105,19 @@
         <div class="px-4 py-2 bg-white flex justify-center gap-2 border-t border-gray-100">
            <button 
             @click="handleRecommend"
-            class="px-3 py-1.5 rounded-full bg-white border border-[#9BCCC4] text-[#9BCCC4] text-xs font-semibold hover:bg-[#9BCCC4] hover:text-white transition-colors flex items-center gap-1 shadow-sm"
+            class="px-4 py-2 rounded-full bg-white border border-[#9BCCC4] text-[#9BCCC4] text-xs font-semibold hover:bg-[#9BCCC4] hover:text-white transition-colors flex items-center gap-1.5 shadow-sm"
             :disabled="isLoading"
           >
-            ✨ 장소 추천
+            <Sparkles class="w-3.5 h-3.5" />
+            장소 추천
           </button>
           <button 
             @click="handleCheckCourse"
-            class="px-3 py-1.5 rounded-full bg-white border border-[#2C2C2C] text-[#2C2C2C] text-xs font-semibold hover:bg-[#2C2C2C] hover:text-white transition-colors flex items-center gap-1 shadow-sm"
+            class="px-4 py-2 rounded-full bg-white border border-[#9BCCC4] text-[#9BCCC4] text-xs font-semibold hover:bg-[#9BCCC4] hover:text-white transition-colors flex items-center gap-1.5 shadow-sm"
             :disabled="isLoading"
           >
-            ✅ 코스 점검
+            <MapPinned class="w-3.5 h-3.5" />
+            코스 점검
           </button>
         </div>
 
@@ -168,7 +147,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { MessageCircle, X, Send, Bot } from 'lucide-vue-next'
+import { MessageCircle, X, Send, Bot, Sparkles, MapPinned } from 'lucide-vue-next'
 import { sendAiChat } from '@/apis/ai'
 import type { ChatMessageDto, RecommendSpotDto } from '@/apis/ai/types'
 
@@ -430,21 +409,19 @@ ${JSON.stringify(candidates.map(c => ({ id: c.id, name: c.name, category: c.cate
         const parsed = JSON.parse(content)
         const rec = parsed.recommendation
         
-        const aiText = `✨ **${rec.name}** 어때?\n\n${rec.reason}`
-        
-        // Find candidate object for map linking
-        const matchedCandidate = candidates.find(c => String(c.id) === String(rec.spotId)) || 
-                                 candidates.find(c => c.name === rec.name)
 
+        
+        // Use [[Name]] format to trigger link rendering
+        const aiText = `✨ [[${rec.name}]] 어때?\n\n${rec.reason}`
+        
+        // Find candidate object for map linking (Optional: if we want to prioritize this over search)
+        // But for now, we rely on the [[ ]] link triggering a search, which is consistent.
+        
         messages.value.push({
             text: aiText,
-            isUser: false,
-            relatedSpot: matchedCandidate
+            isUser: false
+            // relatedSpot removed to use standard link behavior
         })
-        
-        if (matchedCandidate && props.highlightCandidate) {
-            props.highlightCandidate(matchedCandidate)
-        }
 
     } catch (e) {
         console.error('JSON Parse Error', e)
