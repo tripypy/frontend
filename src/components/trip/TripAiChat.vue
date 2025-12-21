@@ -162,7 +162,7 @@ const messages = ref<({
   isUser: boolean; 
   relatedSpot?: any 
 } | { isTyping: boolean; isUser: false })[]>([
-  { text: '안녕하세요! 여행 계획을 도와드릴까요?', isUser: false }
+  { text: '안녕! 여행 계획 도와줄까?', isUser: false }
 ])
 
 // Trip Context
