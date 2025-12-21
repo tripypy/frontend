@@ -15,7 +15,7 @@
       <div class="absolute inset-0 bg-[#2C2C2C] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.2)] group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)] transition-all duration-300"></div>
       
       <div class="absolute inset-0 flex items-center justify-center text-white">
-        <MessageCircle 
+        <Bot 
           v-if="!isOpen" 
           class="w-7 h-7 group-hover:scale-110 transition-transform duration-300" 
           stroke-width="2"
@@ -274,10 +274,10 @@ const getSystemPrompt = (): ChatMessageDto => ({
 3. 목록을 나열할 때도 장소 이름만 깔끔하게 감싸주세요.
    - 예: 1. [[성수동 카페거리]] - 분위기 좋은 카페가 많아.
 4. **장소 추천 시 주의사항**: 
-   - 사용자가 장소 추천을 원하거나, 구체적인 장소를 제안해야 할 상황이라면 **절대로 스스로 장소를 지어내지 마세요.**
-   - 대신, 반드시 아래 **JSON**만 딱 출력하여 클라이언트에게 주변 장소 정보를 요청하세요.
-     \`{"request": "GET_CANDIDATES"}\`
-   - 클라이언트가 후보 장소 데이터를 보내주면, 그때 그 장소들 중에서 가장 알맞은 곳을 골라 **[[장소명]]** 형식으로 추천해주세요.
+   - 당신에게는 항상 **[현재 지도 주변 장소 목록]**이 함께 제공됩니다.
+   - 사용자가 장소 추천을 원하면, **반드시 제공된 후보 장소 목록 중에서만** 골라서 추천하세요.
+   - 후보 목록에 없는 장소를 지어내거나, 엉뚱한 지역을 추천하면 안 됩니다.
+   - 후보 목록이 비어있다면 "주변에 적당한 장소가 안 보여. 지도를 다른 곳으로 이동해볼래?"라고 솔직하게 말하세요.
 `
 })
 
@@ -296,6 +296,18 @@ ${(allSelectedPlaces.value || []).map((p, i) => `${i + 1}. ${p.name} (${p.catego
 }
 
 // --- Handlers ---
+
+// 3. Map Context (주변 장소 정보)
+const getMapContext = (candidates: any[]): ChatMessageDto => {
+  const candidatesList = candidates.length > 0 
+    ? candidates.map((c, i) => `${i + 1}. ${c.name} (${c.category})`).join(', ')
+    : '없음 (주변에 검색된 장소가 없습니다)'
+
+  return {
+    role: 'system',
+    content: `[현재 지도 주변 장소 목록 (실시간)]\n${candidatesList}\n\n위 목록에 있는 장소들 중에서만 추천하세요. 이미 추천했던 장소나 내 여행 일정에 이미 포함된 장소는 가급적 제외하고 새로운 곳을 추천해주세요.`
+  }
+}
 
 const sendMessage = async () => {
   if (!inputMessage.value.trim() || isLoading.value) return
@@ -316,68 +328,28 @@ const sendMessage = async () => {
         content: m.text
       }))
 
+    // 1. Fetch Candidates (Pre-fetch context)
+    let candidateContextMsg: ChatMessageDto = { role: 'system', content: '' }
+    if (props.fetchCandidates) {
+        try {
+            const candidates = await props.fetchCandidates()
+            candidateContextMsg = getMapContext(candidates)
+        } catch (e) {
+            console.error('Failed to fetch candidates', e)
+        }
+    }
+
     // Construct Payload
     const payload = {
       messages: [
         getSystemPrompt(),
         getTripContext(),
-        ...history.slice(-10), // 최근 10개 대화만 유지
+        candidateContextMsg, // Inject Candidates
+        ...history.slice(-10),
       ]
     }
 
     const response = await sendAiChat(payload)
-    
-    // --- Tool Use Handler (GET_CANDIDATES) ---
-    // Extract JSON if embedded in text/markdown
-    let jsonCmd = null
-    const jsonMatch = response.text.match(/\{[\s\S]*"request"[\s\S]*:[\s\S]*"GET_CANDIDATES"[\s\S]*\}/)
-    
-    if (jsonMatch) {
-        try {
-            jsonCmd = JSON.parse(jsonMatch[0])
-        } catch (e) {
-            console.warn('Failed to parse extracted JSON', e)
-        }
-    } else {
-        // Try direct parse if no regex match (fallback)
-        try {
-            const parsed = JSON.parse(response.text)
-            if (parsed.request === 'GET_CANDIDATES') jsonCmd = parsed
-        } catch (e) {}
-    }
-
-    if (jsonCmd && jsonCmd.request === 'GET_CANDIDATES') {
-         // 1. Fetch Candidates (Hidden)
-         if (!props.fetchCandidates) {
-             // If no fetcher, just show the original text (fallback)
-             messages.value.push({ text: response.text, isUser: false })
-             return
-         }
-         
-         const candidates = await props.fetchCandidates()
-         const candidateContext = candidates.length > 0 
-            ? `주변 후보 장소 목록:\n${JSON.stringify(candidates.map(c => ({ id: c.id, name: c.name, category: c.category })))}`
-            : `주변에 후보 장소가 없습니다. 이 사실을 사용자에게 알리고, 다른 지역으로 지도를 이동해보라고 조언해주세요.`
-
-         // 2. Send Candidates back to AI (Recursion)
-         // Add hidden system message to history for context
-         history.push({ role: 'assistant', content: response.text }) // Previous AI request
-         history.push({ role: 'user', content: candidateContext })   // Tool Output
-         
-         const followUpPayload = {
-            messages: [
-                getSystemPrompt(),
-                getTripContext(),
-                ...history.slice(-12) // Keep context
-            ]
-         }
-         
-         const followUpResponse = await sendAiChat(followUpPayload)
-         messages.value.push({ text: followUpResponse.text, isUser: false })
-         return
-    }
-    // ------------------------------------------
-
     messages.value.push({ text: response.text, isUser: false })
 
   } catch (error) {
@@ -456,10 +428,17 @@ ${JSON.stringify(candidates.map(c => ({ id: c.id, name: c.name, category: c.cate
   }
 }
 `
+    // Inject Map Context
+    let candidateContextMsg: ChatMessageDto = { role: 'system', content: '' }
+    if (candidates.length > 0) {
+        candidateContextMsg = getMapContext(candidates)
+    }
+
     const payload = {
       messages: [
         getSystemPrompt(),
         getTripContext(),
+        candidateContextMsg,
         { role: 'user', content: prompt }
       ]
     }
@@ -524,10 +503,20 @@ const handleCheckCourse = async () => {
 2. **⚖️ 밸런스**: 식사, 관광, 휴식(카페) 배분이 적절한지 분석해줘.
 3. **💡 개선 팁**: 너무 빡빡하진 않은지, 더 추가하면 좋을 테마가 있는지 제안해줘.
 `
+    // Fetch Candidates for check course as well (optional but good for context)
+    let candidateContextMsg: ChatMessageDto = { role: 'system', content: '' }
+    if (props.fetchCandidates) {
+        try {
+            const candidates = await props.fetchCandidates()
+            candidateContextMsg = getMapContext(candidates)
+        } catch (e) {}
+    }
+
     const payload = {
        messages: [
          getSystemPrompt(),
          getTripContext(),
+         candidateContextMsg,
          { role: 'user', content: prompt }
        ]
     }
