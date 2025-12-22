@@ -19,9 +19,11 @@
   </div>
 
   <TripDetailModal
-    v-else-if="tripDetail"
+    v-else-if="tripDetail && logDetail"
     :trip="tripDetail"
     :initial-tab="'log'"
+    :log-data="logDetail"
+    :initial-is-liked="isLiked"
     @close="emit('close')"
     @refresh="fetchLogDetail"
   />
@@ -70,7 +72,12 @@ onMounted(fetchLogDetail)
 watchEffect(async () => {
   if (logDetail.value?.tripId) {
     try {
-      tripDetail.value = await getTripDetail(logDetail.value.tripId)
+      const fetchedTripDetail = await getTripDetail(logDetail.value.tripId)
+      // Add logId to tripDetail so TripDetailModal can fetch the log
+      tripDetail.value = {
+        ...fetchedTripDetail,
+        logId: props.logId
+      }
     } catch (e: any) {
       // 403 error means the trip is PRIVATE and user doesn't have access
       // This is expected behavior, not an error

@@ -295,8 +295,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watchEffect, reactive } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, MoreHorizontal, Share, Trash2 } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted, watchEffect, reactive, watch } from 'vue'
+import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash, MoreHorizontal, Share, Trash2 } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
@@ -320,8 +320,11 @@ const props = withDefaults(defineProps<{
   trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string }
   initialPlaceId?: number | null
   initialTab?: 'map' | 'log'
+  logData?: TripLogDetail | null
+  initialIsLiked?: boolean
 }>(), {
-  initialTab: 'map'
+  initialTab: 'map',
+  initialIsLiked: false
 })
 
 const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh'])
@@ -334,8 +337,9 @@ watchEffect(() => {
 })
 
 // 2. 탭 & 로그 상태
+// 2. 탭 & 로그 상태
 const activeTab = ref<'map' | 'log'>(props.initialTab)
-const tripLog = ref<TripLogDetail | null>(null)
+const tripLog = ref<TripLogDetail | null>(props.logData || null)
 const isLoginAlertVisible = ref(false)
 
 const handleLoginConfirm = () => {
@@ -406,7 +410,7 @@ const mapCenter = computed(() => {
 })
 
 const logLoading = ref(false)
-const isLiked = ref(false)
+const isLiked = ref(props.initialIsLiked)
 
 const fetchTripLog = async (tripId: number) => {
     if(!props.trip.logId) return
@@ -452,10 +456,19 @@ const handleLogPlaceClick = (placeId: number) => {
 // 탭 핸들러
 const handleTabClick = (tab: 'map' | 'log') => {
     activeTab.value = tab;
-    if (tab === 'log' && !tripLog.value && !logLoading.value) {
-        fetchTripLog(props.trip.id);
-    }
 }
+
+// 탭 변경 감지 및 로그 데이터 로드
+watch(activeTab, (newTab) => {
+    if (newTab === 'log' && !tripLog.value && !logLoading.value) {
+        if (props.logData) {
+            tripLog.value = props.logData
+            isLiked.value = props.initialIsLiked
+        } else if (props.trip.logId) {
+             fetchTripLog(props.trip.id);
+        }
+    }
+}, { immediate: true })
 
 // 상태 변경 핸들러
 const handleStatusChange = async (event: Event) => {
