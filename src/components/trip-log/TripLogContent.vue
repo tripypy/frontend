@@ -146,12 +146,58 @@
             >
               <img :src="comment.authorImageUrl" :alt="comment.authorNickname" class="w-full h-full object-cover" />
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <span :class="['font-black text-[#2C2C2C]', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.authorNickname }}</span>
-                <span :class="['font-bold text-gray-400', layout === 'horizontal' ? 'text-[10px]' : 'text-xs']">{{ formatCommentDate(comment.createdAt) }}</span>
+            <div class="flex-1 min-w-0 flex items-start">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span :class="['font-black text-[#2C2C2C]', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.authorNickname }}</span>
+                  <span :class="['font-bold text-gray-400', layout === 'horizontal' ? 'text-[10px]' : 'text-xs']">{{ formatCommentDate(comment.createdAt) }}</span>
+                </div>
+
+                <div v-if="editingCommentId === comment.commentId" class="flex flex-col gap-2">
+                   <input
+                      v-model="editingContent"
+                      type="text"
+                      ref="editInputRef"
+                      class="w-full border-[2px] border-[#2C2C2C] rounded-lg px-3 py-2 text-sm font-medium bg-white focus:outline-none focus:ring-1 focus:ring-[#2C2C2C]"
+                      @keydown.enter.prevent="handleEditKeydown($event, comment.commentId)"
+                      @keydown.esc="cancelEditComment"
+                    />
+                    <div class="flex justify-end gap-2">
+                      <button @click="cancelEditComment" class="text-xs font-bold text-gray-500 hover:text-gray-700">취소</button>
+                      <button @click="handleUpdateComment(comment.commentId)" class="text-xs font-bold text-blue-500 hover:text-blue-700">저장</button>
+                    </div>
+                </div>
+                <p v-else :class="['font-medium text-gray-800 leading-relaxed break-all', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.content }}</p>
               </div>
-              <p :class="['font-medium text-gray-800 leading-relaxed', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.content }}</p>
+
+              <div v-if="authStore.user?.nickname === comment.authorNickname && editingCommentId !== comment.commentId" class="relative ml-2 flex-shrink-0">
+                <button 
+                  @click.stop="toggleCommentDropdown(comment.commentId)"
+                  class="p-1 hover:bg-gray-100 rounded-full transition-colors -mt-1"
+                  :data-comment-dropdown-trigger="comment.commentId"
+                >
+                  <MoreHorizontal class="w-4 h-4 text-gray-400" stroke-width="2" />
+                </button>
+                
+                <div
+                  v-if="activeCommentDropdownId === comment.commentId"
+                  class="absolute right-0 top-full mt-1 w-20 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-10"
+                  :data-comment-dropdown-menu="comment.commentId"
+                >
+                  <button
+                    @click="handleEditClick(comment)"
+                    class="w-full px-3 py-2 flex items-center justify-center hover:bg-gray-50 transition-colors text-xs font-bold text-[#2C2C2C] border-b border-gray-100"
+                  >
+                    수정
+                  </button>
+                  <button
+                    @click="handleDeleteClick(comment.commentId)"
+                    class="w-full px-3 py-2 flex items-center justify-center hover:bg-red-50 transition-colors text-xs font-bold text-red-500"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -227,6 +273,7 @@
                   layout === 'horizontal' ? 'px-3 py-2 text-xs' : 'px-4 py-3 text-sm',
                   !authStore.isLoggedIn ? 'bg-gray-100' : '',
                 ]"
+                @keydown.enter.prevent="handleKeydownSubmit"
               />
               <div
                 v-if="!authStore.isLoggedIn"
@@ -269,11 +316,20 @@
         <span class="font-black text-sm text-[#2C2C2C]">링크가 복사되었습니다!</span>
       </div>
     </Transition>
+
+    <AlertDialog
+      :show="alertState.show"
+      :title="alertState.title"
+      :message="alertState.message"
+      :show-cancel-button="alertState.showCancelButton"
+      @close="closeAlert"
+      @confirm="alertState.onConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watchEffect, onMounted, onUnmounted, nextTick } from 'vue'
 import {
   Heart,
   Bookmark,
@@ -286,11 +342,12 @@ import {
   Trash2,
   MessageCircle,
 } from 'lucide-vue-next'
+import AlertDialog from '@/components/common/AlertDialog.vue'
 import { format, parseISO } from 'date-fns'
 import type { TripLogDetail } from '@/types/trip/trip.model'
 import type { TripDetailResponseDto } from '@/apis/trip/types'
 import { useAuthStore } from '@/stores/auth'
-import { likeTripLog, unlikeTripLog, postTripLogComment, getTripLogDetail, getTripLogLikeStatus } from '@/apis/trip-log/index'
+import { likeTripLog, unlikeTripLog, postTripLogComment, getTripLogDetail, getTripLogLikeStatus, updateTripLogComment, deleteTripLogComment } from '@/apis/trip-log/index'
 
 const props = withDefaults(defineProps<{
   logDetail: TripLogDetail
@@ -314,6 +371,47 @@ const newComment = ref('')
 const isBookmarked = ref(false) // Local state for bookmark (Mock)
 const isLiked = ref(props.initialLiked)
 const currentLikes = ref(props.logDetail.likeCount)
+
+const alertState = ref({
+  show: false,
+  title: '',
+  message: '',
+  showCancelButton: true,
+  onConfirm: () => {},
+})
+
+const closeAlert = () => {
+  alertState.value.show = false
+}
+
+const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+  alertState.value = {
+    show: true,
+    title,
+    message,
+    showCancelButton: true,
+    onConfirm: () => {
+      onConfirm()
+      closeAlert()
+    },
+  }
+}
+
+const showAlert = (title: string, message: string) => {
+  alertState.value = {
+    show: true,
+    title,
+    message,
+    showCancelButton: false,
+    onConfirm: closeAlert,
+  }
+}
+
+const activeCommentDropdownId = ref<number | null>(null)
+
+const editingCommentId = ref<number | null>(null)
+const editingContent = ref('')
+const editInputRef = ref<HTMLInputElement | null>(null)
 
 // Update local state when props change
 watchEffect(() => {
@@ -375,7 +473,7 @@ const handleLike = async () => {
     emit('update-like', { logId: props.logDetail.logId, likeCount: response.likeCount, liked: response.liked })
   } catch (e) {
     console.error('Failed to toggle like status:', e)
-    alert('좋아요 상태 변경에 실패했습니다.')
+    showAlert('오류', '좋아요 상태 변경에 실패했습니다.')
   }
 }
 
@@ -391,8 +489,57 @@ const handleCommentSubmit = async () => {
     emit('refresh-comments')
   } catch (error) {
     console.error('Failed to post comment:', error)
-    alert('댓글 작성에 실패했습니다.')
+    showAlert('오류', '댓글 작성에 실패했습니다.')
   }
+}
+
+const startEditComment = async (comment: any) => {
+  editingCommentId.value = comment.commentId
+  editingContent.value = comment.content
+  await nextTick()
+  if (editInputRef.value) {
+    editInputRef.value.focus()
+  }
+}
+
+const handleEditKeydown = (e: KeyboardEvent, commentId: number) => {
+  if (e.isComposing) return
+  handleUpdateComment(commentId)
+}
+
+const handleKeydownSubmit = (e: KeyboardEvent) => {
+  if (e.isComposing) return
+  handleCommentSubmit()
+}
+
+const cancelEditComment = () => {
+  editingCommentId.value = null
+  editingContent.value = ''
+}
+
+const handleUpdateComment = async (commentId: number) => {
+  if (!editingContent.value.trim()) return
+  try {
+    await updateTripLogComment(commentId, { content: editingContent.value })
+    editingCommentId.value = null
+    editingContent.value = ''
+    emit('refresh-comments')
+  } catch (error) {
+    console.error('Failed to update comment:', error)
+    showAlert('오류', '댓글 수정에 실패했습니다.')
+  }
+}
+
+const handleDeleteComment = (commentId: number) => {
+  showConfirm('댓글 삭제', '댓글을 삭제하시겠습니까?', async () => {
+    try {
+      await deleteTripLogComment(commentId)
+      emit('refresh-comments')
+    } catch (error) {
+      console.error('Failed to delete comment:', error)
+      showAlert('오류', '댓글 삭제에 실패했습니다.')
+    }
+  })
 }
 
 const handleShare = () => {
@@ -410,9 +557,9 @@ const handleEdit = () => {
 
 const handleDelete = () => {
   showDropdown.value = false
-  if (confirm('정말 삭제하시겠습니까?')) {
+  showConfirm('여행 기록 삭제', '정말 삭제하시겠습니까?', () => {
     emit('delete')
-  }
+  })
 }
 
 const colors = ['#FFD60A', '#FF6B9D', '#98D8C8', '#B4E4FF', '#E88555']
@@ -433,14 +580,45 @@ const formatCommentDate = (dateString: string) => {
 const dropdownContainer = ref<HTMLElement | null>(null)
 
 const handleClickOutside = (e: MouseEvent) => {
+  // Main dropdown
   if (showDropdown.value && dropdownContainer.value && !dropdownContainer.value.contains(e.target as Node)) {
     showDropdown.value = false
   }
+  
+  // Comment dropdowns
+  if (activeCommentDropdownId.value !== null) {
+    const target = e.target as HTMLElement
+    const trigger = target.closest(`[data-comment-dropdown-trigger="${activeCommentDropdownId.value}"]`)
+    const menu = target.closest(`[data-comment-dropdown-menu="${activeCommentDropdownId.value}"]`)
+    
+    if (!trigger && !menu) {
+      activeCommentDropdownId.value = null
+    }
+  }
+}
+
+const toggleCommentDropdown = (commentId: number) => {
+  if (activeCommentDropdownId.value === commentId) {
+    activeCommentDropdownId.value = null
+  } else {
+    activeCommentDropdownId.value = commentId
+  }
+}
+
+const handleEditClick = (comment: any) => {
+  activeCommentDropdownId.value = null
+  startEditComment(comment)
+}
+
+const handleDeleteClick = (commentId: number) => {
+  activeCommentDropdownId.value = null
+  handleDeleteComment(commentId)
 }
 
 const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && showDropdown.value) {
-    showDropdown.value = false
+  if (e.key === 'Escape') {
+    if (showDropdown.value) showDropdown.value = false
+    if (activeCommentDropdownId.value !== null) activeCommentDropdownId.value = null
   }
 }
 
