@@ -46,7 +46,7 @@
       </div>
 
       <!-- Log Header -->
-      <div v-if="activeTab === 'log' && tripLog" class="p-5 flex-shrink-0 rounded-t-xl z-20 border-[3px] border-[#2C2C2C] border-b-0 bg-white bg-gradient-to-br from-[#FFD60A]/10 to-white flex items-center justify-between">
+      <div v-if="activeTab === 'log' && tripLog" class="px-6 py-5 flex-shrink-0 rounded-t-xl z-20 border-[3px] border-[#2C2C2C] border-b-0 bg-white bg-gradient-to-br from-[#FFD60A]/10 to-white flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]">
             <img :src="tripLog.authorImageUrl" :alt="tripLog.authorNickname" class="w-full h-full object-cover" />
@@ -255,6 +255,7 @@
                   :trip-detail="localTrip"
                   :initial-liked="isLiked"
                   :show-header="false"
+                  layout="horizontal"
                   @update-like="handleLogLikeUpdate"
                   @place-click="handleLogPlaceClick"
                   @login-required="isLoginAlertVisible = true"

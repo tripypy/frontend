@@ -1,221 +1,235 @@
 <template>
-  <div class="flex flex-col h-full bg-white">
-    <!-- Header -->
-    <div
-      v-if="showHeader"
-      class="p-5 flex items-center justify-between bg-gradient-to-br from-[#FFD60A]/10 to-white"
-    >
-      <div class="flex items-center gap-3">
-        <div
-          class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
-        >
-          <img :src="logDetail.authorImageUrl" :alt="logDetail.authorNickname" class="w-full h-full object-cover" />
+  <div :class="['flex h-full bg-white', layout === 'horizontal' ? 'flex-row' : 'flex-col']">
+    <!-- Main Content Section (Left in Horizontal) -->
+    <div :class="[
+      layout === 'horizontal' 
+        ? 'flex-1 h-full overflow-y-auto no-scrollbar relative' 
+        : 'w-full flex-shrink-0'
+    ]">
+      <!-- Header -->
+      <div
+        v-if="showHeader"
+        class="p-5 flex items-center justify-between bg-gradient-to-br from-[#FFD60A]/10 to-white"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
+          >
+            <img :src="logDetail.authorImageUrl" :alt="logDetail.authorNickname" class="w-full h-full object-cover" />
+          </div>
+          <div>
+            <h4 class="font-black text-[#2C2C2C] font-sans">{{ logDetail.authorNickname }}</h4>
+            <div class="flex items-center gap-2 text-xs font-bold text-gray-600">
+              <MapPin class="w-3 h-3" stroke-width="2.5" />
+              <span>{{ logDetail.locationSummary }}</span>
+              <span>•</span>
+              <Calendar class="w-3 h-3" stroke-width="2.5" />
+              <span>{{ formattedDate }}</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <h4 class="font-black text-[#2C2C2C] font-sans">{{ logDetail.authorNickname }}</h4>
-          <div class="flex items-center gap-2 text-xs font-bold text-gray-600">
-            <MapPin class="w-3 h-3" stroke-width="2.5" />
-            <span>{{ logDetail.locationSummary }}</span>
-            <span>•</span>
-            <Calendar class="w-3 h-3" stroke-width="2.5" />
-            <span>{{ formattedDate }}</span>
+        <div class="relative">
+          <button
+            @click="showDropdown = !showDropdown"
+            class="p-2 hover:bg-gray-100 rounded transition-all"
+          >
+            <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
+          </button>
+
+          <div
+            v-if="showDropdown"
+            class="absolute right-0 top-full mt-2 w-40 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-20"
+          >
+            <button
+              @click="handleShare"
+              class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left"
+            >
+              <Share class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+              <span class="font-bold text-sm text-[#2C2C2C]">공유</span>
+            </button>
+
+            <template v-if="isAuthor">
+              <button
+                @click="handleEdit"
+                class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left border-t border-gray-200"
+              >
+                <Edit class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+                <span class="font-bold text-sm text-[#2C2C2C]">수정</span>
+              </button>
+
+              <button
+                @click="handleDelete"
+                class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-red-50 transition-colors text-left border-t border-gray-200"
+              >
+                <Trash2 class="w-4 h-4 text-red-500" stroke-width="2.5" />
+                <span class="font-bold text-sm text-red-500">삭제</span>
+              </button>
+            </template>
           </div>
         </div>
       </div>
-      <div class="relative">
-        <button
-          @click="showDropdown = !showDropdown"
-          class="p-2 hover:bg-gray-100 rounded transition-all"
-        >
-          <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
-        </button>
 
-        <div
-          v-if="showDropdown"
-          class="absolute right-0 top-full mt-2 w-40 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-20"
-        >
-          <button
-            @click="handleShare"
-            class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left"
-          >
-            <Share class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-            <span class="font-bold text-sm text-[#2C2C2C]">공유</span>
-          </button>
+      <!-- Content Body -->
+      <div class="p-5 border-b border-gray-200">
+        <h3 class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ logDetail.title }}</h3>
 
-          <template v-if="isAuthor">
+        <div v-if="groupedCourse.length > 0" class="mb-4">
+          <!-- Tabs -->
+          <div class="flex items-center border-b-2 border-gray-200">
             <button
-              @click="handleEdit"
-              class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left border-t border-gray-200"
+              v-for="day in groupedCourse"
+              :key="day.dayNumber"
+              @click.stop="activeDay = day.dayNumber"
+              :class="[
+                'px-3 py-1 font-bold text-xs transition-all',
+                activeDay === day.dayNumber
+                  ? 'text-[#2C2C2C] border-b-2 border-[#2C2C2C]'
+                  : 'text-gray-500 hover:text-gray-800',
+              ]"
             >
-              <Edit class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-              <span class="font-bold text-sm text-[#2C2C2C]">수정</span>
+              DAY {{ day.dayNumber }}
             </button>
+          </div>
 
-            <button
-              @click="handleDelete"
-              class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-red-50 transition-colors text-left border-t border-gray-200"
-            >
-              <Trash2 class="w-4 h-4 text-red-500" stroke-width="2.5" />
-              <span class="font-bold text-sm text-red-500">삭제</span>
-            </button>
-          </template>
-        </div>
-      </div>
-    </div>
-
-    <!-- Content Body -->
-    <div class="p-5 border-b border-gray-200">
-      <h3 class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ logDetail.title }}</h3>
-
-      <div v-if="groupedCourse.length > 0" class="mb-4">
-        <!-- Tabs -->
-        <div class="flex items-center border-b-2 border-gray-200">
-          <button
-            v-for="day in groupedCourse"
-            :key="day.dayNumber"
-            @click.stop="activeDay = day.dayNumber"
-            :class="[
-              'px-3 py-1 font-bold text-xs transition-all',
-              activeDay === day.dayNumber
-                ? 'text-[#2C2C2C] border-b-2 border-[#2C2C2C]'
-                : 'text-gray-500 hover:text-gray-800',
-            ]"
-          >
-            DAY {{ day.dayNumber }}
-          </button>
-        </div>
-
-        <!-- Course Content -->
-        <div class="pt-3">
-          <div v-for="day in groupedCourse" :key="day.dayNumber">
-            <Transition name="no-animation">
-              <div v-show="activeDay === day.dayNumber">
-                <div class="flex items-center flex-wrap gap-x-1.5 gap-y-2">
-                  <div
-                    v-for="(place, index) in day.places"
-                    :key="index"
-                    class="flex items-center gap-1.5"
-                  >
+          <!-- Course Content -->
+          <div class="pt-3">
+            <div v-for="day in groupedCourse" :key="day.dayNumber">
+              <Transition name="no-animation">
+                <div v-show="activeDay === day.dayNumber">
+                  <div class="flex items-center flex-wrap gap-x-1.5 gap-y-2">
                     <div
-                      @click.stop="emit('place-click', place.id)"
-                      class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge cursor-pointer"
-                      :style="{ '--hover-color': getBadgeColor(index) }"
+                      v-for="(place, index) in day.places"
+                      :key="index"
+                      class="flex items-center gap-1.5"
                     >
-                      <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
-                      <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
-                        place.name
-                      }}</span>
+                      <div
+                        @click.stop="emit('place-click', place.id)"
+                        class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge cursor-pointer"
+                        :style="{ '--hover-color': getBadgeColor(index) }"
+                      >
+                        <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
+                        <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
+                          place.name
+                        }}</span>
+                      </div>
+                      <ChevronRight
+                        v-if="index < day.places.length - 1"
+                        class="w-3 h-3 text-gray-400 flex-shrink-0"
+                      />
                     </div>
-                    <ChevronRight
-                      v-if="index < day.places.length - 1"
-                      class="w-3 h-3 text-gray-400 flex-shrink-0"
-                    />
                   </div>
                 </div>
-              </div>
-            </Transition>
+              </Transition>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="prose max-w-none text-sm font-medium text-gray-800 leading-relaxed break-words" v-html="formattedContent"></div>
-    </div>
-
-    <!-- Comments List -->
-    <div class="flex-1 overflow-y-auto p-5 pt-3 space-y-4">
-      <div v-for="comment in logDetail.comments" :key="comment.commentId" class="flex items-start gap-3">
-        <div
-          class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
-        >
-          <img :src="comment.authorImageUrl" :alt="comment.authorNickname" class="w-full h-full object-cover" />
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-sm font-black text-[#2C2C2C]">{{ comment.authorNickname }}</span>
-            <span class="text-xs font-bold text-gray-400">{{ formatCommentDate(comment.createdAt) }}</span>
-          </div>
-          <p class="text-sm font-medium text-gray-800 leading-relaxed">{{ comment.content }}</p>
-        </div>
+        <div class="prose max-w-none text-sm font-medium text-gray-800 leading-relaxed break-words" v-html="formattedContent"></div>
       </div>
     </div>
 
-    <!-- Footer: Actions & Input -->
-    <div class="border-t border-gray-200 bg-white">
-      <div class="p-4 flex items-center gap-2">
-        <button
-          @click="handleLike"
-          :class="[
-            'flex items-center gap-1.5 px-4 py-2.5 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase',
-            isLiked
-              ? 'bg-[#FF6B9D] text-white shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-              : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
-          ]"
-        >
-          <Heart :class="['w-4 h-4', isLiked ? 'fill-current' : '']" stroke-width="2.5" />
-          <span>{{ currentLikes }}</span>
-        </button>
-
-        <button
-          @click="isBookmarked = !isBookmarked"
-          :class="[
-            'p-2.5 border-[2px] border-[#2C2C2C] rounded-full transition-all',
-            isBookmarked
-              ? 'bg-[#D4A520] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-              : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
-          ]"
-        >
-          <Bookmark
-            :class="['w-4 h-4', isBookmarked ? 'text-white fill-white' : 'text-gray-600']"
-            stroke-width="2.5"
-          />
-        </button>
-      </div>
-
-      <div class="p-4 pt-0">
-        <form @submit.prevent="handleCommentSubmit" class="flex items-center gap-2.5">
+    <!-- Comments & Footer Section (Right in Horizontal) -->
+    <div :class="[
+      layout === 'horizontal' 
+        ? 'w-[400px] h-full flex flex-col border-l border-gray-200' 
+        : 'flex-1 flex flex-col min-h-0'
+    ]">
+      <!-- Comments List -->
+      <div class="flex-1 overflow-y-auto p-5 pt-3 space-y-4">
+        <div v-for="comment in logDetail.comments" :key="comment.commentId" class="flex items-start gap-3">
           <div
             class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
           >
-             <img
-              v-if="authStore.isLoggedIn && authStore.user?.profileImageUrl"
-              :src="authStore.user.profileImageUrl"
-              alt="My Profile"
-              class="w-full h-full object-cover"
-            />
-            <img
-              v-else
-              src="/default-profile.svg"
-              alt="Default Profile"
-              class="w-full h-full object-cover"
-            />
+            <img :src="comment.authorImageUrl" :alt="comment.authorNickname" class="w-full h-full object-cover" />
           </div>
-          <div class="relative flex-1">
-            <input
-              v-model="newComment"
-              :disabled="!authStore.isLoggedIn"
-              type="text"
-              :placeholder="
-                authStore.isLoggedIn ? '댓글을 입력하세요...' : '로그인 후 댓글을 남길 수 있습니다.'
-              "
-              :class="[
-                'w-full px-4 py-3 border-[2px] border-[#2C2C2C] rounded-lg text-sm font-medium bg-white focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(107,143,212,0.3)] transition-all placeholder:text-gray-400',
-                !authStore.isLoggedIn ? 'bg-gray-100' : '',
-              ]"
-            />
-            <div
-              v-if="!authStore.isLoggedIn"
-              @click="emit('login-required')"
-              class="absolute inset-0 cursor-pointer"
-            ></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-black text-[#2C2C2C]">{{ comment.authorNickname }}</span>
+              <span class="text-xs font-bold text-gray-400">{{ formatCommentDate(comment.createdAt) }}</span>
+            </div>
+            <p class="text-sm font-medium text-gray-800 leading-relaxed">{{ comment.content }}</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Footer: Actions & Input -->
+      <div class="border-t border-gray-200 bg-white">
+        <div class="p-4 flex items-center gap-2">
           <button
-            type="submit"
-            :disabled="!authStore.isLoggedIn"
-            class="px-5 py-3 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs bg-[#F9CA6B] text-[#2C2C2C] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="handleLike"
+            :class="[
+              'flex items-center gap-1.5 px-4 py-2.5 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase',
+              isLiked
+                ? 'bg-[#FF6B9D] text-white shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
+                : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
+            ]"
           >
-            작성
+            <Heart :class="['w-4 h-4', isLiked ? 'fill-current' : '']" stroke-width="2.5" />
+            <span>{{ currentLikes }}</span>
           </button>
-        </form>
+
+          <button
+            @click="isBookmarked = !isBookmarked"
+            :class="[
+              'p-2.5 border-[2px] border-[#2C2C2C] rounded-full transition-all',
+              isBookmarked
+                ? 'bg-[#D4A520] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
+                : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
+            ]"
+          >
+            <Bookmark
+              :class="['w-4 h-4', isBookmarked ? 'text-white fill-white' : 'text-gray-600']"
+              stroke-width="2.5"
+            />
+          </button>
+        </div>
+
+        <div class="p-4 pt-0">
+          <form @submit.prevent="handleCommentSubmit" class="flex items-center gap-2.5">
+            <div
+              class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
+            >
+               <img
+                v-if="authStore.isLoggedIn && authStore.user?.profileImageUrl"
+                :src="authStore.user.profileImageUrl"
+                alt="My Profile"
+                class="w-full h-full object-cover"
+              />
+              <img
+                v-else
+                src="/default-profile.svg"
+                alt="Default Profile"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div class="relative flex-1">
+              <input
+                v-model="newComment"
+                :disabled="!authStore.isLoggedIn"
+                type="text"
+                :placeholder="
+                  authStore.isLoggedIn ? '댓글을 입력하세요...' : '로그인 후 댓글을 남길 수 있습니다.'
+                "
+                :class="[
+                  'w-full px-4 py-3 border-[2px] border-[#2C2C2C] rounded-lg text-sm font-medium bg-white focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(107,143,212,0.3)] transition-all placeholder:text-gray-400',
+                  !authStore.isLoggedIn ? 'bg-gray-100' : '',
+                ]"
+              />
+              <div
+                v-if="!authStore.isLoggedIn"
+                @click="emit('login-required')"
+                class="absolute inset-0 cursor-pointer"
+              ></div>
+            </div>
+            <button
+              type="submit"
+              :disabled="!authStore.isLoggedIn"
+              class="px-5 py-3 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs bg-[#F9CA6B] text-[#2C2C2C] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              작성
+            </button>
+          </form>
+        </div>
       </div>
     </div>
     
@@ -266,8 +280,10 @@ const props = withDefaults(defineProps<{
   tripDetail: TripDetailResponseDto | null
   initialLiked: boolean
   showHeader?: boolean
+  layout?: 'vertical' | 'horizontal'
 }>(), {
-  showHeader: true
+  showHeader: true,
+  layout: 'vertical'
 })
 
 const emit = defineEmits(['update-like', 'place-click', 'login-required', 'refresh-comments', 'edit', 'delete'])
