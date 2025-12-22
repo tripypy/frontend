@@ -136,23 +136,30 @@
     ]">
       <!-- Comments List -->
       <div class="flex-1 overflow-y-auto p-4 pt-3 space-y-4">
-        <div v-for="comment in logDetail.comments" :key="comment.commentId" class="flex items-start gap-3">
-        <div
-          :class="[
-            'border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
-            layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10'
-          ]"
-        >
-          <img :src="comment.authorImageUrl" :alt="comment.authorNickname" class="w-full h-full object-cover" />
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 mb-1">
-            <span :class="['font-black text-[#2C2C2C]', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.authorNickname }}</span>
-            <span :class="['font-bold text-gray-400', layout === 'horizontal' ? 'text-[10px]' : 'text-xs']">{{ formatCommentDate(comment.createdAt) }}</span>
+        <template v-if="logDetail.comments && logDetail.comments.length > 0">
+          <div v-for="comment in logDetail.comments" :key="comment.commentId" class="flex items-start gap-3">
+            <div
+              :class="[
+                'border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
+                layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10'
+              ]"
+            >
+              <img :src="comment.authorImageUrl" :alt="comment.authorNickname" class="w-full h-full object-cover" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span :class="['font-black text-[#2C2C2C]', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.authorNickname }}</span>
+                <span :class="['font-bold text-gray-400', layout === 'horizontal' ? 'text-[10px]' : 'text-xs']">{{ formatCommentDate(comment.createdAt) }}</span>
+              </div>
+              <p :class="['font-medium text-gray-800 leading-relaxed', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.content }}</p>
+            </div>
           </div>
-          <p :class="['font-medium text-gray-800 leading-relaxed', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.content }}</p>
+        </template>
+        <div v-else class="h-full flex flex-col items-center justify-center text-center opacity-60">
+            <MessageCircle class="w-12 h-12 mb-2 text-gray-300" stroke-width="1.5" />
+            <p class="text-sm font-bold text-gray-400">댓글이 아직 없어요</p>
+            <p class="text-xs text-gray-400">첫 번째 댓글을 남겨보세요!</p>
         </div>
-      </div>
       </div>
 
       <!-- Footer: Actions & Input -->
@@ -277,6 +284,7 @@ import {
   Share2,
   Edit,
   Trash2,
+  MessageCircle,
 } from 'lucide-vue-next'
 import { format, parseISO } from 'date-fns'
 import type { TripLogDetail } from '@/types/trip/trip.model'
