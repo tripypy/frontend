@@ -49,7 +49,7 @@
       <div v-if="activeTab === 'log' && tripLog" class="px-6 py-5 flex-shrink-0 rounded-t-xl z-20 border-[3px] border-[#2C2C2C] border-b-0 bg-white bg-gradient-to-br from-[#FFD60A]/10 to-white flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]">
-            <img :src="tripLog.authorImageUrl" :alt="tripLog.authorNickname" class="w-full h-full object-cover" />
+            <img :src="tripLog.authorImageUrl" :alt="tripLog.authorNickname" class="w-full h-full object-cover" @error="handleImageError($event, 'profile')" />
           </div>
           <div>
             <h4 class="font-black text-[#2C2C2C] font-sans">{{ tripLog.authorNickname }}</h4>
@@ -307,6 +307,7 @@ import { TripStatus } from '@/types/common'
 import type { TripLogDetail } from '@/types/trip/trip.model'
 import { getTripLogDetail, deleteTripLog, getTripLogLikeStatus } from '@/apis/trip-log/index'
 import AlertDialog from '@/components/common/AlertDialog.vue'
+import { handleImageError } from '@/utils/imageHandler'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 

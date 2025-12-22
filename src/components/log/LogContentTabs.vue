@@ -12,12 +12,13 @@ import type {
 
 import { createTrip } from '@/apis/trip'
 import apiClient from '@/apis/http'
-
 import { Heart, MessageCircle } from 'lucide-vue-next'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
+import { handleImageError } from '@/utils/imageHandler'
 
 interface Props {
+// ... existing props ...
   isMyProfile: boolean
   userDiaries: (TripDiaryResponseDto | UserLogSummaryDto)[]
   userPlans: TripPlanView[]
@@ -149,7 +150,7 @@ const handleDiaryClick = (diaryId: number) => {
                   class="cursor-pointer bg-white border-[2px] border-[#2C2C2C] rounded-2xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] flex flex-col overflow-hidden transition-transform hover:scale-105"
               >
                 <div class="relative w-full h-40">
-                  <img :src="card.thumbnailUrl || '/default-profile.svg'" :alt="card.title" class="w-full h-full object-cover">
+                  <img :src="card.thumbnailUrl || '/default-profile.svg'" :alt="card.title" class="w-full h-full object-cover" @error="handleImageError($event, 'thumbnail')">
                    <span v-if="card.visibility === 'PRIVATE'" class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                     PRIVATE
                   </span>

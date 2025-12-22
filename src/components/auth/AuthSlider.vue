@@ -30,7 +30,7 @@
           </p>
         </div>
       </transition>
-      
+
       <div class="flex justify-center space-x-2 absolute bottom-1 left-1/2 -translate-x-1/2">
         <span
           v-for="(_, index) in props.slides"
