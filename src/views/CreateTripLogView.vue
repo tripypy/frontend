@@ -2,31 +2,45 @@
   <div class="h-screen bg-[#F5F5F5] font-sans selection:bg-[#F9CA6B] selection:text-black flex flex-col overflow-hidden">
     <TravelNavbar current-page="main" @navigate="handleNavigate" />
 
-    <div class="flex-grow pt-24 max-w-[1700px] mx-auto w-full px-4 pb-0 flex flex-col box-border overflow-hidden">
+    <div class="flex-grow pt-24 max-w-[1700px] mx-auto w-full px-4 flex flex-col box-border overflow-hidden">
       <section class="flex flex-col flex-grow bg-white rounded-t-2xl shadow-sm p-4 md:p-8 overflow-hidden h-full">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-bold text-gray-800">여행 기록 작성</h2>
+        <div class="flex justify-between items-center mb-2">
+          <h2 
+            class="text-xl font-bold text-gray-800 text-[#2C2C2C]"
+            style="font-family: 'Bebas Neue', sans-serif; line-height: 0.8"
+          >
+            TRAVEL DIARY
+          </h2>
           <div class="flex items-center gap-4">
             <label class="flex items-center text-sm font-medium text-gray-600">
-              공개 범위
               <select
                 v-model="visibility"
-                class="ml-2 px-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50
-                      focus:outline-none focus:ring-1 focus:ring-black"
+                class="ml-2 px-3.5 py-2.5 border-2 border-[#2C2C2C] rounded-lg bg-white font-bold
+                      focus:outline-none focus:ring-2 focus:ring-gray-200"
+                :class="[
+                  visibility === 'PUBLIC' ? 'border-[#9BCCC4]' : 'border-[#ff856c]'
+                ]"
               >
-                <option value="PUBLIC">전체 공개</option>
-                <option value="PRIVATE">비공개</option>
+                <option value="PUBLIC">PUBLIC</option>
+                <option value="PRIVATE">PRIVATE</option>
               </select>
             </label>
             <button
-              class="px-8 py-2.5 rounded-full font-bold text-white
+              class="flex flex-row px-3 py-2.5 rounded-lg font-bold text-white
+                    justify-center items-center
                     bg-black hover:bg-gray-800
-                    disabled:bg-gray-300 disabled:cursor-not-allowed
-                    transition-all active:scale-95 shadow-md"
+                    disabled:bg-gray-400 disabled:cursor-not-allowed
+                    transition-all active:scale-95 shadow-md
+                    text-[#2c2c2c] hover:bg-white hover:border-[#2C2C2C] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px]
+                    "
               :disabled="!isFormValid || isSubmitting"
               @click="submitPost"
             >
-              {{ isSubmitting ? '저장 중...' : '기록 저장하기' }}
+              <BookMarked
+                :size=20
+                class="mr-1"
+              />
+              {{ isSubmitting ? '저장 중...' : '저장하기' }}
             </button>
           </div>
         </div>
@@ -34,26 +48,27 @@
         <input
           type="text"
           v-model="title"
-          placeholder="여행 기록 제목을 입력하세요"
+          placeholder="여행 일지 제목을 입력하세요"
           class="w-full px-4 py-4 text-3xl font-bold border-b border-gray-50
                 focus:outline-none focus:border-black transition-colors mb-4"
         />
 
-        <div class="flex-grow flex flex-col min-h-0 relative h-full">
+        <div class="flex-grow flex flex-col min-h-0 relative h-full mb-10">
           <ContentEditor v-model="postContent" class="h-full" />
         </div>
 
         <!-- Debug HTML View (Real-time) -->
-        <div class="mt-4 p-4 bg-gray-900 text-green-400 rounded-xl overflow-auto min-h-48 text-xs font-mono">
+        <!-- <div class="mt-4 p-4 bg-gray-900 text-green-400 rounded-xl overflow-auto min-h-48 text-xs font-mono">
           <h3 class="text-white font-bold mb-2 uppercase tracking-wider">[실시간 HTML 데이터 확인]</h3>
           <pre>{{ postContent }}</pre>
-        </div>
+        </div> -->
       </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { BookMarked } from 'lucide-vue-next'
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ContentEditor from '@/components/log-write/ContentEditor.vue'
