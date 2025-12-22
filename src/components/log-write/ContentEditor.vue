@@ -28,6 +28,13 @@
         theme="snow"
         contentType="html"
         :content="content"
+        :toolbar="[
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          ['link', 'image'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['clean']
+    ]"
         @update:content="updateContent"
         @ready="onReady"
       />
@@ -294,7 +301,9 @@ const onReady = (quill: Quill) => {
 
   quillInstance.value = quill;
   const toolbar = quill.getModule('toolbar') as { addHandler: (name: string, handler: () => void) => void } | null;
-  if(toolbar) toolbar.addHandler('image', handleToolbarImage);
+  if(toolbar){
+    toolbar.addHandler('image', handleToolbarImage);
+  }
 
   quill.root.addEventListener('dragover', (e: DragEvent) => {
     e.preventDefault()

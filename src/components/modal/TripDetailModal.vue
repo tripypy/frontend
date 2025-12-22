@@ -156,7 +156,7 @@
         </div>
       </div>
 
-      <div 
+      <div
         class="flex-1 flex overflow-hidden border-[3px] border-[#2C2C2C] rounded-b-xl isolate transform-gpu"
         :class="activeTab === 'map' ? 'border-t-[3px]' : 'border-t-0'"
       >
@@ -296,7 +296,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect, reactive } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash, MoreHorizontal, Share, Trash2 } from 'lucide-vue-next'
+import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, MoreHorizontal, Share, Trash2 } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
@@ -501,7 +501,6 @@ const handleEditLogClick = () => {
 }
 
 const showDropdown = ref(false)
-const showToast = ref(false) // Add if needed, or reuse in TripLogContent
 
 const handleShare = () => {
     showDropdown.value = false

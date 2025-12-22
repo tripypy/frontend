@@ -176,6 +176,7 @@ const groupedCompletedTrips = computed(() => {
         return acc
       },
       {} as Record<string, TripResponseDto[]>,
+      {} as Record<string, TripResponseDto[]>,
     )
 })
 

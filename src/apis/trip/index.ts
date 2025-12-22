@@ -5,7 +5,7 @@ import type {
   TripItemsReplaceRequestDto,
   TripUpdateRequestDto,
   TripResponseDto,
-
+  TripSummaryResponseDto,
   TripScrapResponseDto
 } from '@/apis/trip/types'
 
@@ -89,5 +89,4 @@ export const requestScrapTrip = async (tripId: number): Promise<TripScrapRespons
   const response = await apiClient.post<TripScrapResponseDto>(`/trips/${tripId}/scrap`);
   return response.data
 }
-
 
