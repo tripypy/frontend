@@ -54,7 +54,11 @@
                 <Calendar :size="18" :stroke-width="2.5" />
                 <span>{{ displayDuration }}</span>
               </div>
-              <div class="flex items-center gap-2">
+              <div v-if="trip.locationSummary" class="flex items-center gap-2">
+                <MapPin :size="18" :stroke-width="2.5" />
+                <span>{{ trip.locationSummary }}</span>
+              </div> <!-- Added -->
+              <div v-if="!trip.locationSummary" class="flex items-center gap-2"> <!-- Fallback or keep separate -->
                 <MapPin :size="18" :stroke-width="2.5" />
                 <span>{{ trip.tripItems.length }}개 장소</span>
               </div>

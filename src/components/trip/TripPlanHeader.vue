@@ -113,7 +113,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ArrowLeft, Save, Edit, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, Save, Edit, Trash2, MapPin } from 'lucide-vue-next'
 import { TripStatus } from '@/types/common'
 import type { TripVisibility } from '@/types/trip/trip.model'
 

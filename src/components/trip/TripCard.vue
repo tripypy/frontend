@@ -47,7 +47,7 @@
     </div>
 
     <div class="p-5 bg-white">
-      <div v-if="trip.tags && trip.tags.length > 0 || isEditable" class="mb-5 flex items-center overflow-hidden">
+      <div v-if="trip.tags && trip.tags.length > 0" class="mb-5 flex items-center overflow-hidden">
         <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full">
           <template v-if="trip.tags && trip.tags.length > 0">
             <span
@@ -57,28 +57,15 @@
             >
               #{{ tag }}
             </span>
-            <button
-              v-if="isEditable"
-              @click.stop
-              class="w-7 h-7 rounded-full bg-white border-[2px] border-[#2C2C2C] flex items-center justify-center flex-shrink-0 hover:bg-gray-50 transition-colors focus:outline-none"
-            >
-              <span class="text-[#2C2C2C] font-black text-sm">+</span>
-            </button>
           </template>
-          <button
-            v-else-if="isEditable"
-            @click.stop
-            class="px-3 py-1 bg-white rounded-full text-[11px] font-black border-[2px] border-[#2C2C2C] border-dashed whitespace-nowrap hover:bg-gray-50 transition-colors flex items-center gap-1.5 focus:outline-none"
-          >
-            <span class="text-sm">+</span>
-            <span>태그 추가</span>
-          </button>
         </div>
       </div>
 
       <div class="flex items-center gap-2 mb-3">
         <MapPin class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-        <span class="text-xs font-black text-[#2C2C2C]">코스 {{ trip.spots }}개</span>
+        <span class="text-xs font-black text-[#2C2C2C]">
+          {{ trip.locationSummary || `코스 ${trip.spots}개` }}
+        </span>
       </div>
 
       <div class="space-y-2">
@@ -97,8 +84,11 @@
         </div>
       </div>
 
-      <div v-if="trip.spots > trip.spotPreviews.length" class="mt-4 text-center">
-        <button class="text-xs font-black text-[#2C2C2C] hover:underline focus:outline-none">
+      <div class="mt-4 text-center h-[20px]">
+        <button 
+          v-if="trip.spots > trip.spotPreviews.length"
+          class="text-xs font-black text-[#2C2C2C] hover:underline focus:outline-none"
+        >
           +{{ trip.spots - trip.spotPreviews.length }}개 더보기
         </button>
       </div>
