@@ -1,6 +1,7 @@
 import type { Place } from '@/types/trip/place.model'
 import type { TripLogCommentResponse } from '@/apis/trip-log/types'
 import type { TripResponseDto } from '@/apis/trip/types'
+import type { TripVisibility } from '@/types/trip/trip.model'
 
 /**
  * 여행 가시성 상태
@@ -43,13 +44,14 @@ tripId: number
 tripTitle: string
 images: TripLogImage[]
 comments: TripLogCommentResponse[]
+visibility: TripVisibility
 }
 
 export interface TripDiaryView {
   id: number
   title: string
   thumbnailUrl?: string
-  visibility: 'PUBLIC' | 'PRIVATE'
+  visibility: TripVisibility
   spotPreviews: { name: string }[]
   tags: string[]
   startDate: string | null

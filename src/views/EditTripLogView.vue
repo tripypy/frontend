@@ -28,16 +28,15 @@ import { ref, onMounted } from 'vue'
 import ContentEditor from '@/components/log-write/ContentEditor.vue'
 import { getTripLogDetail, patchTripLog } from '@/apis/trip-log'
 import type { TripLogDetail, TripVisibility } from '@/types/trip/trip.model'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 interface Props {
-logId: number
-onClose?: () => void
+    logId: number
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits<{
-(e: 'updated'): void
-}>()
 
 const content = ref('')
 const title = ref('')
@@ -47,18 +46,18 @@ const editorRef = ref<InstanceType<typeof ContentEditor> | null>(null)
 
 const fetchLog = async () => {
 try {
-const log: TripLogDetail = await getTripLogDetail(props.logId)
-content.value = log.content
-title.value = log.title
-visibility.value = log.images.length > 0 ? 'PUBLIC' : 'PRIVATE' // 예시
+    const log: TripLogDetail = await getTripLogDetail(props.logId)
+    content.value = log.content
+    title.value = log.title
+    visibility.value = log.visibility
 } catch (e) {
-console.error(e)
-alert('로그를 불러오는 중 오류가 발생했습니다.')
+    console.error(e)
+    alert('로그를 불러오는 중 오류가 발생했습니다.')
 }
 }
 
 onMounted(() => {
-fetchLog()
+    fetchLog()
 })
 
 const onSubmit = async () => {
@@ -73,8 +72,7 @@ const onSubmit = async () => {
             }
         }
         await patchTripLog(params)
-        emit('updated')
-        props.onClose?.()
+        router.back()
     } catch (e) {
         console.error(e)
         alert('로그 수정에 실패했습니다.')
@@ -84,6 +82,6 @@ const onSubmit = async () => {
 }
 
 const onCancel = () => {
-    props.onClose?.()
+    router.back()
 }
 </script>
