@@ -1,12 +1,12 @@
 import apiClient from '@/apis/http'
 import type {
-    TripLogCommentRequest,
-    TripLogCommentResponse,
-    TripLogLikeResponse,
-    TripLogFeedResponseDto,
-    TripLogCreateRequestDto,
-    UploadImageResponse,
-    TripLogPatchRequestDto,
+  TripLogCommentRequest,
+  TripLogCommentResponse,
+  TripLogLikeResponse,
+  TripLogFeedResponseDto,
+  TripLogCreateRequestDto,
+  UploadImageResponse,
+  TripLogPatchRequestDto,
 } from '@/apis/trip-log/types'
 
 import type { TripLogDetail } from '@/types/trip/trip.model'
@@ -99,6 +99,27 @@ export async function getTripLogFeed(
 }
 
 /**
+ * 특정 장소(spotId)와 관련된 여행 로그 목록을 조회합니다.
+ * @param spotId 장소 ID
+ * @param params 페이징 파라미터 (cursor, limit)
+ * @returns 여행 로그 목록 (TripLogFeedResponseDto)
+ */
+export const getTripLogsBySpot = async (
+  spotId: number,
+  params: { cursor?: number | null; limit?: number }
+): Promise<TripLogFeedResponseDto> => {
+  const cursorParam = params.cursor ? { cursor: params.cursor } : {}
+  const response = await apiClient.get<TripLogFeedResponseDto>('/trip-logs', {
+    params: {
+      spotId,
+      ...cursorParam,
+      limit: params.limit ?? 10
+    }
+  })
+  return response.data
+}
+
+/**
  * 여행 로그 생성 API 함수
  * @param payload 여행 로그 생성 요청 데이터
  * @returns 생성된 로그 ID
@@ -139,7 +160,7 @@ export async function getPresignedUrl(
  * @param logId 삭제할 여행 로그의 ID
  * @returns 성공 시 void (HTTP 204)
  */
-export const deleteTripLog = async(logId: number): Promise<void> => {
+export const deleteTripLog = async (logId: number): Promise<void> => {
   await apiClient.delete(`/trip-logs/${logId}`)
 }
 
@@ -151,5 +172,5 @@ export const deleteTripLog = async(logId: number): Promise<void> => {
  */
 export const patchTripLog = async (params: TripLogPatchRequestDto): Promise<void> => {
   const { logId, payload } = params
-  await apiClient.patch(`/trip-logs/${logId}`, payload) 
+  await apiClient.patch(`/trip-logs/${logId}`, payload)
 }

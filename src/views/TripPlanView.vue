@@ -2,6 +2,7 @@
   <div class="min-h-screen bg-[#F5F5F5] h-screen flex flex-col font-sans">
     <TripPlanHeader
       :trip-title="trip.tripTitle.value"
+      :location-summary="trip.tripLocationSummary.value"
       :trip-date="trip.tripDate.value"
       :formatted-date="trip.formattedDate.value"
       :is-edit-mode="trip.isEditMode.value"

@@ -11,11 +11,14 @@
         </div>
 
         <div v-if="isEditable" class="flex items-center gap-1.5">
+          <!-- Status Toggle Button -->
           <button
-            @click.stop="handleShare"
-            class="w-7 h-7 bg-white border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none"
+            v-if="trip.isOwner"
+            @click.stop="handleToggleStatus"
+            class="w-7 h-7 border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none bg-white"
+            :title="trip.status === TripStatus.COMPLETED ? '계획중으로 변경' : '완료 처리'"
           >
-            <Share2 class="w-3.5 h-3.5" stroke-width="2.5" />
+            <Check class="w-4 h-4 text-[#2C2C2C]" stroke-width="3" />
           </button>
 
           <button
@@ -47,38 +50,11 @@
     </div>
 
     <div class="p-5 bg-white">
-      <div v-if="trip.tags && trip.tags.length > 0 || isEditable" class="mb-5 flex items-center overflow-hidden">
-        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full">
-          <template v-if="trip.tags && trip.tags.length > 0">
-            <span
-              v-for="(tag, index) in trip.tags"
-              :key="index"
-              class="px-2.5 py-1 bg-white rounded-full text-[11px] font-black border-[2px] border-[#2C2C2C] whitespace-nowrap flex-shrink-0"
-            >
-              #{{ tag }}
-            </span>
-            <button
-              v-if="isEditable"
-              @click.stop
-              class="w-7 h-7 rounded-full bg-white border-[2px] border-[#2C2C2C] flex items-center justify-center flex-shrink-0 hover:bg-gray-50 transition-colors focus:outline-none"
-            >
-              <span class="text-[#2C2C2C] font-black text-sm">+</span>
-            </button>
-          </template>
-          <button
-            v-else-if="isEditable"
-            @click.stop
-            class="px-3 py-1 bg-white rounded-full text-[11px] font-black border-[2px] border-[#2C2C2C] border-dashed whitespace-nowrap hover:bg-gray-50 transition-colors flex items-center gap-1.5 focus:outline-none"
-          >
-            <span class="text-sm">+</span>
-            <span>태그 추가</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2 mb-3">
+      <div class="flex items-center gap-2 mb-4">
         <MapPin class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-        <span class="text-xs font-black text-[#2C2C2C]">코스 {{ trip.spots }}개</span>
+        <span class="text-sm font-black text-[#2C2C2C] truncate">
+          {{ trip.locationSummary || `코스 ${trip.spots}개` }}
+        </span>
       </div>
 
       <div class="space-y-2">
@@ -97,8 +73,11 @@
         </div>
       </div>
 
-      <div v-if="trip.spots > trip.spotPreviews.length" class="mt-4 text-center">
-        <button class="text-xs font-black text-[#2C2C2C] hover:underline focus:outline-none">
+      <div class="mt-4 text-center h-[20px]">
+        <button
+          v-if="trip.spots > trip.spotPreviews.length"
+          class="text-xs font-black text-[#2C2C2C] hover:underline focus:outline-none"
+        >
           +{{ trip.spots - trip.spotPreviews.length }}개 더보기
         </button>
       </div>
@@ -108,8 +87,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { Calendar, Share2, Bookmark, MapPin } from 'lucide-vue-next'
+import { Calendar, Bookmark, MapPin, Check } from 'lucide-vue-next'
 import type { TripResponseDto } from '@/apis/trip/types'
+import { updateTrip } from '@/apis/trip/index'
 import { TripStatus } from '@/types/common'
 
 const props = withDefaults(defineProps<{
@@ -123,14 +103,15 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'openModal', id: number): void
   (e: 'navigate', page: string, id?: number): void
+  (e: 'refresh'): void
 }>()
 
-const isBookmarked = ref(false) // Assuming bookmarking is not directly tied to API status anymore
+const isBookmarked = ref(false)
 
-const statusColors: Record<TripStatus, string> = { // Use TripStatus enum
+const statusColors: Record<TripStatus, string> = {
   COMPLETED: '#F9CA6B',
   PLANNED: '#9BCCC4',
-  DRAFT: '#E88555', // Assuming DRAFT maps to '스크랩' color for now
+  DRAFT: '#E88555',
 }
 
 const headerColor = computed(() => statusColors[props.trip.status] || '#9BCCC4')
@@ -138,8 +119,15 @@ const headerColor = computed(() => statusColors[props.trip.status] || '#9BCCC4')
 const numberColors = ['#F9CA6B', '#9BCCC4', '#E88555']
 const getNumberColor = (idx: number) => numberColors[idx % numberColors.length]
 
-const handleShare = () => {
-  alert('공유 기능 준비 중입니다!')
+const handleToggleStatus = async () => {
+  const newStatus = props.trip.status === TripStatus.COMPLETED ? TripStatus.PLANNED : TripStatus.COMPLETED
+  try {
+    await updateTrip(props.trip.id, { status: newStatus })
+    emit('refresh')
+  } catch (error) {
+    console.error('Failed to toggle status:', error)
+    alert('상태 변경에 실패했습니다.')
+  }
 }
 
 const displayDateRange = computed(() => {
@@ -167,7 +155,6 @@ const checkOverflow = async () => {
     if (el.scrollWidth > el.clientWidth) {
       isOverflowing.value = true
       scrollAmount.value = el.scrollWidth - el.clientWidth
-      // Adjust speed: 0.01s per pixel (faster)
       duration.value = scrollAmount.value * 0.01
     } else {
       isOverflowing.value = false
@@ -182,7 +169,6 @@ watch(() => props.trip.title, checkOverflow)
 </script>
 
 <style scoped>
-/* 가로 스크롤바 숨기기 */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
