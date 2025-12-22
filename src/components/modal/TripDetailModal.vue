@@ -88,21 +88,23 @@
           </div>
 
           <button
-            v-if="activeTab === 'map'"
+            v-if="activeTab === 'map' && trip.isOwner "
             @click="handleEditClick"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
-            <Edit :size="16" :stroke-width="3" /> EDIT
+            <Edit :size="16" :stroke-width="3" /> EDIT PLAN
           </button>
 
           <button
             v-if="activeTab === 'log' && !logLoading && tripLog && trip.isOwner"
+            @click="handleEditLogClick"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
-            <Edit :size="16" :stroke-width="3" /> EDIT
+            <Edit :size="16" :stroke-width="3" /> EDIT LOG
           </button>
           <button
             v-if="activeTab === 'log' && !logLoading && tripLog && trip.isOwner"
+            @click="handleDeleteLogClick"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#ff856c] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
             <Trash :size="16" :stroke-width="3" /> DELETE
@@ -235,7 +237,7 @@ import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
 import type { TripLogDetail } from '@/types/trip/trip.model'
-import { getTripLogDetail } from '@/apis/trip-log/index'
+import { getTripLogDetail, deleteTripLog } from '@/apis/trip-log/index'
 
 interface DayPlanDisplay {
   dayNumber: number
@@ -247,7 +249,7 @@ const props = defineProps<{
   initialPlaceId?: number | null
 }>()
 
-const emit = defineEmits(['close', 'edit', 'write'])
+const emit = defineEmits(['close', 'edit', 'write', 'edit-log'])
 const activeTab = ref<'map' | 'log'>('map')  // 탭 상태(기본은 'map'으로 설정)
 const tripLog = ref<TripLogDetail | null>(null) // 로그 데이터 상태
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -315,19 +317,24 @@ const mapCenter = computed(() => {
 const logLoading = ref(false)
 // 로그 데이터 조회 함수
 const fetchTripLog = async (tripId: number) => {
+    if(!props.trip.logId) return
     logLoading.value = true;
     tripLog.value = null;
     try {
-        const response = await getTripLogDetail(tripId);
+        const response = await getTripLogDetail(props.trip.logId);
         tripLog.value = response; // 로그 데이터 저장
     } catch (error: any) {
-        if (error?.response?.status === 404) return
+        if (error?.response?.status === 404){
+          console.warn(`tripId[${tripId}] 로그가 없습니다`)
+          console.log(props.trip)
+        }
         else alert('로그를 불러오는 중 오류가 발생했습니다.')
     } finally {
         logLoading.value = false;
     }
 }
 
+/* ---- handler ---- */
 // 탭 클릭 핸들러
 const handleTabClick = (tab: 'map' | 'log') => {
     activeTab.value = tab;
@@ -337,6 +344,22 @@ const handleTabClick = (tab: 'map' | 'log') => {
     }
 }
 
+const handleDeleteLogClick = async () => {
+  if (!logLoading.value && tripLog.value && props.trip.isOwner){
+    try {
+      await deleteTripLog(tripLog.value.logId)
+      alert('로그가 삭제되었습니다.')
+      emit('close') 
+    } catch (error) {
+      console.error('로그 삭제 실패', error)
+      alert('로그 삭제 실패')
+    }
+  }
+}
+
+const handleEditLogClick = () => {
+  emit('edit-log', tripLog.value )
+}
 
 const handleWriteLogClick = () => {
   emit('write', props.trip)

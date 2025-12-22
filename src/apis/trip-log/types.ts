@@ -64,3 +64,12 @@ export interface TripLogCreateRequestDto {
 export interface UploadImageResponse {
   presignedUrl: string
 }
+
+export interface TripLogPatchRequestDto {
+  logId: number,
+  payload: {
+    title: string
+    content: string
+    visibility: TripVisibility
+  }
+}

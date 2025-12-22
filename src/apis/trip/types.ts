@@ -47,6 +47,7 @@ export interface TripDetailResponseDto {
   visibility: TripVisibility
   isOwner: boolean
   tripItems: TripItemResponseDto[]
+  logId: number
 }
 
 

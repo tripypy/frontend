@@ -24,7 +24,7 @@ router.beforeEach((to, from, next) => {
     return next(false)
   }
 
-  const protectedRoutes = ['trips', 'trip-detail', 'create-trip', 'log', 'settings', 'log-write', 'friends']
+  const protectedRoutes = ['trips', 'trip-detail', 'create-trip', 'log', 'settings', 'log-write', 'friends', 'log-edit']
   const publicOnlyRoutes = ['login', 'signup', 'find-account']
 
   const isProtected = protectedRoutes.includes(to.name as string)
