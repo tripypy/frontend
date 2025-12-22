@@ -99,6 +99,15 @@ export async function getTripLogFeed(
 }
 
 /**
+ * 친구들의 여행 로그 피드를 조회하는 API 함수 (최근 3일)
+ * @returns {Promise<TripLogFeedResponseDto>}
+ */
+export async function getFriendTripLogFeed(): Promise<TripLogFeedResponseDto> {
+  const response = await apiClient.get<TripLogFeedResponseDto>('/trip-logs/feed/friends');
+  return response.data;
+}
+
+/**
  * 특정 장소(spotId)와 관련된 여행 로그 목록을 조회합니다.
  * @param spotId 장소 ID
  * @param params 페이징 파라미터 (cursor, limit)
