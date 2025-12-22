@@ -315,9 +315,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { X, MapPin, Phone, Globe, Star, Trash2, Heart } from 'lucide-vue-next'
-import { spotApi, type SpotRequestDto, type SpotResponseDto } from '@/apis/spot'
-import { spotReviewApi, type SpotReviewResponseDto } from '@/apis/spot-review'
-import { getTripLogsBySpot } from '@/apis/trip-log'
+import { spotApi, type SpotRequestDto } from '@/apis/spot/index'
+import { type SpotResponseDto } from '@/apis/search'
+import { spotReviewApi, type SpotReviewResponseDto } from '@/apis/spot-review/index'
+//import { getTripLogsBySpot } from '@/apis/trip-log/index'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types'
 import { useAuthStore } from '@/stores/auth'
 import AlertDialog from '@/components/common/AlertDialog.vue'

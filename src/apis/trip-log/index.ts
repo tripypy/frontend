@@ -1,9 +1,11 @@
 import apiClient from '@/apis/http'
 import type {
-  TripLogCommentRequest,
-  TripLogCommentResponse,
-  TripLogLikeResponse,
-  TripLogFeedResponseDto
+    TripLogCommentRequest,
+    TripLogCommentResponse,
+    TripLogLikeResponse,
+    TripLogFeedResponseDto,
+    TripLogCreateRequestDto,
+    UploadImageResponse,
 } from '@/apis/trip-log/types'
 
 import type { TripLogDetail } from '@/types/trip/trip.model'
@@ -96,26 +98,34 @@ export async function getTripLogFeed(
 }
 
 /**
- * 특정 장소가 포함된 여행 기록을 조회하는 API 함수 (무한 스크롤)
- * @param spotId 장소 ID
- * @param params.cursor 다음 페이지를 위한 커서 값
- * @param params.limit 페이지 당 항목 수 (기본 10)
+ * 여행 로그 생성 API 함수
+ * @param payload 여행 로그 생성 요청 데이터
+ * @returns 생성된 로그 ID
  */
-export async function getTripLogsBySpot(
-  spotId: number,
-  params: GetTripLogFeedParams
-): Promise<TripLogFeedResponseDto> {
-  const cursorParam = params.cursor !== null && params.cursor !== undefined
-    ? { cursor: params.cursor }
-    : {};
+export const postTripLogCreate = async (
+  payload: TripLogCreateRequestDto,
+): Promise<{ logId: number }> => {
+  const response = await apiClient.post<{ logId: number }>(
+    '/trip-logs',
+    payload,
+  )
 
-  const response = await apiClient.get<TripLogFeedResponseDto>('/trip-logs', {
-    params: {
-      spotId,
-      ...cursorParam,
-      limit: params.limit ?? 10,
+  return response.data
+}
+
+/**
+ * 여행 로그 이미지 처리 API 함수
+ * @returns 영구 이미지 url
+ */
+
+export async function getPresignedUrl(
+  file: File
+): Promise<UploadImageResponse> {
+  const response = await apiClient.post<UploadImageResponse>(
+    '/trip-logs/images/presigned-url',
+    {
+      fileName: file.name,
     }
-  });
-
-  return response.data;
+  )
+  return response.data
 }

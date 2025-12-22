@@ -4,10 +4,10 @@
 
     <div class="pt-28 max-w-[1440px] mx-auto px-6 pb-12">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         <!-- Left Sidebar: Discovery -->
         <div class="hidden lg:block lg:col-span-3 space-y-8">
-          
+
           <!-- Keywords Section -->
           <div class="bg-white border-[2px] border-[#2C2C2C] rounded-xl p-5 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)]">
             <h3 class="text-xl font-black mb-4 uppercase flex items-center gap-2" style="font-family: 'Bebas Neue', sans-serif">
@@ -30,14 +30,14 @@
             <h3 class="text-xl font-black mb-4 uppercase flex items-center gap-2" style="font-family: 'Bebas Neue', sans-serif">
               <span class="text-[#9BCCC4]">★</span> Real-time Ranking
             </h3>
-            
+
             <div class="space-y-3">
               <div v-for="(place, idx) in hotPlaces" :key="idx" @click="handlePlaceClick(place)" class="flex items-center gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
                 <!-- Rank -->
                 <span class="text-lg font-black italic text-[#2C2C2C] w-6 text-center shadow-[2px_2px_0px_0px_rgba(207,245,0,0.5)] bg-white border border-[#2C2C2C] rounded flex-shrink-0">
                   {{ idx + 1 }}
                 </span>
-                
+
                 <!-- Content -->
                 <div class="min-w-0 flex-1">
                    <h4 class="font-bold text-sm truncate text-[#2C2C2C] group-hover:text-[#E88555] transition-colors leading-tight">
@@ -50,7 +50,7 @@
               </div>
             </div>
 
-            <button 
+            <button
               @click="handleNavigate('search')"
               class="w-full mt-4 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs uppercase hover:bg-[#F5F5F5] transition-colors"
             >
@@ -65,7 +65,7 @@
           <div class="mb-8 text-center bg-white border-[2px] border-[#2C2C2C] rounded-xl p-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] relative overflow-hidden">
              <!-- Decorative diagonal stripes background -->
              <div class="absolute top-0 right-0 w-32 h-32 opacity-10" style="background-image: radial-gradient(#2C2C2C 2px, transparent 2px); background-size: 10px 10px;"></div>
-             
+
              <h2
               class="text-6xl text-[#2C2C2C] mb-1 relative inline-block z-10"
               style="font-family: 'Bebas Neue', sans-serif"
@@ -99,14 +99,14 @@
 
         <!-- Right Sidebar: Personal -->
         <div class="hidden lg:block lg:col-span-3 space-y-8">
-          
+
           <!-- New Plan Card (CTA) -->
           <button
             @click="handleCreateTrip"
             class="w-full bg-[#F9CA6B] border-[2px] border-[#2C2C2C] rounded-xl p-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all text-left group relative overflow-hidden"
           >
              <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-            
+
             <div class="w-12 h-12 bg-[#2C2C2C] text-white rounded-xl flex items-center justify-center mb-4 shadow-sm border border-white/20 group-hover:rotate-12 transition-transform">
               <Plus class="w-6 h-6" stroke-width="3" />
             </div>
@@ -128,9 +128,9 @@
             </div>
 
             <div v-if="upcomingTrips.length > 0" class="space-y-3">
-              <div 
-                v-for="trip in upcomingTrips" 
-                :key="trip.id" 
+              <div
+                v-for="trip in upcomingTrips"
+                :key="trip.id"
                 class="group cursor-pointer bg-[#FFF8ED] border-[2px] border-[#2C2C2C] rounded-lg p-3 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] transition-all"
                 @click="handleNavigateToTrip(trip.id)"
               >
@@ -159,15 +159,15 @@
           <!-- Daily Mission (Premium Log Style) -->
           <div class="bg-[#2C2C2C] rounded-xl p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] text-center text-white relative overflow-hidden group cursor-pointer min-h-[140px] flex flex-col justify-center items-center">
             <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-            
+
             <h3 class="text-xl font-black mb-3 relative z-10 text-[#F9CA6B]" style="font-family: 'Bebas Neue'">
               DAILY MISSION
             </h3>
-            
+
             <p class="text-sm font-bold text-gray-200 relative z-10 mb-4 break-keep leading-snug">
               {{ currentMission }}
             </p>
-            
+
             <div class="inline-block px-4 py-1.5 border border-white/30 rounded-full text-[10px] font-bold group-hover:bg-white group-hover:text-[#2C2C2C] transition-all relative z-10 uppercase tracking-wider">
               Accept Challenge
             </div>
@@ -213,7 +213,7 @@ import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
-import { Plus, MapPin, Calendar, ExternalLink, TrendingUp, TrendingDown, Minus } from 'lucide-vue-next'
+import { Plus, Calendar} from 'lucide-vue-next'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { getTripLogFeed } from '@/apis/trip-log/index';
 import { dailyMissions } from '@/data/mockData'
@@ -328,7 +328,7 @@ const upcomingTrips = computed(() => {
       const start = parseISO(trip.startDate!)
       const diff = differenceInCalendarDays(start, now)
       const dDay = diff === 0 ? 'D-Day' : `D-${diff}`
-      
+
       return {
         id: trip.id,
         title: trip.title,
@@ -339,7 +339,7 @@ const upcomingTrips = computed(() => {
     .sort((a, b) => {
         return a.date.localeCompare(b.date)
     })
-    .slice(0, 3) 
+    .slice(0, 3)
 })
 
 
@@ -369,7 +369,7 @@ onMounted(async () => {
   // Observer Setup
   observer = new IntersectionObserver(
     (entries) => {
-      if (entries[0]?.isIntersecting && hasNext.value) { 
+      if (entries[0]?.isIntersecting && hasNext.value) {
         loadMore()
       }
     },
