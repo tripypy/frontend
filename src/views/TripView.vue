@@ -53,6 +53,7 @@
               :trip="trip"
               @click="handleOpenModal(trip.id)"
               @open-modal="handleOpenModal"
+              @refresh="fetchTrips"
             />
           </div>
         </div>
@@ -65,6 +66,7 @@
           :trip="trip"
           @click="handleOpenModal(trip.id)"
           @open-modal="handleOpenModal"
+          @refresh="fetchTrips"
         />
       </div>
     </div>
@@ -76,6 +78,7 @@
       @edit="handleEditFromModal"
       @write="handleWriteLogFromModal"
       @edit-log="handleEditLogFromModal"
+      @refresh="fetchTrips"
     />
 
     <ScrollToTop />
@@ -91,39 +94,36 @@ import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import { useRouter } from 'vue-router'
-import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index' // Added getTripDetail
-import type { TripResponseDto, TripDetailResponseDto, TripItemResponseDto } from '@/apis/trip/types' // Added TripDetailResponseDto
+import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index'
+import type { TripResponseDto, TripDetailResponseDto, TripItemResponseDto } from '@/apis/trip/types'
 import { TripStatus } from '@/types/common'
 import type { TripLogDetail } from '@/types/trip/trip.model'
-
-// TODO: TripCard에서 필요한 spots, tags, spotPreviews, completedDate 필드가 TripResponseDto에 없음.
-// 현재는 TripResponseDto를 기반으로 하되, TripCard의 props 타입을 TripResponseDto에 맞게 조정해야 합니다.
-// 장기적으로는 백엔드 API에서 해당 정보를 제공하거나, TripCard 컴포넌트의 요구사항을 조정해야 합니다.
 
 const { handleNavigate } = useNavigate()
 const router = useRouter()
 
-const activeTab = ref<TripStatus | 'all' | 'saved'>('all')
-const tripsList = ref<TripResponseDto[]>([]) // Changed to TripResponseDto[]
+const activeTab = ref<TripStatus | 'all'>('all')
+const tripsList = ref<TripResponseDto[]>([])
 
-
-onMounted(async () => {
+// 데이터 조회
+const fetchTrips = async () => {
   try {
     const response = await getMyTrips()
     tripsList.value = response
   } catch (error) {
     console.error('내 여행 목록 조회 실패:', error)
-    alert('내 여행 목록 조회에 실패했습니다.')
+    // alert('내 여행 목록 조회에 실패했습니다.') // 필요시 주석 해제
   }
-})
+}
 
-const selectedTrip = ref<TripDetailResponseDto | null>(null) // Changed type to TripDetailResponseDto | null
+onMounted(fetchTrips)
+
+const selectedTrip = ref<TripDetailResponseDto | null>(null)
 
 // 새로운 여행 계획 생성 핸들러
 const handleCreateNewTrip = async () => {
   try {
-    const newTrip = await createTrip() // API 호출
-    console.log('newTrip:', newTrip) // newTrip 값 확인
+    const newTrip = await createTrip()
     handleNavigate('trip-edit', { id: newTrip.id })
   } catch (error) {
     console.error('여행 계획 생성 실패:', error)
@@ -134,35 +134,29 @@ const handleCreateNewTrip = async () => {
 // 탭 필터링 로직
 const planningTrips = computed(() => tripsList.value.filter((t) => t.status === TripStatus.PLANNED))
 const completedTrips = computed(() => tripsList.value.filter((t) => t.status === TripStatus.COMPLETED))
-const savedTrips = computed(() => tripsList.value.filter((t) => t.status === '스크랩')) // '스크랩'은 TripStatus에 없으므로 로컬 필터링 유지
 
 const displayTrips = computed(() => {
-  const filteredTrips = (() => {
-    if (activeTab.value === TripStatus.PLANNED) return planningTrips.value
-    if (activeTab.value === TripStatus.COMPLETED) return completedTrips.value
-    if (activeTab.value === 'saved') return savedTrips.value
-    return tripsList.value
-  })()
-  return filteredTrips
+  if (activeTab.value === TripStatus.PLANNED) return planningTrips.value
+  if (activeTab.value === TripStatus.COMPLETED) return completedTrips.value
+  return tripsList.value
 })
 
-const tabs: { id: TripStatus | 'all' | 'saved'; label: string }[] = [
+// [수정됨] 스크랩 탭 제거
+const tabs: { id: TripStatus | 'all'; label: string }[] = [
   { id: 'all', label: '전체' },
   { id: TripStatus.PLANNED, label: '계획중' },
   { id: TripStatus.COMPLETED, label: '완료' },
-  { id: 'saved', label: '스크랩' },
 ]
 
-const getCount = (tabId: TripStatus | 'all' | 'saved') => {
+const getCount = (tabId: TripStatus | 'all') => {
   if (tabId === 'all') return tripsList.value.length
   if (tabId === TripStatus.PLANNED) return planningTrips.value.length
   if (tabId === TripStatus.COMPLETED) return completedTrips.value.length
-  if (tabId === 'saved') return savedTrips.value.length
   return 0
 }
 
 const groupedCompletedTrips = computed(() => {
-  const groups: Record<string, TripResponseDto[]> = {} // Changed to TripResponseDto[]
+  const groups: Record<string, TripResponseDto[]> = {}
   completedTrips.value.forEach((trip) => {
     if (trip.startDate) {
       const monthKey = trip.startDate.substring(0, 7)
@@ -190,53 +184,47 @@ const formatMonth = (monthStr: string) => {
 
 // 1. 모달 열기 로직
 const handleOpenModal = async (tripId: number) => {
-  // Made async
   try {
-    const detail = await getTripDetail(tripId) // Fetch detailed trip data
+    const detail = await getTripDetail(tripId)
     selectedTrip.value = {
       ...detail,
-      // description은 tripItems에서 파생
       description:
         detail.tripItems && detail.tripItems.length > 0
           ? detail.tripItems.map((item : TripItemResponseDto) => item.spot.name).join(' → ')
           : '장소 없음',
-      // duration, views, imageUrl은 TripDetailResponseDto에 없으므로 mock data 유지 또는 제거
-      duration: '반나절', // Mock Data
-      views: 1240, // Mock Data
-      imageUrl: '', // Mock Data
     }
   } catch (error) {
     console.error(`여행 상세 조회 실패 (ID: ${tripId}):`, error)
     alert('여행 상세 정보를 불러오는데 실패했습니다.')
-    selectedTrip.value = null // 모달을 열지 않음
+    selectedTrip.value = null
   }
 }
 
-// 2. 모달 안에서 [수정] 버튼 클릭 시 -> TripPlanView로 이동 + 수정 모드 ON
-const handleEditFromModal = (trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string }) => {
+// 2. TripPlanView로 이동
+const handleEditFromModal = (trip: TripDetailResponseDto) => {
   selectedTrip.value = null
   handleNavigate('trip-edit', { id: trip.id })
 }
 
-const handleWriteLogFromModal = (trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string }) => {
-  selectedTrip.value = null // 모달 닫기
+// 3. 로그 작성 이동
+const handleWriteLogFromModal = (trip: TripDetailResponseDto) => {
+  selectedTrip.value = null
   router.push({
     name: 'log-write',
     params: { tripId: trip.id }
   })
 }
 
+// 4. 로그 수정 이동
 const handleEditLogFromModal = (tripLog: TripLogDetail) => {
   selectedTrip.value = null
   if (tripLog.logId){
-    console.log(tripLog.logId +" 해당 로그 edit 화면으로 이동")
     router.push({ name: 'log-edit', params: { logId: tripLog.logId}})
   }
 }
 </script>
 
 <style scoped>
-
 .font-sans {
   font-family: 'Outfit', sans-serif;
 }

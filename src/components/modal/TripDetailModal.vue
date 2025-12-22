@@ -14,7 +14,7 @@
       class="relative w-full max-w-4xl h-[85vh] flex flex-col"
       @click.stop
     >
-        <div class="flex-shrink-0 self-end">
+      <div class="flex-shrink-0 self-end">
         <div class="flex items-center justify-end">
           <div class="flex relative top-[3px]">
             <button
@@ -49,6 +49,7 @@
         <div class="flex items-center justify-between gap-6">
           <div class="flex-1">
             <h2 class="text-2xl font-black mb-2">{{ trip.title }}</h2>
+
             <div v-if="activeTab === 'map'" class="flex items-center gap-4 text-sm font-bold text-gray-600">
               <div class="flex items-center gap-2">
                 <Calendar :size="18" :stroke-width="2.5" />
@@ -57,20 +58,48 @@
               <div v-if="trip.locationSummary" class="flex items-center gap-2">
                 <MapPin :size="18" :stroke-width="2.5" />
                 <span>{{ trip.locationSummary }}</span>
-              </div> <!-- Added -->
-              <div v-if="!trip.locationSummary" class="flex items-center gap-2"> <!-- Fallback or keep separate -->
+              </div>
+              <div v-else class="flex items-center gap-2">
                 <MapPin :size="18" :stroke-width="2.5" />
                 <span>{{ trip.tripItems.length }}개 장소</span>
               </div>
+
               <div class="flex items-center gap-2">
                 <ListChecks :size="18" :stroke-width="2.5" />
-                <span>{{ trip.status }}</span>
+                <div v-if="trip.isOwner" class="relative">
+                  <select
+                    :value="localTrip.status"
+                    @change="handleStatusChange"
+                    class="appearance-none h-7 pl-2 pr-6 border-[2px] border-[#2C2C2C] rounded-md text-xs font-bold bg-white focus:outline-none focus:ring-1 focus:ring-[#2C2C2C] cursor-pointer"
+                  >
+                    <option v-for="status in TripStatus" :key="status" :value="status">{{ status }}</option>
+                  </select>
+                  <div class="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <ChevronDown class="w-3 h-3 text-[#2C2C2C]" stroke-width="3" />
+                  </div>
+                </div>
+                <span v-else>{{ trip.status }}</span>
               </div>
+
               <div class="flex items-center gap-2">
                 <Shield :size="18" :stroke-width="2.5" />
-                <span>{{ trip.visibility }}</span>
+                <div v-if="trip.isOwner" class="relative">
+                  <select
+                    :value="localTrip.visibility"
+                    @change="handleVisibilityChange"
+                    class="appearance-none h-7 pl-2 pr-6 border-[2px] border-[#2C2C2C] rounded-md text-xs font-bold bg-white focus:outline-none focus:ring-1 focus:ring-[#2C2C2C] cursor-pointer"
+                  >
+                    <option value="PUBLIC">PUBLIC</option>
+                    <option value="PRIVATE">PRIVATE</option>
+                  </select>
+                  <div class="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <ChevronDown class="w-3 h-3 text-[#2C2C2C]" stroke-width="3" />
+                  </div>
+                </div>
+                <span v-else>{{ trip.visibility }}</span>
               </div>
             </div>
+
             <div v-if="activeTab === 'log' && tripLog" class="flex items-center gap-4 text-sm font-bold text-gray-600">
               <div class="flex text-base font-bold text-black items-center gap-2">
                 <User :size="18" :stroke-width="2.5" />
@@ -92,7 +121,7 @@
           </div>
 
           <button
-            v-if="activeTab === 'map' && trip.isOwner "
+            v-if="activeTab === 'map' && trip.isOwner"
             @click="handleEditClick"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
@@ -115,11 +144,10 @@
           </button>
         </div>
       </div>
+
       <div class="flex-1 flex overflow-hidden ">
         <div v-if="activeTab === 'map'" class="flex-1 flex overflow-hidden">
-          <div
-            class="w-[320px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0"
-          >
+          <div class="w-[320px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0">
             <div class="p-4 border-b-[2px] border-gray-200">
               <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
                 <button
@@ -165,9 +193,7 @@
               </div>
 
               <div v-else class="text-center py-8">
-                <div
-                  class="w-12 h-12 bg-gray-100 border-[2px] border-gray-300 rounded-lg mx-auto mb-3 flex items-center justify-center"
-                >
+                <div class="w-12 h-12 bg-gray-100 border-[2px] border-gray-300 rounded-lg mx-auto mb-3 flex items-center justify-center">
                   <MapPin :size="24" :stroke-width="2" class="text-gray-400" />
                 </div>
                 <p class="text-sm font-bold text-gray-500">선택된 장소가 없습니다</p>
@@ -176,7 +202,6 @@
           </div>
 
           <div class="flex-1 flex flex-col bg-gray-100">
-            <!-- Map Container -->
             <div class="flex-1 relative">
               <KakaoMap
                 ref="kakaoMapRef"
@@ -187,25 +212,24 @@
                 :selected-marker-id="selectedMarkerId"
                 @marker-click="handleMarkerClick"
               />
-              <div
-                v-if="markerPositions.length === 0"
-                class="absolute inset-0 flex items-center justify-center pointer-events-none"
-              >
+              <div v-if="markerPositions.length === 0" class="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div class="text-center">
-                  <div
-                    class="w-14 h-14 bg-white border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center mx-auto mb-3 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.4)]"
-                  >
+                  <div class="w-14 h-14 bg-white border-[3px] border-[#2C2C2C] rounded-full flex items-center justify-center mx-auto mb-3 shadow-[4px_4px_0px_0px_rgba(44,44,44,0.4)]">
                     <MapPin :size="26" :stroke-width="2.5" class="text-[#2C2C2C]" />
                   </div>
                   <p class="font-bold text-gray-700">코스에 담긴 장소가 지도에 표시됩니다</p>
                 </div>
               </div>
             </div>
-            <!-- Place Detail Panel -->
-            <PlaceDetailPanel :place="selectedPlace" @close="selectedPlace = null" />
+
+            <PlaceDetailPanel
+              :place="selectedPlace"
+              @close="selectedPlace = null"
+              @open-detail="handleOpenPlaceDetailModal"
+            />
           </div>
         </div>
-        <!-- log content -->
+
         <div v-if="activeTab === 'log'" class="p-1 flex-1 overflow-y-auto flex items-center justify-center bg-gray-50">
           <div v-if="logLoading" class="text-center text-lg font-bold text-gray-600">
             로그를 불러오는 중...
@@ -214,7 +238,7 @@
           <div v-else-if="tripLog">
               <div class="w-full max-w-3xl p-6 bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-lg">
                   <div class="prose max-w-none" v-html="tripLog.content"></div>
-                  </div>
+              </div>
           </div>
 
           <div v-else class="text-center mb-20 p-12 flex flex-col justify-center items-center">
@@ -228,18 +252,25 @@
           </div>
         </div>
       </div>
+    </div>
 
-      </div>
+    <PlaceDetailModal
+        v-if="showPlaceDetailModal && detailedPlace"
+        :place="detailedPlace"
+        @close="showPlaceDetailModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield, Pencil, User, Heart, MessageCircle, Trash } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted, watchEffect, reactive } from 'vue'
+import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
+import { updateTrip } from '@/apis/trip/index'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
+import { TripStatus } from '@/types/common'
 import type { TripLogDetail } from '@/types/trip/trip.model'
 import { getTripLogDetail, deleteTripLog } from '@/apis/trip-log/index'
 
@@ -253,15 +284,24 @@ const props = defineProps<{
   initialPlaceId?: number | null
 }>()
 
-const emit = defineEmits(['close', 'edit', 'write', 'edit-log'])
-const activeTab = ref<'map' | 'log'>('map')  // 탭 상태(기본은 'map'으로 설정)
-const tripLog = ref<TripLogDetail | null>(null) // 로그 데이터 상태
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh'])
+
+// 1. 상태 동기화 (드롭다운 즉시 반응용)
+const localTrip = reactive({ ...props.trip })
+watchEffect(() => {
+  Object.assign(localTrip, props.trip)
+})
+
+// 2. 탭 & 로그 상태
+const activeTab = ref<'map' | 'log'>('map')
+const tripLog = ref<TripLogDetail | null>(null)
+
+// 3. 지도 & 장소 관련 상태
 const kakaoMapRef = ref<any>(null)
 const activeDay = ref(1)
 const selectedPlace = ref<SpotResponseDto | null>(null)
 const selectedMarkerId = ref<number | string | null>(null)
-const showPlaceDetailModal = ref(false)
+const showPlaceDetailModal = ref(false) // Nested Modal State
 const detailedPlace = ref<SpotResponseDto | null>(null)
 
 const days = computed<DayPlanDisplay[]>(() => {
@@ -281,7 +321,6 @@ watchEffect(() => {
     const initialItem = props.trip.tripItems.find(item => item.spot.id === props.initialPlaceId)
     if (initialItem) {
       activeDay.value = initialItem.dayNumber
-      // DOM 업데이트를 기다린 후 클릭 핸들러를 호출
       setTimeout(() => {
         handlePlaceClick(initialItem.spot)
       }, 0)
@@ -319,18 +358,16 @@ const mapCenter = computed(() => {
 })
 
 const logLoading = ref(false)
-// 로그 데이터 조회 함수
 const fetchTripLog = async (tripId: number) => {
     if(!props.trip.logId) return
     logLoading.value = true;
     tripLog.value = null;
     try {
         const response = await getTripLogDetail(props.trip.logId);
-        tripLog.value = response; // 로그 데이터 저장
+        tripLog.value = response;
     } catch (error: any) {
         if (error?.response?.status === 404){
           console.warn(`tripId[${tripId}] 로그가 없습니다`)
-          console.log(props.trip)
         }
         else alert('로그를 불러오는 중 오류가 발생했습니다.')
     } finally {
@@ -338,22 +375,47 @@ const fetchTripLog = async (tripId: number) => {
     }
 }
 
-/* ---- handler ---- */
-// 탭 클릭 핸들러
+// 탭 핸들러
 const handleTabClick = (tab: 'map' | 'log') => {
     activeTab.value = tab;
-    // Log 탭을 클릭했을 때만 로그 데이터를 불러옵니다.
     if (tab === 'log' && !tripLog.value && !logLoading.value) {
         fetchTripLog(props.trip.id);
     }
 }
 
+// 상태 변경 핸들러
+const handleStatusChange = async (event: Event) => {
+  const newStatus = (event.target as HTMLSelectElement).value as TripStatus
+  try {
+    await updateTrip(props.trip.id, { status: newStatus })
+    localTrip.status = newStatus
+    emit('refresh')
+  } catch (error) {
+    console.error('Failed to update status:', error)
+    alert('상태 변경에 실패했습니다.')
+  }
+}
+
+// 공개 여부 변경 핸들러
+const handleVisibilityChange = async (event: Event) => {
+  const newVisibility = (event.target as HTMLSelectElement).value as any
+  try {
+    await updateTrip(props.trip.id, { visibility: newVisibility })
+    localTrip.visibility = newVisibility
+    emit('refresh')
+  } catch (error) {
+    console.error('Failed to update visibility:', error)
+    alert('공개 여부 변경에 실패했습니다.')
+  }
+}
+
+// 로그 관련 핸들러
 const handleDeleteLogClick = async () => {
   if (!logLoading.value && tripLog.value && props.trip.isOwner){
     try {
       await deleteTripLog(tripLog.value.logId)
       alert('로그가 삭제되었습니다.')
-      emit('close') 
+      emit('close')
     } catch (error) {
       console.error('로그 삭제 실패', error)
       alert('로그 삭제 실패')
@@ -362,7 +424,7 @@ const handleDeleteLogClick = async () => {
 }
 
 const handleEditLogClick = () => {
-  emit('edit-log', tripLog.value )
+  if(tripLog.value) emit('edit-log', tripLog.value )
 }
 
 const handleWriteLogClick = () => {
@@ -373,6 +435,7 @@ const handleEditClick = () => {
   emit('edit', props.trip)
 }
 
+// 지도 및 장소 핸들러
 const handlePlaceClick = (place: SpotResponseDto) => {
   selectedPlace.value = place
   selectedMarkerId.value = place.id
@@ -390,13 +453,9 @@ const handlePlaceClick = (place: SpotResponseDto) => {
 
     if (bounds && mapDiv && mapDiv.offsetHeight > 0) {
       const mapHeightInPixels = mapDiv.offsetHeight
-      // 패널 높이(256px)의 약 1/3인 85px을 오프셋으로 사용
       const pixelOffset = 85
-
       const latSpan = bounds.getNorthEast().getLat() - bounds.getSouthWest().getLat()
       const latOffset = (latSpan / mapHeightInPixels) * pixelOffset
-
-      // 중심을 아래로 이동시켜 마커가 패널 위로 보이게 함
       finalLat -= latOffset
     }
 
@@ -411,6 +470,7 @@ const handleMarkerClick = (id: number | string) => {
   }
 }
 
+// [중요] 상세 모달 열기 핸들러
 const handleOpenPlaceDetailModal = (place: SpotResponseDto) => {
     detailedPlace.value = place
     showPlaceDetailModal.value = true
