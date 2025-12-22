@@ -102,6 +102,9 @@ export async function getTripLogFeed(
  * 여행 로그 생성 API 함수
  * @param payload 여행 로그 생성 요청 데이터
  * @returns 생성된 로그 ID
+ * 여행 로그 생성 API 함수
+ * @param payload 여행 로그 생성 요청 데이터
+ * @returns 생성된 로그 ID
  */
 export const postTripLogCreate = async (
   payload: TripLogCreateRequestDto,

@@ -67,15 +67,14 @@ const router = createRouter({
     {
       path: '/log-write/:tripId',
       name: 'log-write',
-      component: () => import('@/views/CreateTripLogView.vue'),
+      component: () => import('@/views/PostCreateView.vue'),
       props:true
     },
     {
-      path: '/log-edit/:logId',
-      name: 'log-edit',
-      component: () => import('@/views/EditTripLogView.vue'),
-      props:true
-    }
+      path: '/friends',
+      name: 'friends',
+      component: () => import('@/views/FriendsView.vue'),
+    },
   ],
 })
 
