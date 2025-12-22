@@ -28,12 +28,31 @@
       class="relative w-full max-w-4xl h-[85vh] flex flex-col"
       @click.stop
     >
-      <!-- Single LOG Tab (always active) -->
+      <!-- Tabs -->
       <div class="flex-shrink-0 self-end">
         <div class="flex items-center justify-end">
           <div class="flex relative top-[3px]">
             <button
-              class="px-4 py-2 text-base font-black border-[4px] border-[#2C2C2C] rounded-t-lg transition-all focus:outline-none mr-2 border-b-0 bg-[#F9CA6B] translate-y-[-3px] shadow-[0_0_0_0_rgba(44,44,44,1)]"
+              @click="activeTab = 'map'"
+              :class="[
+                'px-4 py-2 text-base font-black border-[4px] border-[#2C2C2C] rounded-t-lg transition-all focus:outline-none',
+                'border-b-0',
+                activeTab === 'map'
+                  ? 'bg-[#9BCCC4] translate-y-[-3px] shadow-[0_0_0_0_rgba(44,44,44,1)]'
+                  : 'bg-[#9BCCC4]/50 translate-y-0 border-b-[3px] border-[#2C2C2C] shadow-[0_3px_0_0_rgba(44,44,44,0.4)]',
+              ]"
+            >
+              MAP
+            </button>
+            <button
+              @click="activeTab = 'log'"
+              :class="[
+                'px-4 py-2 text-base font-black border-[4px] border-[#2C2C2C] rounded-t-lg transition-all focus:outline-none mr-2 ml-1',
+                'border-b-0',
+                activeTab === 'log'
+                  ? 'bg-[#F9CA6B] translate-y-[-3px] shadow-[0_0_0_0_rgba(44,44,44,1)]'
+                  : 'bg-[#F9CA6B]/50 translate-y-0 border-b-[3px] border-[#2C2C2C] shadow-[0_3px_0_0_rgba(44,44,44,0.4)]',
+              ]"
             >
               LOG
             </button>
@@ -42,7 +61,7 @@
       </div>
 
       <!-- Log Header -->
-      <div class="px-6 py-5 flex-shrink-0 rounded-t-xl z-20 border-[3px] border-[#2C2C2C] border-b-0 bg-white bg-gradient-to-br from-[#FFD60A]/10 to-white flex items-center justify-between">
+      <div v-if="activeTab === 'log' && logDetail" class="px-6 py-5 flex-shrink-0 rounded-t-xl z-20 border-[3px] border-[#2C2C2C] border-b-0 bg-white bg-gradient-to-br from-[#FFD60A]/10 to-white flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]">
             <img :src="logDetail.authorImageUrl" :alt="logDetail.authorNickname" class="w-full h-full object-cover" />
@@ -73,25 +92,71 @@
         </div>
       </div>
 
+      <!-- Map Header -->
+      <div v-else class="bg-white border-[3px] border-[#2C2C2C] px-6 py-5 flex-shrink-0 rounded-t-xl z-10 border-b-0">
+        <div class="flex items-center justify-between gap-6">
+          <div class="flex-1">
+            <h2 class="text-2xl font-black mb-2">{{ logDetail?.tripTitle || '여행 계획' }}</h2>
+            <div v-if="tripDetail" class="flex items-center gap-4 text-sm font-bold text-gray-600">
+              <div class="flex items-center gap-2">
+                <MapPin :size="18" :stroke-width="2.5" />
+                <span>{{ tripDetail.locationSummary || `${tripDetail.tripItems?.length || 0}개 장소` }}</span>
+              </div>
+            </div>
+            <div v-else class="text-sm font-bold text-gray-500">
+              여행 계획 정보를 불러올 수 없습니다
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Body Container -->
       <div 
-        class="flex-1 flex overflow-hidden border-x-[3px] border-b-[3px] border-[#2C2C2C] rounded-b-xl isolate transform-gpu -mt-[2px] p-1 bg-gray-50"
+        class="flex-1 flex overflow-hidden border-x-[3px] border-b-[3px] border-[#2C2C2C] rounded-b-xl isolate transform-gpu"
+        :class="activeTab === 'map' ? 'border-t-[3px]' : '-mt-[2px]'"
       >
-      <TripLogContent
-        v-if="logDetail"
-        :log-detail="logDetail"
-        :trip-detail="tripDetail"
-        :initial-liked="isLiked"
-        :show-header="false"
-        layout="horizontal"
-        @update-like="handleLikeUpdate"
-        @place-click="handleCourseClick"
-        @login-required="isLoginAlertVisible = true"
-        @refresh-comments="fetchLogDetail"
-        @edit="() => {}"
-        @delete="() => {}"
-        class="w-full h-full"
-      />
+        <!-- MAP Tab Content -->
+        <div v-if="activeTab === 'map'" class="p-1 flex-1 overflow-y-auto flex items-center justify-center bg-gray-50">
+          <div v-if="!tripDetail" class="text-center p-12">
+            <p class="text-lg font-bold text-gray-700 mb-4">여행 계획 정보를 불러오는 중...</p>
+          </div>
+          <div v-else class="text-center p-12">
+            <div class="mb-6">
+              <h3 class="text-2xl font-black text-[#2C2C2C] mb-2">{{ tripDetail.title }}</h3>
+              <p class="text-sm font-bold text-gray-600 mb-4">{{ tripDetail.tripItems?.length || 0 }}개의 장소</p>
+            </div>
+            <button
+              @click="handleGoToTripDetail"
+              class="px-6 py-3 bg-[#9BCCC4] border-[3px] border-[#2C2C2C] rounded-lg font-black shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:shadow-[6px_6px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all uppercase focus:outline-none"
+            >
+              여행 계획 자세히 보기
+            </button>
+          </div>
+        </div>
+
+        <!-- LOG Tab Content -->
+        <div v-else class="p-1 flex-1 overflow-y-auto flex items-center justify-center bg-gray-50">
+          <div v-if="!logDetail" class="text-center text-lg font-bold text-gray-600">
+            로그를 불러오는 중...
+          </div>
+          <div v-else class="w-full h-full">
+            <TripLogContent
+              v-if="logDetail"
+              :log-detail="logDetail"
+              :trip-detail="tripDetail"
+              :initial-liked="isLiked"
+              :show-header="false"
+              layout="horizontal"
+              @update-like="handleLikeUpdate"
+              @place-click="handleCourseClick"
+              @login-required="isLoginAlertVisible = true"
+              @refresh-comments="fetchLogDetail"
+              @edit="() => {}"
+              @delete="() => {}"
+              class="w-full h-full"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -142,6 +207,7 @@ const isLoading = ref(true)
 const error = ref<string | null>(null)
 
 const isLiked = ref(false)
+const activeTab = ref<'map' | 'log'>('log')
 const showDropdown = ref(false)
 const dropdownContainer = ref<HTMLElement | null>(null)
 const isTripDetailModalVisible = ref(false)
@@ -155,7 +221,11 @@ const fetchLogDetail = async () => {
     if(!logDetail.value) isLoading.value = true
     
     const fetchedLogDetail = await getTripLogDetail(props.logId)
-    logDetail.value = fetchedLogDetail
+    // Ensure logId is present in the object
+    logDetail.value = {
+      ...fetchedLogDetail,
+      logId: props.logId
+    }
 
     if (authStore.isLoggedIn) {
       const likeStatus = await getTripLogLikeStatus(props.logId)
@@ -177,8 +247,15 @@ watchEffect(async () => {
   if (logDetail.value?.tripId) {
     try {
       tripDetail.value = await getTripDetail(logDetail.value.tripId)
-    } catch (e) {
-      console.error('Failed to fetch trip detail:', e)
+    } catch (e: any) {
+      // 403 error means the trip is PRIVATE and user doesn't have access
+      // This is expected behavior, not an error
+      if (e?.response?.status === 403) {
+        console.warn('Trip is PRIVATE or access denied')
+        tripDetail.value = null
+      } else {
+        console.error('Failed to fetch trip detail:', e)
+      }
     }
   }
 })
@@ -230,6 +307,13 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const handleLoginConfirm = () => {
   router.push('/login')
+}
+
+const handleGoToTripDetail = () => {
+  if (tripDetail.value?.id) {
+    emit('close')
+    router.push(`/trips?tripId=${tripDetail.value.id}`)
+  }
 }
 
 onMounted(() => {
