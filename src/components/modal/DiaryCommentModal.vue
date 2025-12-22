@@ -2,9 +2,20 @@
   <div
     v-if="isLoading"
     class="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-50 p-6"
+    @click="emit('close')"
   >
-    <div class="text-white font-black text-2xl">
-      로딩 중...
+    <button
+      @click.stop="emit('close')"
+      class="absolute top-6 right-6 z-10 text-white hover:opacity-80 transition-opacity"
+    >
+      <span class="font-black text-3xl drop-shadow-[2px_2px_6px_rgba(0,0,0,0.6)]">✕</span>
+    </button>
+    
+    <div 
+        class="relative w-full max-w-4xl h-[85vh] bg-white rounded-xl flex items-center justify-center shadow-2xl"
+        @click.stop
+    >
+        <div class="w-12 h-12 border-[4px] border-[#2C2C2C] border-t-transparent rounded-full animate-spin"></div>
     </div>
   </div>
   
@@ -52,15 +63,40 @@ const error = ref<string | null>(null)
 const fetchLogDetail = async () => {
   try {
     if(!logDetail.value) isLoading.value = true
+    error.value = null
     
+    // 1. Log 상세 조회
     const fetchedLogDetail = await getTripLogDetail(props.logId)
-    // Ensure logId is present in the object
     logDetail.value = {
       ...fetchedLogDetail,
       logId: props.logId
     }
+
+    // 2. Trip 상세 조회 (Log에 연결된 Trip)
+    if (fetchedLogDetail.tripId) {
+       try {
+          const fetchedTripDetail = await getTripDetail(fetchedLogDetail.tripId)
+          tripDetail.value = {
+            ...fetchedTripDetail,
+            logId: props.logId
+          }
+       } catch (e: any) {
+          // 403 error means the trip is PRIVATE and user doesn't have access
+          // Public Log but Private Trip is a valid case (only show log)
+          // But TripDetailModal usually requires trip data.
+          // In this case, we might need a fallback or display error.
+          if (e?.response?.status === 403) {
+            console.warn('Trip is PRIVATE or access denied')
+            // If we can't load trip, we probably can't show the modal fully 
+            // as it depends on trip data structure.
+            error.value = '비공개 여행 일정입니다.' 
+          } else {
+            throw e
+          }
+       }
+    }
   } catch (e) {
-    console.error('Failed to fetch trip log detail:', e)
+    console.error('Failed to fetch data:', e)
     error.value = '데이터를 불러오는 데 실패했습니다.'
   } finally {
     isLoading.value = false
@@ -68,28 +104,6 @@ const fetchLogDetail = async () => {
 }
 
 onMounted(fetchLogDetail)
-
-watchEffect(async () => {
-  if (logDetail.value?.tripId) {
-    try {
-      const fetchedTripDetail = await getTripDetail(logDetail.value.tripId)
-      // Add logId to tripDetail so TripDetailModal can fetch the log
-      tripDetail.value = {
-        ...fetchedTripDetail,
-        logId: props.logId
-      }
-    } catch (e: any) {
-      // 403 error means the trip is PRIVATE and user doesn't have access
-      // This is expected behavior, not an error
-      if (e?.response?.status === 403) {
-        console.warn('Trip is PRIVATE or access denied')
-        tripDetail.value = null
-      } else {
-        console.error('Failed to fetch trip detail:', e)
-      }
-    }
-  }
-})
 </script>
 
 <style scoped>
