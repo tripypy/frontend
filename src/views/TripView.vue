@@ -136,9 +136,13 @@ const planningTrips = computed(() => tripsList.value.filter((t) => t.status === 
 const completedTrips = computed(() => tripsList.value.filter((t) => t.status === TripStatus.COMPLETED))
 
 const displayTrips = computed(() => {
-  if (activeTab.value === TripStatus.PLANNED) return planningTrips.value
-  if (activeTab.value === TripStatus.COMPLETED) return completedTrips.value
-  return tripsList.value
+  const filteredTrips = (() => {
+    if (activeTab.value === TripStatus.PLANNED) return planningTrips.value
+    if (activeTab.value === TripStatus.COMPLETED) return completedTrips.value
+    return tripsList.value
+  })()
+  //console.log('displayTrips:', filteredTrips) // Added log
+  return filteredTrips
 })
 
 // [수정됨] 스크랩 탭 제거
