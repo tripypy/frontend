@@ -31,8 +31,8 @@ const isMyProfile = computed<boolean>(() => {
 
 const showFriendsModal = ref(false)
 
-const fetchAndSetProfileData = async (userId: number) => {
-  isLoading.value = true
+const fetchAndSetProfileData = async (userId: number, showLoading = true) => {
+  if (showLoading) isLoading.value = true
   try {
     const response = await fetchUserProfile(userId);
     if (response){
@@ -40,17 +40,17 @@ const fetchAndSetProfileData = async (userId: number) => {
     }
   } catch (error) {
     console.error(`Failed to fetch profile for user ${userId}:`, error);
-    profileData.value = null
+    if (showLoading) profileData.value = null
   } finally {
-    isLoading.value = false
+    if (showLoading) isLoading.value = false
   }
 }
 
-const setMyProfileData = async () => {
-    isLoading.value = true
+const setMyProfileData = async (showLoading = true) => {
+    if (showLoading) isLoading.value = true
     if (!loggedInUser.value) {
         profileData.value = null;
-        isLoading.value = false;
+        if (showLoading) isLoading.value = false;
         return;
     };
 
@@ -61,9 +61,9 @@ const setMyProfileData = async () => {
         }
     } catch (error) {
         console.error('내 프로필 정보를 가져오는 데 실패했습니다.', error);
-        profileData.value = null;
+        if (showLoading) profileData.value = null;
     } finally {
-        isLoading.value = false;
+        if (showLoading) isLoading.value = false;
     }
 }
 
@@ -115,7 +115,7 @@ onMounted(() => {
             v-if="profileData"
             :initial-summary="profileData?.travelStyleSummary"
             :is-my-profile="isMyProfile"
-            @analysis-completed="setMyProfileData"
+            @analysis-completed="setMyProfileData(false)"
           />
           <LogContentTabs
             :is-my-profile="isMyProfile"

@@ -21,7 +21,7 @@
             <label for="password" class="sr-only">비밀번호</label>
             <div class="relative">
               <input
-                :type="isPasswordVisible ? 'text' : 'password'" 
+                :type="isPasswordVisible ? 'text' : 'password'"
                 id="password"
                 v-model="password"
                 placeholder="비밀번호"
@@ -46,7 +46,7 @@
           <button
             type="submit"
             :disabled="isLoading"
-            class="mt-5 flex w-full text-xl items-center justify-center rounded-full bg-[#1b1d0d] p-3 font-black text-white transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:bg-white hover:text-black hover:shadow-[4px_4px_0px_0px_#2C2C2C] focus:outline-none disabled:opacity-70 disabled:hover:translate-x-0 disabled:hover:shadow-none hover:border-2 hover:border-[#1b1d0d]"
+            class="mt-5 flex w-full text-xl items-center justify-center border-2 rounded-full bg-[#1b1d0d] p-3 font-black text-white transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:bg-white hover:text-black hover:shadow-[4px_4px_0px_0px_#2C2C2C] focus:outline-none disabled:opacity-70 disabled:hover:translate-x-0 disabled:hover:shadow-none hover:border-2 hover:border-[#1b1d0d]"
           >
             <div
               v-if="isLoading"
