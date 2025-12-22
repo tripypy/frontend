@@ -11,6 +11,7 @@
         </div>
 
         <div v-if="isEditable" class="flex items-center gap-1.5">
+          <!-- Status Toggle Button -->
           <button
             v-if="trip.isOwner"
             @click.stop="handleToggleStatus"
