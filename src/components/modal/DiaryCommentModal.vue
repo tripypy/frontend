@@ -49,6 +49,7 @@
       class="bg-white border-[3px] border-[#2C2C2C] rounded-2xl shadow-[8px_8px_0px_0px_rgba(44,44,44,0.3)] max-w-6xl w-full h-[90vh] flex overflow-hidden"
       @click.stop
     >
+      <!-- Left: Image Slider -->
       <div
         class="flex-1 bg-[#F5F5F5] relative border-r border-gray-200 overflow-hidden flex flex-col justify-center"
       >
@@ -97,222 +98,17 @@
         </div>
       </div>
 
+      <!-- Right: Trip Log Content -->
       <div class="w-[480px] flex flex-col bg-white">
-        <div
-          class="p-5 flex items-center justify-between bg-gradient-to-br from-[#FFD60A]/10 to-white"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
-            >
-              <img :src="logDetail.authorImageUrl" :alt="logDetail.authorNickname" class="w-full h-full object-cover" />
-            </div>
-            <div>
-              <h4 class="font-black text-[#2C2C2C] font-sans">{{ logDetail.authorNickname }}</h4>
-              <div class="flex items-center gap-2 text-xs font-bold text-gray-600">
-                <MapPin class="w-3 h-3" stroke-width="2.5" />
-                <span>{{ logDetail.locationSummary }}</span>
-                <span>•</span>
-                <Calendar class="w-3 h-3" stroke-width="2.5" />
-                <span>{{ formattedDate }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="relative">
-            <button
-              @click="showDropdown = !showDropdown"
-              class="p-2 hover:bg-gray-100 rounded transition-all"
-            >
-              <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
-            </button>
-
-            <div
-              v-if="showDropdown"
-              class="absolute right-0 top-full mt-2 w-40 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-20"
-            >
-              <button
-                @click="handleShare"
-                class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left"
-              >
-                <Share class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-                <span class="font-bold text-sm text-[#2C2C2C]">공유</span>
-              </button>
-
-              <template v-if="isAuthor">
-                <button
-                  @click="handleEdit"
-                  class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left border-t border-gray-200"
-                >
-                  <Edit class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
-                  <span class="font-bold text-sm text-[#2C2C2C]">수정</span>
-                </button>
-
-                <button
-                  @click="handleDelete"
-                  class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-red-50 transition-colors text-left border-t border-gray-200"
-                >
-                  <Trash2 class="w-4 h-4 text-red-500" stroke-width="2.5" />
-                  <span class="font-bold text-sm text-red-500">삭제</span>
-                </button>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="p-5 border-b border-gray-200">
-          <h3 class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ logDetail.title }}</h3>
-
-          <div v-if="groupedCourse.length > 0" class="mb-4">
-            <!-- Tabs -->
-            <div class="flex items-center border-b-2 border-gray-200">
-              <button
-                v-for="day in groupedCourse"
-                :key="day.dayNumber"
-                @click.stop="activeDay = day.dayNumber"
-                :class="[
-                  'px-3 py-1 font-bold text-xs transition-all',
-                  activeDay === day.dayNumber
-                    ? 'text-[#2C2C2C] border-b-2 border-[#2C2C2C]'
-                    : 'text-gray-500 hover:text-gray-800',
-                ]"
-              >
-                DAY {{ day.dayNumber }}
-              </button>
-            </div>
-
-            <!-- Course Content -->
-            <div class="pt-3">
-              <div v-for="day in groupedCourse" :key="day.dayNumber">
-                <Transition name="no-animation">
-                  <div v-show="activeDay === day.dayNumber">
-                    <div class="flex items-center flex-wrap gap-x-1.5 gap-y-2">
-                      <div
-                        v-for="(place, index) in day.places"
-                        :key="index"
-                        class="flex items-center gap-1.5"
-                      >
-                        <div
-                          @click.stop="handleCourseClick(place.id)"
-                          class="flex items-center gap-1 px-2.5 py-1 border-[2px] border-[#2C2C2C] rounded-full bg-white shadow-[1px_1px_0px_0px_rgba(44,44,44,0.1)] course-badge cursor-pointer"
-                          :style="{ '--hover-color': getBadgeColor(index) }"
-                        >
-                          <span class="text-xs font-black text-[#2C2C2C]">{{ index + 1 }}</span>
-                          <span class="text-xs font-black text-[#2C2C2C] whitespace-nowrap">{{
-                            place.name
-                          }}</span>
-                        </div>
-                        <ChevronRight
-                          v-if="index < day.places.length - 1"
-                          class="w-3 h-3 text-gray-400 flex-shrink-0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </Transition>
-              </div>
-            </div>
-          </div>
-
-          <p class="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
-            {{ formattedContent }}
-          </p>
-        </div>
-
-        <div class="flex-1 overflow-y-auto p-5 pt-3 space-y-4">
-          <div v-for="comment in logDetail.comments" :key="comment.commentId" class="flex items-start gap-3">
-            <div
-              class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
-            >
-              <img :src="comment.authorImageUrl" :alt="comment.authorNickname" class="w-full h-full object-cover" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-sm font-black text-[#2C2C2C]">{{ comment.authorNickname }}</span>
-                <span class="text-xs font-bold text-gray-400">{{ formatCommentDate(comment.createdAt) }}</span>
-              </div>
-              <p class="text-sm font-medium text-gray-800 leading-relaxed">{{ comment.content }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="border-t border-gray-200 bg-white">
-          <div class="p-4 flex items-center gap-2">
-            <button
-              @click="handleLike"
-              :class="[
-                'flex items-center gap-1.5 px-4 py-2.5 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase',
-                isLiked
-                  ? 'bg-[#FF6B9D] text-white shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-                  : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
-              ]"
-            >
-              <Heart :class="['w-4 h-4', isLiked ? 'fill-current' : '']" stroke-width="2.5" />
-              <span>{{ currentLikes }}</span>
-            </button>
-
-            <button
-              @click="isBookmarked = !isBookmarked"
-              :class="[
-                'p-2.5 border-[2px] border-[#2C2C2C] rounded-full transition-all',
-                isBookmarked
-                  ? 'bg-[#D4A520] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-                  : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
-              ]"
-            >
-              <Bookmark
-                :class="['w-4 h-4', isBookmarked ? 'text-white fill-white' : 'text-gray-600']"
-                stroke-width="2.5"
-              />
-            </button>
-          </div>
-
-          <div class="p-4 pt-0">
-            <form @submit.prevent="handleCommentSubmit" class="flex items-center gap-2.5">
-              <div
-                class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]"
-              >
-                <img
-                  v-if="authStore.isLoggedIn && authStore.user?.profileImageUrl"
-                  :src="authStore.user.profileImageUrl"
-                  alt="My Profile"
-                  class="w-full h-full object-cover"
-                />
-                <img
-                  v-else
-                  src="/default-profile.svg"
-                  alt="Default Profile"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-              <div class="relative flex-1">
-                <input
-                  v-model="newComment"
-                  :disabled="!authStore.isLoggedIn"
-                  type="text"
-                  :placeholder="
-                    authStore.isLoggedIn ? '댓글을 입력하세요...' : '로그인 후 댓글을 남길 수 있습니다.'
-                  "
-                  :class="[
-                    'w-full px-4 py-3 border-[2px] border-[#2C2C2C] rounded-lg text-sm font-medium bg-white focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(107,143,212,0.3)] transition-all placeholder:text-gray-400',
-                    !authStore.isLoggedIn ? 'bg-gray-100' : '',
-                  ]"
-                />
-                <div
-                  v-if="!authStore.isLoggedIn"
-                  @click="handleCommentInputClick"
-                  class="absolute inset-0 cursor-pointer"
-                ></div>
-              </div>
-              <button
-                type="submit"
-                :disabled="!authStore.isLoggedIn"
-                class="px-5 py-3 border-[2px] border-[#2C2C2C] rounded-lg font-black text-xs bg-[#F9CA6B] text-[#2C2C2C] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                작성
-              </button>
-            </form>
-          </div>
-        </div>
+          <TripLogContent
+            :log-detail="logDetail"
+            :trip-detail="tripDetail"
+            :initial-liked="isLiked"
+            @update-like="handleLikeUpdate"
+            @place-click="handleCourseClick"
+            @login-required="isLoginAlertVisible = true"
+            @refresh-comments="fetchLogDetail"
+          />
       </div>
     </div>
 
@@ -338,26 +134,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  Heart,
-  Bookmark,
-  MapPin,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-  Share,
-  Edit,
-  Trash2,
-} from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { getTripDetail } from '@/apis/trip/index'
-import { getTripLogDetail, postTripLogComment, likeTripLog, unlikeTripLog, getTripLogLikeStatus } from '@/apis/trip-log/index'
+import { getTripLogDetail, getTripLogLikeStatus } from '@/apis/trip-log/index'
 import type { TripDetailResponseDto } from '@/apis/trip/types'
 import type { TripLogDetail } from '@/types/trip/trip.model'
-import { format, parseISO } from 'date-fns'
 import TripDetailModal from './TripDetailModal.vue'
 import AlertDialog from '@/components/common/AlertDialog.vue'
 import { useAuthStore } from '@/stores/auth'
+import TripLogContent from '@/components/trip-log/TripLogContent.vue'
 
 const props = defineProps<{
   logId: number
@@ -375,22 +160,19 @@ const error = ref<string | null>(null)
 
 const currentImageIndex = ref(0)
 const isLiked = ref(false)
-const isBookmarked = ref(false)
-const showDropdown = ref(false)
 const showToast = ref(false)
 const isTripDetailModalVisible = ref(false)
-const activeDay = ref(1)
 const initialSelectedPlaceId = ref<number | null>(null)
-const newComment = ref('')
 const isLoginAlertVisible = ref(false)
 
 // 데이터 로드
 const fetchLogDetail = async () => {
   try {
-    isLoading.value = true
+    // isLoading only on first load
+    if(!logDetail.value) isLoading.value = true
+    
     const fetchedLogDetail = await getTripLogDetail(props.logId)
     logDetail.value = fetchedLogDetail
-    currentLikes.value = fetchedLogDetail.likeCount
 
     if (authStore.isLoggedIn) {
       const likeStatus = await getTripLogLikeStatus(props.logId)
@@ -418,45 +200,9 @@ watchEffect(async () => {
   }
 })
 
-const isAuthor = computed(() => logDetail.value?.authorNickname === '김민준')
-
 const sortedImages = computed(() => {
   if (!logDetail.value?.images) return []
   return [...logDetail.value.images].sort((a, b) => a.orderIndex - b.orderIndex)
-})
-
-const formattedDate = computed(() => {
-  if (!logDetail.value?.createdAt) return ''
-  return format(parseISO(logDetail.value.createdAt), 'yyyy.MM.dd')
-})
-
-const formattedContent = computed(() => {
-  if (!logDetail.value?.content) return ''
-  return logDetail.value.content.replace(/^[ \t]*{{\s*img_.*?\s*}}[ \t]*$\r?\n?/gm, '')
-})
-
-const groupedCourse = computed(() => {
-  if (!tripDetail.value?.tripItems || tripDetail.value.tripItems.length === 0) {
-    return []
-  }
-  const grouped = tripDetail.value.tripItems.reduce(
-    (acc, item) => {
-      const day = item.dayNumber
-      if (!acc[day]) {
-        acc[day] = { dayNumber: day, places: [] }
-      }
-      acc[day]!.places.push({ id: item.spot.id, name: item.spot.name })
-      return acc
-    },
-    {} as Record<number, { dayNumber: number; places: { id: number; name: string }[] }>,
-  )
-  return Object.values(grouped).sort((a, b) => a.dayNumber - b.dayNumber)
-})
-
-watchEffect(() => {
-  if (groupedCourse.value.length > 0) {
-    activeDay.value = groupedCourse.value[0]!.dayNumber
-  }
 })
 
 const handleCourseClick = (placeId: number) => {
@@ -476,85 +222,10 @@ const handleNextImage = () => {
     currentImageIndex.value < sortedImages.value.length - 1 ? currentImageIndex.value + 1 : 0
 }
 
-const currentLikes = ref(0) // Initialize with 0, will be updated by fetchLogDetail
-const handleLike = async () => {
-  if (!authStore.isLoggedIn) {
-    isLoginAlertVisible.value = true
-    return
-  }
-
-  try {
-    let response
-    if (isLiked.value) {
-      response = await unlikeTripLog(props.logId)
-    } else {
-      response = await likeTripLog(props.logId)
-    }
-    currentLikes.value = response.likeCount
-    currentLikes.value = response.likeCount
-    isLiked.value = response.liked
-    emit('update', { logId: props.logId, likeCount: response.likeCount, liked: response.liked })
-  } catch (e) {
-    console.error('Failed to toggle like status:', e)
-    alert('좋아요 상태 변경에 실패했습니다.')
-  }
+const handleLikeUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
+    isLiked.value = payload.liked
+    emit('update', payload)
 }
-
-const handleCommentSubmit = async () => {
-  if (!authStore.isLoggedIn) {
-    isLoginAlertVisible.value = true
-    return
-  }
-  if (!newComment.value.trim()) return
-  try {
-    await postTripLogComment(props.logId, { content: newComment.value })
-    newComment.value = ''
-    // 댓글 목록 갱신
-    const updatedLogDetail = await getTripLogDetail(props.logId)
-    if (logDetail.value) {
-      logDetail.value.comments = updatedLogDetail.comments
-      logDetail.value.commentCount = updatedLogDetail.commentCount
-    }
-  } catch (error) {
-    console.error('Failed to post comment:', error)
-    alert('댓글 작성에 실패했습니다.')
-  }
-}
-
-const handleCommentInputClick = () => {
-  if (!authStore.isLoggedIn) {
-    isLoginAlertVisible.value = true
-  }
-}
-
-const handleLoginConfirm = () => {
-  isLoginAlertVisible.value = false
-  router.push({ name: 'login' })
-  emit('close') // Close the main modal as well
-}
-
-const handleShare = () => {
-  showDropdown.value = false
-  navigator.clipboard.writeText(window.location.href).then(() => {
-    showToast.value = true
-    setTimeout(() => (showToast.value = false), 2000)
-  })
-}
-
-const handleEdit = () => {
-  showDropdown.value = false
-  console.log('수정하기')
-}
-
-const handleDelete = () => {
-  showDropdown.value = false
-  if (confirm('정말 삭제하시겠습니까?')) {
-    console.log('삭제하기')
-  }
-}
-
-const colors = ['#FFD60A', '#FF6B9D', '#98D8C8', '#B4E4FF', '#E88555']
-const getBadgeColor = (idx: number) => colors[idx % colors.length]
 
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
@@ -567,34 +238,13 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
-const handleClickOutside = (e: MouseEvent) => {
-  const target = e.target as HTMLElement
-  if (showDropdown.value && !target.closest('.relative')) {
-    showDropdown.value = false
-  }
-}
-
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
-  document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
-  document.removeEventListener('click', handleClickOutside)
 })
-
-const formatCommentDate = (dateString: string) => {
-  const date = parseISO(dateString)
-  const now = new Date()
-  const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000)
-  if (diffSeconds < 60) return `${diffSeconds}초 전`
-  const diffMinutes = Math.round(diffSeconds / 60)
-  if (diffMinutes < 60) return `${diffMinutes}분 전`
-  const diffHours = Math.round(diffMinutes / 60)
-  if (diffHours < 24) return `${diffHours}시간 전`
-  return format(date, 'yyyy.MM.dd')
-}
 </script>
 
 <style scoped>
