@@ -70,6 +70,12 @@ const router = createRouter({
       component: () => import('@/views/CreateTripLogView.vue'),
       props:true
     },
+    {
+      path: '/log-edit/:logId',
+      name: 'log-edit',
+      component: () => import('@/views/EditTripLogView.vue'),
+      props:true
+    }
   ],
 })
 

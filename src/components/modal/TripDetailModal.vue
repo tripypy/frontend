@@ -92,14 +92,15 @@
             @click="handleEditClick"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
-            <Edit :size="16" :stroke-width="3" /> EDIT
+            <Edit :size="16" :stroke-width="3" /> EDIT PLAN
           </button>
 
           <button
             v-if="activeTab === 'log' && !logLoading && tripLog && trip.isOwner"
+            @click="handleEditLogClick"
             class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
           >
-            <Edit :size="16" :stroke-width="3" /> EDIT
+            <Edit :size="16" :stroke-width="3" /> EDIT LOG
           </button>
           <button
             v-if="activeTab === 'log' && !logLoading && tripLog && trip.isOwner"
@@ -237,7 +238,7 @@ import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
 import type { TripLogDetail } from '@/types/trip/trip.model'
 import { getTripLogDetail, deleteTripLog } from '@/apis/trip-log/index'
- 
+
 interface DayPlanDisplay {
   dayNumber: number
   places: SpotResponseDto[]
@@ -248,7 +249,7 @@ const props = defineProps<{
   initialPlaceId?: number | null
 }>()
 
-const emit = defineEmits(['close', 'edit', 'write'])
+const emit = defineEmits(['close', 'edit', 'write', 'edit-log'])
 const activeTab = ref<'map' | 'log'>('map')  // 탭 상태(기본은 'map'으로 설정)
 const tripLog = ref<TripLogDetail | null>(null) // 로그 데이터 상태
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -333,6 +334,7 @@ const fetchTripLog = async (tripId: number) => {
     }
 }
 
+/* ---- handler ---- */
 // 탭 클릭 핸들러
 const handleTabClick = (tab: 'map' | 'log') => {
     activeTab.value = tab;
@@ -342,8 +344,6 @@ const handleTabClick = (tab: 'map' | 'log') => {
     }
 }
 
-
-/* ---- handler ---- */
 const handleDeleteLogClick = async () => {
   if (!logLoading.value && tripLog.value && props.trip.isOwner){
     try {
@@ -355,6 +355,10 @@ const handleDeleteLogClick = async () => {
       alert('로그 삭제 실패')
     }
   }
+}
+
+const handleEditLogClick = () => {
+  emit('edit-log', tripLog.value )
 }
 
 const handleWriteLogClick = () => {

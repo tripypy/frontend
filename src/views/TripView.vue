@@ -75,6 +75,7 @@
       @close="selectedTrip = null"
       @edit="handleEditFromModal"
       @write="handleWriteLogFromModal"
+      @edit-log="handleEditLogFromModal"
     />
 
     <ScrollToTop />
@@ -93,6 +94,7 @@ import { useRouter } from 'vue-router'
 import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index' // Added getTripDetail
 import type { TripResponseDto, TripDetailResponseDto, TripItemResponseDto } from '@/apis/trip/types' // Added TripDetailResponseDto
 import { TripStatus } from '@/types/common'
+import type { TripLogDetail } from '@/types/trip/trip.model'
 
 // TODO: TripCard에서 필요한 spots, tags, spotPreviews, completedDate 필드가 TripResponseDto에 없음.
 // 현재는 TripResponseDto를 기반으로 하되, TripCard의 props 타입을 TripResponseDto에 맞게 조정해야 합니다.
@@ -222,6 +224,14 @@ const handleWriteLogFromModal = (trip: TripDetailResponseDto & { duration?: stri
     name: 'log-write',
     params: { tripId: trip.id }
   })
+}
+
+const handleEditLogFromModal = (tripLog: TripLogDetail) => {
+  selectedTrip.value = null
+  if (tripLog.logId){
+    console.log(tripLog.logId +" 해당 로그 edit 화면으로 이동")
+    router.push({ name: 'log-edit', params: { logId: tripLog.logId}})
+  }
 }
 </script>
 
