@@ -118,9 +118,7 @@
         </div>
       </div>
 
-      <p class="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
-        {{ formattedContent }}
-      </p>
+      <div class="prose max-w-none text-sm font-medium text-gray-800 leading-relaxed break-words" v-html="formattedContent"></div>
     </div>
 
     <!-- Comments List -->
