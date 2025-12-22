@@ -26,13 +26,14 @@
               </select>
             </label>
             <button
-              class="flex flex-row px-3 py-2.5 rounded-lg font-bold text-white
+              class="flex flex-row px-3 py-2.5 rounded-lg font-bold text-white bg-black
                     justify-center items-center
-                    bg-black hover:bg-gray-800
                     disabled:bg-gray-400 disabled:cursor-not-allowed
                     transition-all active:scale-95 shadow-md
-                    text-[#2c2c2c] hover:bg-white hover:border-[#2C2C2C] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px]
                     "
+              :class="[
+                isFormValid ? 'hover:text-[#2c2c2c] hover:bg-white hover:border-[#2C2C2C] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px]' : ''
+              ]"
               :disabled="!isFormValid || isSubmitting"
               @click="submitPost"
             >
