@@ -6,6 +6,7 @@ import type {
     TripLogFeedResponseDto,
     TripLogCreateRequestDto,
     UploadImageResponse,
+    TripLogPatchRequestDto,
 } from '@/apis/trip-log/types'
 
 import type { TripLogDetail } from '@/types/trip/trip.model'
@@ -128,4 +129,24 @@ export async function getPresignedUrl(
     }
   )
   return response.data
+}
+
+/**
+ * 여행 로그 삭제 API 함수
+ * @param logId 삭제할 여행 로그의 ID
+ * @returns 성공 시 void (HTTP 204)
+ */
+export const deleteTripLog = async(logId: number): Promise<void> => {
+  await apiClient.delete(`/trip-logs/${logId}`)
+}
+
+/**
+ * 여행 로그 수정 API 함수
+ * @param logId 수정할 여행 로그의 ID
+ * @param payload 수정할 로그 데이터 (title, content, visibility)
+ * @returns 성공 시 void (HTTP 200)
+ */
+export const patchTripLog = async (params: TripLogPatchRequestDto): Promise<void> => {
+  const { logId, payload } = params
+  await apiClient.patch(`/trip-logs/${logId}`, payload) 
 }

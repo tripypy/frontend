@@ -99,10 +99,7 @@ const submitPost = async () => {
       content: postContent.value,
       visibility: visibility.value,
     }
-
-    console.log(payload)
-    const { logId } = await postTripLogCreate(payload)
-    console.log(logId + "로그 생성 완료! ")
+    await postTripLogCreate(payload)
     // 성공 시 해당 로그 페이지로 이동
     router.push(`/trips`)
   } catch (err) {
