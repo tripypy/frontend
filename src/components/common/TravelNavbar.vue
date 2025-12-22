@@ -45,35 +45,50 @@
             >
               <Bell class="w-5 h-5" stroke-width="2.5" />
               <span
-                class="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#E88555] border-[2px] border-white rounded-full"
-              ></span>
+                v-if="notificationStore.unreadCount > 0"
+                class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-[#E88555] border-[2px] border-white rounded-full flex items-center justify-center text-[10px] font-black text-white"
+              >
+                {{ notificationStore.unreadCount > 9 ? '9+' : notificationStore.unreadCount }}
+              </span>
             </button>
 
             <div
               v-if="showNotifications"
               class="absolute right-0 mt-4 w-96 bg-white border-[3px] border-[#2C2C2C] shadow-[6px_6px_0px_0px_rgba(44,44,44,0.15)] rounded-2xl overflow-hidden z-50"
             >
-              <div class="p-5 border-b-[2px] border-[#2C2C2C] bg-[#FFF8ED]">
+              <div class="p-5 border-b-[2px] border-[#2C2C2C] bg-[#FFF8ED] flex justify-between items-center">
                 <h3
                   class="font-black text-lg uppercase"
                   style="font-family: 'Bebas Neue', sans-serif"
                 >
                   Notifications
                 </h3>
+                <button 
+                  v-if="notificationStore.unreadCount > 0"
+                  @click="notificationStore.readAll"
+                  class="text-xs font-bold text-gray-500 hover:text-[#2C2C2C]"
+                >
+                  전체 읽음
+                </button>
               </div>
               <div class="max-h-96 overflow-y-auto">
+                <div v-if="notificationStore.notifications.length === 0" class="p-10 text-center text-gray-400 font-bold">
+                  알림이 없습니다.
+                </div>
                 <div
-                  v-for="notif in notifications"
+                  v-for="notif in notificationStore.notifications"
                   :key="notif.id"
-                  class="p-4 hover:bg-[#FFF8ED] cursor-pointer transition-colors border-b-[1px] border-gray-200 last:border-0"
+                  @click="handleNotificationClick(notif)"
+                  class="p-4 hover:bg-[#FFF8ED] cursor-pointer transition-colors border-b-[1px] border-gray-200 last:border-0 relative"
+                  :class="{ 'bg-[#FFFDF9]': !notif.isRead }"
                 >
                   <div class="flex gap-3">
                     <div
-                      class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0"
+                      class="w-10 h-10 border-[2px] border-[#2C2C2C] rounded-lg overflow-hidden flex-shrink-0 bg-gray-100"
                     >
                       <img
-                        :src="notif.avatar"
-                        :alt="notif.name"
+                        :src="notif.senderProfileImageUrl || defaultProfileImage"
+                        :alt="notif.senderNickname"
                         class="w-full h-full object-cover"
                       />
                     </div>
@@ -82,8 +97,9 @@
                         class="text-sm font-bold leading-relaxed"
                         v-html="highlightMessage(notif.message, notif.type)"
                       ></p>
-                      <p class="text-xs font-bold text-gray-500 mt-1">{{ notif.time }}</p>
+                      <p class="text-xs font-bold text-gray-500 mt-1">{{ formatTime(notif.createdAt) }}</p>
                     </div>
+                    <div v-if="!notif.isRead" class="w-2 h-2 bg-[#E88555] rounded-full mt-1"></div>
                   </div>
                 </div>
               </div>
@@ -158,8 +174,12 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { Home, Search, Map, Bell, Settings, LogOut, BookOpen, UserPlus } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { useNotificationStore } from '@/stores/notification'
+import { formatDistanceToNow } from 'date-fns'
+import { ko } from 'date-fns/locale'
 
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 const router = useRouter()
 const defaultProfileImage = '/default-profile.svg'
 const userProfileImage = computed(
@@ -209,58 +229,45 @@ const handleLogout = async () => {
   router.push('/')
 }
 
-const notifications = [
-  {
-    id: 1,
-    name: '김민수',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
-    message: '김민수님이 회원님을 팔로우하기 시작했습니다.',
-    time: '5분 전',
-    type: 'follow',
-  },
-  {
-    id: 2,
-    name: '이서연',
-    avatar: 'https://images.unsplash.com/photo-1557053910-d9eadeed1c58?w=100&h=100&fit=crop',
-    message: '이서연님이 회원님의 게시물에 좋아요를 눌렀습니다.',
-    time: '1시간 전',
-    type: 'like',
-  },
-  {
-    id: 3,
-    name: '박지훈',
-    avatar: 'https://images.unsplash.com/photo-1648415041078-d5b259c683be?w=100&h=100&fit=crop',
-    message: '박지훈님이 댓글을 남겼습니다: "정보 감사합니다!"',
-    time: '2시간 전',
-    type: 'comment',
-  },
-  {
-    id: 4,
-    name: '최유진',
-    avatar: 'https://images.unsplash.com/photo-1609043238951-9bb29775f27c?w=100&h=100&fit=crop',
-    message: '최유진님이 회원님의 여행 계획을 저장했습니다.',
-    time: '1일 전',
-    type: 'save',
-  },
-]
+const handleNotificationClick = async (notif: any) => {
+  if (!notif.isRead) {
+    await notificationStore.readNotification(notif.id)
+  }
+  if (notif.targetUrl) {
+    router.push(notif.targetUrl)
+  }
+  showNotifications.value = false
+}
+
+const formatTime = (dateString: string) => {
+  return formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko })
+}
 
 const highlightMessage = (message: string, type: string) => {
   let highlighted = message
-  highlighted = highlighted.replace(/^([가-힣]+)/, '<span class="font-black">$1</span>')
-  if (type === 'follow') {
+  // 강조 로직: 닉네임(문장 시작)은 검은색 굵게
+  highlighted = highlighted.replace(/^([^ ]+)/, '<span class="font-black">$1</span>')
+  
+  if (type === 'FRIEND_REQUEST' || type === 'FRIEND_ACCEPT') {
     highlighted = highlighted.replace(
-      '팔로우',
-      '<span class="font-black text-[#5AB5A8]">팔로우</span>',
+      /(친구 요청|친구 신청)/,
+      '<span class="font-black text-[#5AB5A8]">$1</span>',
     )
-  } else if (type === 'like') {
+  } else if (type === 'LIKE') {
     highlighted = highlighted.replace(
       '좋아요',
       '<span class="font-black text-[#FF6B9D]">좋아요</span>',
     )
-  } else if (type === 'comment') {
-    highlighted = highlighted.replace('댓글', '<span class="font-black text-[#6B8FD4]">댓글</span>')
-  } else if (type === 'save') {
-    highlighted = highlighted.replace('저장', '<span class="font-black text-[#D4A520]">저장</span>')
+  } else if (type === 'COMMENT') {
+    highlighted = highlighted.replace(
+      '댓글', 
+      '<span class="font-black text-[#6B8FD4]">댓글</span>'
+    )
+  } else if (type === 'SCRAP') {
+    highlighted = highlighted.replace(
+      '스크랩', 
+      '<span class="font-black text-[#D4A520]">스크랩</span>'
+    )
   }
   return highlighted
 }
