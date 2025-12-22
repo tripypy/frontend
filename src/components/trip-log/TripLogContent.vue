@@ -173,17 +173,14 @@
           </button>
 
           <button
-            @click="isBookmarked = !isBookmarked"
+            @click="handleShare"
             :class="[
-              'border-[2px] border-[#2C2C2C] rounded-full transition-all',
-              layout === 'horizontal' ? 'p-1.5' : 'p-2.5',
-              isBookmarked
-                ? 'bg-[#D4A520] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-                : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
+              'flex items-center justify-center border-[2px] border-[#2C2C2C] rounded-full bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all focus:outline-none',
+              layout === 'horizontal' ? 'w-7 h-7' : 'w-9 h-9'
             ]"
           >
-            <Bookmark
-              :class="[layout === 'horizontal' ? 'w-3.5 h-3.5' : 'w-4 h-4', isBookmarked ? 'text-white fill-white' : 'text-gray-600']"
+            <Share2
+              :class="[layout === 'horizontal' ? 'w-3.5 h-3.5' : 'w-4 h-4', 'text-[#2C2C2C]']"
               stroke-width="2.5"
             />
           </button>
@@ -277,7 +274,7 @@ import {
   Calendar,
   ChevronRight,
   MoreHorizontal,
-  Share,
+  Share2,
   Edit,
   Trash2,
 } from 'lucide-vue-next'
