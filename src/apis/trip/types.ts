@@ -46,6 +46,7 @@ export interface TripDetailResponseDto {
   status: TripStatus
   visibility: TripVisibility
   isOwner: boolean
+  locationSummary?: string // nullable
   tripItems: TripItemResponseDto[]
   logId: number
 }
@@ -60,6 +61,7 @@ export interface TripResponseDto {
   status: TripStatus
   visibility?: TripVisibility
   isOwner: boolean
+  locationSummary?: string // nullable
   spots: number // 추가됨
   tags?: string[] // 추가됨, nullable
   spotPreviews: { name: string }[] // 추가됨

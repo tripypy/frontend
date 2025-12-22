@@ -45,6 +45,7 @@ export function useTripPlan() {
   const isEditMode = ref(false)
   const backupData = ref('')
   const tripTitle = ref('')
+  const tripLocationSummary = ref('') // Added
   const tripDate = ref('')
   const activeDay = ref(1)
   const days = ref<DayPlan[]>([])
@@ -61,6 +62,7 @@ export function useTripPlan() {
     try {
       const tripDetail = await getTripDetail(tripId.value)
       tripTitle.value = tripDetail.title
+      tripLocationSummary.value = tripDetail.locationSummary || '' // Added
       tripDate.value = tripDetail.startDate || ''
       tripStatus.value = tripDetail.status
       tripVisibility.value = tripDetail.visibility
@@ -257,6 +259,7 @@ export function useTripPlan() {
     tripId,
     isEditMode,
     tripTitle,
+    tripLocationSummary, // Added
     tripDate,
     activeDay,
     days,
