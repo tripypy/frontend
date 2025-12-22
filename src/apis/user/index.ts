@@ -3,8 +3,24 @@ import type {
   UserAIAnalysisResponseDto,
   UserMeResponseDto,
   UserProfileResponseDto,
-  UserFriendsResponseDto
+  UserFriendsResponseDto,
+  UserSearchResponseDto
 } from '@/apis/user/types'
+
+/**
+ * 사용자 닉네임 검색
+ */
+export const requestSearchUsers = async (nickname: string): Promise<UserSearchResponseDto[]> => {
+    try {
+        const response = await apiClient.get<UserSearchResponseDto[]>('/users/search', {
+            params: { nickname }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to search users:', error);
+        return [];
+    }
+};
 
 /**
  * 특정 사용자의 프로필을 조회합니다.

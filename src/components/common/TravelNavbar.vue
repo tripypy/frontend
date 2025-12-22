@@ -31,6 +31,13 @@
 
         <!-- Logged In State -->
         <div v-if="authStore.isLoggedIn" class="flex items-center gap-3">
+          <router-link
+            to="/friends"
+            class="relative w-11 h-11 bg-white border-[2px] rounded-full border-[#2C2C2C] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none"
+          >
+            <UserPlus class="w-5 h-5" stroke-width="2.5" />
+          </router-link>
+
           <div class="relative" ref="notificationRef">
             <button
               @click="showNotifications = !showNotifications"
@@ -149,7 +156,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
-import { Home, Search, Map, Bell, Settings, LogOut, BookOpen } from 'lucide-vue-next'
+import { Home, Search, Map, Bell, Settings, LogOut, BookOpen, UserPlus } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -160,11 +167,11 @@ const userProfileImage = computed(
 )
 
 defineProps<{
-  currentPage: 'main' | 'search' | 'trips' | 'log'
+  currentPage: 'main' | 'search' | 'trips' | 'log' | 'friends'
 }>()
 
 const emit = defineEmits<{
-  (e: 'navigate', page: 'main' | 'search' | 'trips' | 'log'): void
+  (e: 'navigate', page: 'main' | 'search' | 'trips' | 'log' | 'friends'): void
 }>()
 
 const menus = [
