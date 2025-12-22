@@ -70,6 +70,11 @@ const router = createRouter({
       component: () => import('@/views/PostCreateView.vue'),
       props:true
     },
+    {
+      path: '/friends',
+      name: 'friends',
+      component: () => import('@/views/FriendsView.vue'),
+    },
   ],
 })
 

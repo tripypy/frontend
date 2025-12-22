@@ -1,6 +1,5 @@
 // src/apis/auth/index.ts
-import apiClient from '@/apis/http';
-import refreshClient from '@/apis/http';
+import apiClient, { refreshClient } from '@/apis/http';
 import type { LoginRequestDto, SignupRequestDto, TokenResponseDto } from './types'; 
 
 /**

@@ -4,6 +4,12 @@ import type {
 import type { TripStatus } from '@/types/common'
 import type { TripVisibility } from '@/types/trip/trip.model'
 
+export interface UserSearchResponseDto {
+    id: number
+    nickname: string
+    profileImageUrl: string | null
+}
+
 // 로그인 요청 DTO
 export interface LoginRequestDto {
     email: string;
