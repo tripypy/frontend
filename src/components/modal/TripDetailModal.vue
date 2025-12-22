@@ -413,13 +413,14 @@ const logLoading = ref(false)
 const isLiked = ref(props.initialIsLiked)
 
 const fetchTripLog = async (tripId: number) => {
-    if(!props.trip.logId) return
+    const targetLogId = props.trip.logId || tripLog.value?.logId
+    if(!targetLogId) return
+
     logLoading.value = true;
-    tripLog.value = null;
     try {
         const [logResponse, likeResponse] = await Promise.all([
-          getTripLogDetail(props.trip.logId),
-          useAuthStore().isLoggedIn ? getTripLogLikeStatus(props.trip.logId) : Promise.resolve({ liked: false })
+          getTripLogDetail(targetLogId),
+          useAuthStore().isLoggedIn ? getTripLogLikeStatus(targetLogId) : Promise.resolve({ liked: false })
         ])
         tripLog.value = logResponse;
         isLiked.value = likeResponse.liked
@@ -427,6 +428,7 @@ const fetchTripLog = async (tripId: number) => {
         console.error('fetchTripLog error:', error)
         if (error?.response?.status === 404){
           console.warn(`tripId[${tripId}] 로그가 없습니다`)
+          tripLog.value = null // Only nullify if 404
         }
         else alert('로그를 불러오는 중 오류가 발생했습니다.')
     } finally {
