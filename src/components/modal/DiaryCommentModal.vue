@@ -75,7 +75,7 @@
 
       <!-- Body Container -->
       <div 
-        class="flex-1 flex overflow-hidden border-x-[3px] border-b-[3px] border-[#2C2C2C] rounded-b-xl isolate transform-gpu -mt-[2px]"
+        class="flex-1 flex overflow-hidden border-x-[3px] border-b-[3px] border-[#2C2C2C] rounded-b-xl isolate transform-gpu -mt-[2px] p-1 bg-gray-50"
       >
       <TripLogContent
         v-if="logDetail"
