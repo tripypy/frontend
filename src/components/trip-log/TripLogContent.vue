@@ -28,7 +28,7 @@
             </div>
           </div>
         </div>
-        <div class="relative">
+        <div class="relative" ref="dropdownContainer">
           <button
             @click="showDropdown = !showDropdown"
             class="p-2 hover:bg-gray-100 rounded transition-all"
@@ -165,7 +165,7 @@
               layout === 'horizontal' ? 'px-3 py-1.5' : 'px-4 py-2.5',
               isLiked
                 ? 'bg-[#FF6B9D] text-white shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-                : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] hover:translate-x-[-1px] hover:translate-y-[-1px]',
+                : 'bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
             ]"
           >
             <Heart :class="[layout === 'horizontal' ? 'w-3.5 h-3.5' : 'w-4 h-4', isLiked ? 'fill-current' : '']" stroke-width="2.5" />
@@ -422,19 +422,28 @@ const formatCommentDate = (dateString: string) => {
   return format(date, 'yyyy.MM.dd')
 }
 
+const dropdownContainer = ref<HTMLElement | null>(null)
+
 const handleClickOutside = (e: MouseEvent) => {
-  const target = e.target as HTMLElement
-  if (showDropdown.value && !target.closest('.relative')) {
+  if (showDropdown.value && dropdownContainer.value && !dropdownContainer.value.contains(e.target as Node)) {
+    showDropdown.value = false
+  }
+}
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && showDropdown.value) {
     showDropdown.value = false
   }
 }
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleKeydown)
 })
 </script>
 
