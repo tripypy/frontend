@@ -316,10 +316,13 @@ interface DayPlanDisplay {
   places: SpotResponseDto[]
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string }
   initialPlaceId?: number | null
-}>()
+  initialTab?: 'map' | 'log'
+}>(), {
+  initialTab: 'map'
+})
 
 const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh'])
 const router = useRouter()
@@ -331,7 +334,7 @@ watchEffect(() => {
 })
 
 // 2. 탭 & 로그 상태
-const activeTab = ref<'map' | 'log'>('map')
+const activeTab = ref<'map' | 'log'>(props.initialTab)
 const tripLog = ref<TripLogDetail | null>(null)
 const isLoginAlertVisible = ref(false)
 
