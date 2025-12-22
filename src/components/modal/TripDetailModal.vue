@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <div class="bg-white border-b-[3px] border-t-[3px] border-[#2C2C2C] px-6 py-5 flex-shrink-0 rounded-t-xl z-10">
+      <div class="bg-white border-[3px] border-[#2C2C2C] px-6 py-5 flex-shrink-0 rounded-t-xl z-10 border-b-0">
         <div class="flex items-center justify-between gap-6">
           <div class="flex-1">
             <h2 class="text-2xl font-black mb-2">{{ trip.title }}</h2>
@@ -145,7 +145,7 @@
         </div>
       </div>
 
-      <div class="flex-1 flex overflow-hidden ">
+      <div class="flex-1 flex overflow-hidden border-[3px] border-[#2C2C2C] border-t-[3px] rounded-b-xl isolate transform-gpu">
         <div v-if="activeTab === 'map'" class="flex-1 flex overflow-hidden">
           <div class="w-[320px] bg-white border-r-[3px] border-[#2C2C2C] flex flex-col overflow-hidden flex-shrink-0">
             <div class="p-4 border-b-[2px] border-gray-200">
