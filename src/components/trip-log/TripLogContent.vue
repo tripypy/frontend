@@ -2,6 +2,7 @@
   <div class="flex flex-col h-full bg-white">
     <!-- Header -->
     <div
+      v-if="showHeader"
       class="p-5 flex items-center justify-between bg-gradient-to-br from-[#FFD60A]/10 to-white"
     >
       <div class="flex items-center gap-3">
@@ -262,13 +263,16 @@ import type { TripDetailResponseDto } from '@/apis/trip/types'
 import { useAuthStore } from '@/stores/auth'
 import { likeTripLog, unlikeTripLog, postTripLogComment, getTripLogDetail, getTripLogLikeStatus } from '@/apis/trip-log/index'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   logDetail: TripLogDetail
   tripDetail: TripDetailResponseDto | null
   initialLiked: boolean
-}>()
+  showHeader?: boolean
+}>(), {
+  showHeader: true
+})
 
-const emit = defineEmits(['update-like', 'place-click', 'login-required', 'refresh-comments'])
+const emit = defineEmits(['update-like', 'place-click', 'login-required', 'refresh-comments', 'edit', 'delete'])
 
 const authStore = useAuthStore()
 
@@ -370,13 +374,13 @@ const handleShare = () => {
 
 const handleEdit = () => {
   showDropdown.value = false
-  console.log('수정하기')
+  emit('edit')
 }
 
 const handleDelete = () => {
   showDropdown.value = false
   if (confirm('정말 삭제하시겠습니까?')) {
-    console.log('삭제하기')
+    emit('delete')
   }
 }
 
