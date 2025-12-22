@@ -235,10 +235,16 @@
             로그를 불러오는 중...
           </div>
 
-          <div v-else-if="tripLog">
-              <div class="w-full max-w-3xl p-6 bg-white border-[2px] border-[#2C2C2C] rounded-xl shadow-lg">
-                  <div class="prose max-w-none" v-html="tripLog.content"></div>
-              </div>
+          <div v-else-if="tripLog" class="w-full h-full">
+              <TripLogContent
+                  :log-detail="tripLog"
+                  :trip-detail="localTrip"
+                  :initial-liked="isLiked"
+                  @update-like="handleLogLikeUpdate"
+                  @place-click="handleLogPlaceClick"
+                  @login-required="isLoginAlertVisible = true"
+                  @refresh-comments="fetchTripLog(trip.id)"
+              />
           </div>
 
           <div v-else class="text-center mb-20 p-12 flex flex-col justify-center items-center">
@@ -259,6 +265,16 @@
         :place="detailedPlace"
         @close="showPlaceDetailModal = false"
     />
+
+    <AlertDialog
+      :show="isLoginAlertVisible"
+      title="로그인 필요"
+      message="로그인 후 이용해주세요!"
+      confirm-button-text="로그인"
+      close-button-text="취소"
+      @close="isLoginAlertVisible = false"
+      @confirm="handleLoginConfirm"
+    />
   </div>
 </template>
 
@@ -268,11 +284,15 @@ import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, 
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
+import TripLogContent from '@/components/trip-log/TripLogContent.vue'
 import { updateTrip } from '@/apis/trip/index'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
 import { TripStatus } from '@/types/common'
 import type { TripLogDetail } from '@/types/trip/trip.model'
-import { getTripLogDetail, deleteTripLog } from '@/apis/trip-log/index'
+import { getTripLogDetail, deleteTripLog, getTripLogLikeStatus } from '@/apis/trip-log/index'
+import AlertDialog from '@/components/common/AlertDialog.vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 interface DayPlanDisplay {
   dayNumber: number
@@ -285,6 +305,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh'])
+const router = useRouter()
 
 // 1. 상태 동기화 (드롭다운 즉시 반응용)
 const localTrip = reactive({ ...props.trip })
@@ -295,6 +316,13 @@ watchEffect(() => {
 // 2. 탭 & 로그 상태
 const activeTab = ref<'map' | 'log'>('map')
 const tripLog = ref<TripLogDetail | null>(null)
+const isLoginAlertVisible = ref(false)
+
+const handleLoginConfirm = () => {
+  isLoginAlertVisible.value = false
+  router.push({ name: 'login' })
+  emit('close')
+}
 
 // 3. 지도 & 장소 관련 상태
 const kakaoMapRef = ref<any>(null)
@@ -358,20 +386,46 @@ const mapCenter = computed(() => {
 })
 
 const logLoading = ref(false)
+const isLiked = ref(false)
+
 const fetchTripLog = async (tripId: number) => {
     if(!props.trip.logId) return
     logLoading.value = true;
     tripLog.value = null;
     try {
-        const response = await getTripLogDetail(props.trip.logId);
-        tripLog.value = response;
+        const [logResponse, likeResponse] = await Promise.all([
+          getTripLogDetail(props.trip.logId),
+          useAuthStore().isLoggedIn ? getTripLogLikeStatus(props.trip.logId) : Promise.resolve({ liked: false })
+        ])
+        tripLog.value = logResponse;
+        isLiked.value = likeResponse.liked
     } catch (error: any) {
+        console.error('fetchTripLog error:', error)
         if (error?.response?.status === 404){
           console.warn(`tripId[${tripId}] 로그가 없습니다`)
         }
         else alert('로그를 불러오는 중 오류가 발생했습니다.')
     } finally {
         logLoading.value = false;
+    }
+}
+
+const handleLogLikeUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
+    if(tripLog.value && tripLog.value.logId === payload.logId) {
+        tripLog.value.likeCount = payload.likeCount
+        isLiked.value = payload.liked
+    }
+}
+
+const handleLogPlaceClick = (placeId: number) => {
+    activeTab.value = 'map'
+    const item = props.trip.tripItems.find(i => i.spot.id === placeId)
+    if(item) {
+        activeDay.value = item.dayNumber
+        // wait for map ?
+        setTimeout(() => {
+             handlePlaceClick(item.spot)
+        }, 100)
     }
 }
 
