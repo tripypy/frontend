@@ -36,6 +36,7 @@
       />
 
       <div
+        v-if="trip.isEditMode.value"
         class="w-[6px] -ml-[3px] z-30 cursor-col-resize flex items-center justify-center hover:bg-[#9BCCC4] transition-colors opacity-0 hover:opacity-100 active:opacity-100 active:bg-[#9BCCC4]"
         @mousedown="startResize"
       >
@@ -86,9 +87,17 @@
         <PlaceDetailPanel
           :place="selectedPlaceForDetail"
           @close="selectedPlaceForDetail = null"
+          @open-detail="handleOpenPlaceDetailModal"
         />
       </div>
     </div>
+    
+    <!-- Place Detail Modal -->
+    <PlaceDetailModal 
+        v-if="showPlaceDetailModal && detailedPlace" 
+        :place="detailedPlace" 
+        @close="showPlaceDetailModal = false" 
+    />
 
     <!-- AI Chatbot Floating Button -->
     <TripAiChat 
@@ -103,13 +112,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { RotateCw } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import TripPlanHeader from '@/components/trip/TripPlanHeader.vue'
 import TripPlanPanel from '@/components/trip/TripPlanPanel.vue'
 import TripSearchListPanel from '@/components/trip/TripSearchListPanel.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
+import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import type { Place } from '@/types/trip/place.model'
 
 // Import Composables
@@ -118,6 +128,14 @@ import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 import { useTripPlan } from '@/composables/trip/useTripPlan'
 import { useMapInteraction } from '@/composables/trip/useMapInteraction'
 import TripAiChat from '@/components/trip/TripAiChat.vue' // [NEW]
+
+// 1. 패널 리사이징 로직
+const initialPanelWidth = 300
+const { width: panelWidth, startResize } = useResizablePanel({
+  initialWidth: initialPanelWidth,
+  minWidth: 200,
+  maxWidth: 300
+})
 
 // [NEW] AI 추천을 위한 주변 후보 장소 검색 (Frontend Kakao SDK 사용)
 // 다양한 카테고리 검색 (관광지, 문화시설, 음식점, 카페, 공원)
@@ -191,6 +209,12 @@ const {
 // 3. 여행 데이터 로직
 const trip = useTripPlan()
 
+watch(() => trip.isEditMode.value, (newVal) => {
+    if (!newVal) {
+        panelWidth.value = initialPanelWidth
+    }
+})
+
 // 4. [NEW] 지도 인터랙션 로직 (위의 상태들을 주입해서 연결)
 const mapInteraction = useMapInteraction({
   searchResults,
@@ -206,9 +230,9 @@ const mapInteraction = useMapInteraction({
 // 단, ref="kakaoMapRef" 연결을 위해 이것만 별도로 꺼내줍니다.
 const { kakaoMapRef } = mapInteraction
 
-
-
 const selectedPlaceForDetail = ref<Place | null>(null)
+const showPlaceDetailModal = ref(false)
+const detailedPlace = ref<Place | null>(null)
 
 // Helper to find a place from any list by its ID (trip item ID or kakaoPlaceId)
 const findPlaceById = (id: number | string): Place | undefined => {
@@ -242,6 +266,12 @@ const handleAddPlace = (place: Place) => {
     // 추가된 장소는 바로 패널을 띄우고 중심으로 이동
     showDetailAndPan(newPlace)
   }
+}
+
+// Handler for opening full detail modal from the side panel
+const handleOpenPlaceDetailModal = (place: Place) => {
+    detailedPlace.value = place
+    showPlaceDetailModal.value = true
 }
 
 // Ai Chat Search Handler

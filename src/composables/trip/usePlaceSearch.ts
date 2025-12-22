@@ -1,5 +1,6 @@
 import type { Place } from '@/types/trip/place.model'
 import { ref } from 'vue'
+import { spotApi } from '@/apis/spot'
 
 export function usePlaceSearch() {
   const searchQuery = ref('')
@@ -34,12 +35,13 @@ export function usePlaceSearch() {
         ps.keywordSearch(
           searchQuery.value,
           (data: any[], status: any) => {
-            // 1. 성공 시
             if (status === (window as any).kakao.maps.services.Status.OK) {
-              isSearching.value = false
               console.log('Kakao Search Results:', data)
+
+              // 1. Immediate UI Update
+              // 우선 카카오 데이터로 화면을 그린다 (ID는 카카오 ID 임시 사용)
               searchResults.value = data.map((item: any) => ({
-                id: Number(item.id),
+                id: Number(item.id), // 임시 ID (Kakao ID가 숫자가 아닐수도 있지만, Place Model이 number라 임시 변환)
                 kakaoPlaceId: item.id,
                 name: item.place_name,
                 address: item.road_address_name || item.address_name,
@@ -48,16 +50,65 @@ export function usePlaceSearch() {
                 lng: Number(item.x),
                 phone: item.phone,
                 placeUrl: item.place_url,
+                thumbnailUrl: undefined // 초기엔 없음
               }))
+
+              isSearching.value = false // 로딩 해제 (카드는 떴음)
+
+              // 2. Background Sync
+              // 각 아이템별로 독립적으로 백엔드 싱크 & 썸네일 생성 수행
+              data.forEach(async (item: any, index: number) => {
+                try {
+                  const spotRequest = {
+                    kakaoPlaceId: item.id,
+                    name: item.place_name,
+                    address: item.road_address_name || item.address_name,
+                    category: item.category_group_name || '기타',
+                    lat: Number(item.y),
+                    lng: Number(item.x),
+                    placeUrl: item.place_url,
+                    thumbnailUrl: ''
+                  }
+
+                  // A. Upsert Spot
+                  let spot = await spotApi.createSpot(spotRequest)
+
+                  // 업데이트: ID 교체 및 기존 썸네일 확인
+                  if (searchResults.value[index]) {
+                    searchResults.value[index] = {
+                      ...searchResults.value[index],
+                      id: spot.id, // 진짜 DB ID로 교체
+                      thumbnailUrl: spot.thumbnailUrl
+                    }
+                  }
+
+                  // B. 썸네일 없으면 생성 요청
+                  if (!spot.thumbnailUrl) {
+                    try {
+                      const updatedSpot = await spotApi.generateSpotThumbnail(spot.id)
+                      // 생성 완료 후 다시 업데이트
+                      if (searchResults.value[index]) {
+                        searchResults.value[index] = {
+                          ...searchResults.value[index],
+                          thumbnailUrl: updatedSpot.thumbnailUrl
+                        }
+                      }
+                    } catch (err) {
+                      console.warn(`Thumbnail generation failed for spot ${spot.id}`, err)
+                    }
+                  }
+
+                } catch (err) {
+                  console.error('Background sync failed for item', index, err)
+                }
+              })
             }
             // 2. 결과 없음 (ZERO_RESULT)
             else if (status === (window as any).kakao.maps.services.Status.ZERO_RESULT) {
-              // Fallback: 위치 제한이 있었고, 첫 시도였다면 -> 제한 없이 재검색
               if (options.bounds && !isFallbackAttempt) {
                 console.log('No results in current bounds. Retrying globally...')
-                executeSearch({}, true) // 재귀 호출 (옵션 제거)
+                executeSearch({}, true)
               } else {
-                // 진짜 결과 없음
                 isSearching.value = false
                 searchResults.value = []
               }

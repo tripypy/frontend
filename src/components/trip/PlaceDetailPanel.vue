@@ -1,158 +1,107 @@
 <template>
   <div
     v-if="place"
-    class="h-64 bg-white border-t-[3px] border-[#2C2C2C] p-4 relative flex-shrink-0 overflow-y-auto"
+    class="h-40 bg-white border-t-[3px] border-[#2C2C2C] flex relative flex-shrink-0 overflow-hidden cursor-pointer hover:bg-gray-50 transition-colors"
+    @click="$emit('open-detail', place)"
   >
-    <button
-      @click="$emit('close')"
-      class="absolute top-3 right-3 p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors z-10"
-    >
-      <X :size="16" />
-    </button>
+    <!-- Left: Image Section -->
+    <div class="w-[160px] h-full flex-shrink-0 relative border-r border-gray-100 bg-gray-50">
+        <img v-if="place.thumbnailUrl" :src="place.thumbnailUrl" class="w-full h-full object-cover" />
+        <div v-else class="w-full h-full flex items-center justify-center">
+             <MapPin :size="24" class="text-gray-300" />
+        </div>
+    </div>
 
-    <div class="flex gap-4 h-full">
-      <!-- Left Column: Info -->
-      <div class="flex-1 flex flex-col">
-        <p class="text-xs font-bold text-gray-500 mb-1">{{ place.category }}</p>
-        <h3 class="text-2xl font-black mb-2 leading-tight">{{ place.name }}</h3>
+    <!-- Right: Content Section -->
+    <div class="flex-1 p-4 flex flex-col min-w-0 bg-transparent">
+       <!-- Close Button -->
+       <button
+          @click.stop="$emit('close')"
+          class="absolute top-3 right-3 p-1 text-gray-400 hover:text-[#2C2C2C] hover:bg-gray-200 rounded-full transition-colors z-10"
+        >
+          <X :size="16" />
+        </button>
 
-        <div class="flex flex-wrap gap-1 mb-3">
-          <span
-            v-for="(tag, index) in mockData.tags"
-            :key="index"
-            class="px-2 py-0.5 border-[1.5px] border-[#2C2C2C] rounded-full bg-[#B4E4FF] text-[10px] font-black"
-          >
-            #{{ tag }}
+       <!-- Category & Rating -->
+       <div class="flex items-center gap-2 mb-1">
+          <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex-shrink-0">
+             {{ place.category }}
           </span>
-        </div>
-
-        <div class="mt-auto space-y-2 text-xs">
-          <div class="flex items-center gap-2 font-bold">
-            <MapPin :size="14" class="flex-shrink-0" />
-            <span class="truncate">{{ place.address }}</span>
+          <div class="flex items-center gap-1 -ml-1 scale-90 origin-left">
+             <Star :size="12" class="fill-[#FFD60A] text-[#FFD60A]" />
+             <span class="text-xs font-black text-[#2C2C2C]">{{ reviewStats.averageRating.toFixed(1) }}</span>
+             <span class="text-[10px] text-gray-400 font-medium">({{ reviewStats.reviewCount }})</span>
           </div>
-          <div v-if="place.placeUrl" class="flex items-center gap-2 font-bold">
-            <Globe :size="14" class="flex-shrink-0" />
-            <a
-              :href="place.placeUrl"
-              target="_blank"
-              class="truncate text-blue-600 hover:underline"
-              @click.stop
-            >
-              {{ place.placeUrl }}
-            </a>
-          </div>
-        </div>
-      </div>
+       </div>
 
-      <!-- Right Column: Ratings & Reviews -->
-      <div class="w-48 flex flex-col border-l-2 border-gray-200 pl-4">
-        <!-- Average Rating -->
-        <div class="mb-3">
-          <p class="text-xs font-black text-gray-600 uppercase">평균 평점</p>
-          <div class="flex items-baseline gap-1">
-            <span class="font-black text-2xl">{{ mockData.rating }}</span>
-            <span class="text-xs font-bold text-gray-500">/ 5.0</span>
-          </div>
-        </div>
+       <!-- Title -->
+       <div class="mb-auto pr-6">
+          <h3 class="text-lg font-black text-[#2C2C2C] leading-tight group-hover:text-[#9BCCC4] transition-colors truncate">
+              {{ place.name }}
+          </h3>
+       </div>
 
-        <!-- My Rating -->
-        <div class="mb-4">
-          <p class="text-xs font-black text-gray-600 uppercase mb-1">내 평가</p>
-          <div class="flex items-center gap-1 cursor-pointer" @mouseleave="handleStarLeave">
-            <div
-              v-for="star in 5"
-              :key="star"
-              class="relative w-6 h-6"
-              @mousemove="(e) => handleStarHover(star - 1, e)"
-              @click="(e) => handleStarClick(star - 1, e)"
-            >
-              <Star class="absolute inset-0 w-6 h-6 fill-none text-gray-300" stroke-width="2" />
-              <div
-                class="absolute inset-0 overflow-hidden"
-                :style="{ width: `${getStarFillPercent(star - 1)}%` }"
-              >
-                <Star
-                  :class="[
-                    'absolute left-0 w-6 h-6',
-                    hoverRating > 0 || userRating === 0
-                      ? 'fill-[#FFD60A] text-[#FFD60A]'
-                      : 'fill-[#FF1493] text-[#FF1493]',
-                  ]"
-                  stroke-width="2"
-                />
-              </div>
-            </div>
-          </div>
-          <p v-if="userRating > 0" class="text-xs font-bold text-[#FF1493] mt-1">
-            내 평가: {{ userRating.toFixed(1) }}
-          </p>
-        </div>
+       <!-- Info -->
+       <div class="mt-2 space-y-1.5">
+           <div class="flex items-center gap-1.5 text-xs font-bold text-gray-600">
+             <MapPin :size="13" class="flex-shrink-0 text-gray-400" />
+             <span class="truncate">{{ place.address }}</span>
+           </div>
+           
+           <div v-if="place.phone" class="flex items-center gap-1.5 text-xs font-bold text-gray-600">
+             <Phone :size="13" class="flex-shrink-0 text-gray-400" />
+             <span class="truncate">{{ place.phone }}</span>
+           </div>
 
-        <!-- Reviews Placeholder -->
-        <div class="mt-auto">
-          <button
-            class="w-full flex items-center justify-center gap-2 py-2 bg-gray-100 text-gray-400 rounded-lg border-2 border-dashed border-gray-300"
-            disabled
-          >
-            <MessageSquare :size="14" />
-            <span class="text-xs font-bold">리뷰 (준비 중)</span>
-          </button>
-        </div>
-      </div>
+           <div v-if="place.placeUrl" class="flex items-center gap-1.5 group/link cursor-pointer" @click.stop>
+             <ArrowUpRight :size="13" class="flex-shrink-0 text-gray-400 group-hover/link:text-[#9BCCC4] transition-colors" />
+             <a :href="place.placeUrl" target="_blank" class="text-xs text-gray-400 group-hover/link:text-[#9BCCC4] underline decoration-gray-300 underline-offset-2 transition-colors">
+               상세보기
+             </a>
+           </div>
+       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { X, MapPin, Globe, Star, MessageSquare } from 'lucide-vue-next'
+import { ref, watch, computed } from 'vue'
+import { X, MapPin, Globe, Star, MessageSquare, ArrowUpRight, Phone } from 'lucide-vue-next'
 import type { SpotResponseDto } from '@/apis/trip/types'
+import { spotReviewApi } from '@/apis/spot-review'
 
 const props = defineProps<{
   place: SpotResponseDto | null
 }>()
 
-defineEmits(['close'])
+const emit = defineEmits(['close', 'open-detail'])
 
-// --- Mock Data ---
-const mockData = {
-  rating: 4.8,
-  tags: ['카페', '디저트', '감성'],
+const reviewStats = ref({ averageRating: 0, reviewCount: 0 })
+
+
+
+const fetchReviewStats = async () => {
+    if(!props.place?.id) return
+    try {
+        // Backend expects 'spotId' (number) but place might be from Kakao search (no ID yet if not saved)
+        // Check if place has an ID. If it's pure Kakao data in search phase, it might not have our DB ID.
+        // However, trip items usually have DB ID if saved. 
+        // If place.id is missing or looks like kakao ID, we might need check/create logic which exists in 'createSpot'.
+        // But for this panel appearing in search, it's safer to just show 0 if no ID.
+        if (props.place.id) {
+             const stats = await spotReviewApi.getSpotReviewStats(props.place.id)
+             reviewStats.value = stats
+        } else {
+             reviewStats.value = { averageRating: 0, reviewCount: 0 }
+        }
+    } catch (e) {
+        console.error("Failed to fetch stats", e)
+        reviewStats.value = { averageRating: 0, reviewCount: 0 }
+    }
 }
 
-// --- Star Rating Logic ---
-const userRating = ref<number>(0)
-const hoverRating = ref<number>(0)
+watch(() => props.place, () => {
+    fetchReviewStats()
+}, { immediate: true })
 
-const getAverageRatingRounded = () => {
-  return Math.floor(mockData.rating * 2) / 2
-}
-
-const handleStarHover = (starIndex: number, event: MouseEvent) => {
-  const target = event.currentTarget as HTMLElement
-  const rect = target.getBoundingClientRect()
-  const x = event.clientX - rect.left
-  hoverRating.value = x < rect.width / 2 ? starIndex + 0.5 : starIndex + 1
-}
-
-const handleStarClick = (starIndex: number, event: MouseEvent) => {
-  const target = event.currentTarget as HTMLElement
-  const rect = target.getBoundingClientRect()
-  const x = event.clientX - rect.left
-  const rating = x < rect.width / 2 ? starIndex + 0.5 : starIndex + 1
-  userRating.value = userRating.value === rating ? 0 : rating
-}
-
-const handleStarLeave = () => {
-  hoverRating.value = 0
-}
-
-const getStarFillPercent = (starIndex: number) => {
-  const displayRating = hoverRating.value || userRating.value || getAverageRatingRounded()
-  const starPosition = starIndex + 1
-  if (displayRating >= starPosition) return 100
-  if (displayRating > starIndex) return (displayRating - starIndex) * 100
-  return 0
-}
 </script>

@@ -232,6 +232,7 @@ import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue'
 import { Calendar, MapPin, Edit, ListChecks, Shield, Pencil, User, Heart, MessageCircle, Trash } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
+import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
 import type { TripLogDetail } from '@/types/trip/trip.model'
 import { getTripLogDetail } from '@/apis/trip-log/index'
@@ -254,6 +255,8 @@ const kakaoMapRef = ref<any>(null)
 const activeDay = ref(1)
 const selectedPlace = ref<SpotResponseDto | null>(null)
 const selectedMarkerId = ref<number | string | null>(null)
+const showPlaceDetailModal = ref(false)
+const detailedPlace = ref<SpotResponseDto | null>(null)
 
 const days = computed<DayPlanDisplay[]>(() => {
   const grouped = props.trip.tripItems.reduce((acc, item) => {
@@ -381,6 +384,11 @@ const handleMarkerClick = (id: number | string) => {
   }
 }
 
+const handleOpenPlaceDetailModal = (place: SpotResponseDto) => {
+    detailedPlace.value = place
+    showPlaceDetailModal.value = true
+}
+
 const displayDuration = computed(() => {
   const start = props.trip.startDate
   if (start) {
@@ -392,6 +400,7 @@ const displayDuration = computed(() => {
 
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
+    if (showPlaceDetailModal.value) return
     emit('close')
   }
 }
