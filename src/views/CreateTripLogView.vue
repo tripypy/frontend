@@ -5,7 +5,7 @@
     <div class="flex-grow pt-24 max-w-[1700px] mx-auto w-full px-4 flex flex-col box-border overflow-hidden">
       <section class="flex flex-col flex-grow bg-white rounded-t-2xl shadow-sm p-4 md:p-8 overflow-hidden h-full">
         <div class="flex justify-between items-center mb-2">
-          <h2 
+          <h2
             class="text-xl font-bold text-gray-800 text-[#2C2C2C]"
             style="font-family: 'Bebas Neue', sans-serif; line-height: 0.8"
           >
@@ -15,7 +15,7 @@
             <label class="flex items-center text-sm font-medium text-gray-600">
               <select
                 v-model="visibility"
-                class="ml-2 px-3.5 py-2.5 border-2 border-[#2C2C2C] rounded-lg bg-white font-bold
+                class="ml-2 px-3.5 py-3 border-2 border-[#2C2C2C] rounded-lg bg-white font-bold
                       focus:outline-none focus:ring-2 focus:ring-gray-200"
                 :class="[
                   visibility === 'PUBLIC' ? 'border-[#9BCCC4]' : 'border-[#ff856c]'
@@ -27,12 +27,12 @@
             </label>
             <button
               class="flex flex-row px-3 py-2.5 rounded-lg font-bold text-white bg-black
-                    justify-center items-center
-                    disabled:bg-gray-400 disabled:cursor-not-allowed
+                    justify-center items-center border-2 border-[#2C2C2C]
+                    disabled:bg-gray-400 disabled:cursor-not-allowed disabled:border-gray-400
                     transition-all active:scale-95 shadow-md
                     "
               :class="[
-                isFormValid ? 'hover:text-[#2c2c2c] hover:bg-white hover:border-[#2C2C2C] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px]' : ''
+                isFormValid ? 'hover:border-2 hover:text-[#2c2c2c] hover:bg-[#CFF500] hover:border-[#2C2C2C] hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px]' : ''
               ]"
               :disabled="!isFormValid || isSubmitting"
               @click="submitPost"

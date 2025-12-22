@@ -28,11 +28,12 @@
         theme="snow"
         contentType="html"
         :content="content"
-        :toolbar="[ // <--- :toolbar 속성 사용 (가장 간단)
-        ['bold', 'italic', 'underline', 'strike'], 
-        ['link', 'image'], // 이미지 버튼 포함
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        ['clean']
+        :toolbar="[
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          ['link', 'image'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['clean']
     ]"
         @update:content="updateContent"
         @ready="onReady"
@@ -302,7 +303,7 @@ const onReady = (quill: Quill) => {
   const toolbar = quill.getModule('toolbar') as { addHandler: (name: string, handler: () => void) => void } | null;
   if(toolbar){
     toolbar.addHandler('image', handleToolbarImage);
-  } 
+  }
 
   quill.root.addEventListener('dragover', (e: DragEvent) => {
     e.preventDefault()
