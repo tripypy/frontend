@@ -226,14 +226,32 @@
           </button>
 
           <button
+            @click="handleScrap"
+            :disabled="isScrapping"
+            :class="[
+              'flex items-center justify-center border-[2px] border-[#2C2C2C] rounded-full transition-all focus:outline-none',
+              layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10',
+              isBookmarked
+                ? 'bg-[#98D8C8] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
+                : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
+              isScrapping && 'opacity-50 cursor-not-allowed',
+            ]"
+          >
+            <Bookmark
+              :class="[layout === 'horizontal' ? 'w-4 h-4' : 'w-5 h-5', isBookmarked ? 'text-[#2C2C2C] fill-[#2C2C2C]' : 'text-[#2C2C2C]']"
+              stroke-width="2.5"
+            />
+          </button>
+
+          <button
             @click="handleShare"
             :class="[
               'flex items-center justify-center border-[2px] border-[#2C2C2C] rounded-full bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all focus:outline-none',
-              layout === 'horizontal' ? 'w-7 h-7' : 'w-9 h-9'
+              layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10'
             ]"
           >
             <Share2
-              :class="[layout === 'horizontal' ? 'w-3.5 h-3.5' : 'w-4 h-4', 'text-[#2C2C2C]']"
+              :class="[layout === 'horizontal' ? 'w-4 h-4' : 'w-5 h-5', 'text-[#2C2C2C]']"
               stroke-width="2.5"
             />
           </button>
@@ -313,7 +331,9 @@
             <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#2C2C2C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <span class="font-black text-sm text-[#2C2C2C]">링크가 복사되었습니다!</span>
+        <span class="font-black text-sm text-[#2C2C2C]">
+          {{ isBookmarked ? '내 여행에 추가되었습니다' : '링크가 복사되었습니다!' }}
+        </span>
       </div>
     </Transition>
 
@@ -348,6 +368,7 @@ import type { TripLogDetail } from '@/types/trip/trip.model'
 import type { TripDetailResponseDto } from '@/apis/trip/types'
 import { useAuthStore } from '@/stores/auth'
 import { likeTripLog, unlikeTripLog, postTripLogComment, getTripLogDetail, getTripLogLikeStatus, updateTripLogComment, deleteTripLogComment } from '@/apis/trip-log/index'
+// import { requestScrapTrip } from '@/apis/trip/index'
 
 const props = withDefaults(defineProps<{
   logDetail: TripLogDetail
@@ -474,6 +495,34 @@ const handleLike = async () => {
   } catch (e) {
     console.error('Failed to toggle like status:', e)
     showAlert('오류', '좋아요 상태 변경에 실패했습니다.')
+  }
+}
+
+const isScrapping = ref(false)
+
+const handleScrap = async () => {
+  if (isScrapping.value || isBookmarked.value) return
+  if (!authStore.isLoggedIn) {
+    emit('login-required')
+    return
+  }
+
+  try {
+    isScrapping.value = true
+    // const response = await requestScrapTrip(props.logDetail.logId)
+    // if (response.tripId) {
+    //   isBookmarked.value = true
+    //   showToast.value = true
+    //   setTimeout(() => {
+    //     showToast.value = false
+    //   }, 2500)
+    // }
+    alert('아직 준비 중인 기능입니다!')
+  } catch (err) {
+    console.error('스크랩 실패:', err)
+    showAlert('오류', '스크랩에 실패했습니다.')
+  } finally {
+    isScrapping.value = false
   }
 }
 

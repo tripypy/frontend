@@ -250,17 +250,11 @@ const handleScrap = async () => {
 
   try {
     isScrapping.value = true
-    const response = await requestScrapTrip(props.logId)
-
-    if (response.tripId) {
-      isBookmarked.value = true
-      toastMessage.value = '내 여행에 추가되었습니다'
-      showToast.value = true
-
-      setTimeout(() => {
-        showToast.value = false
-      }, 2500)
-    }
+    toastMessage.value = '아직 준비 중인 기능입니다!'
+    showToast.value = true
+    setTimeout(() => {
+      showToast.value = false
+    }, 2000)
   } catch (err) {
     console.error('스크랩 실패:', err)
   } finally {
