@@ -24,6 +24,8 @@ const route = useRoute()
 const loggedInUser = computed(() => authStore.user)
 const profileData = ref<LogViewProfile | null>(null)
 const isLoading = ref(true)
+const currentPage = ref(1)
+const totalPages = ref(1)
 
 const isMyProfile = computed<boolean>(() => {
   const routeUserId = route.params.userId
@@ -38,41 +40,7 @@ const fetchAndSetProfileData = async (userId: number, showLoading = true) => {
     const response = await fetchUserProfile(userId);
     if (response){
       profileData.value = toLogViewProfile(response, false)
-      
-      // Fetch rich logs
-      try {
-        const logsRes = await getTripLogsByUser(userId, { limit: 100 }) // Load enough for preview
-        if (logsRes && logsRes.content) {
-            profileData.value.diaries = logsRes.content.map((log: any) => ({
-                id: log.logId,
-                tripId: log.tripId || 0, // tripId might not be in feed dto? Check spec. Spec says tripId is in Detail, but LogFeedDto doesn't explicitly show it in user's pasted spec (TripLogFeedResponseDto). Wait. The pasted spec shows TripLogFeedResponseDto having logId, authorId. No tripId?
-                // Actually TripLogFeedResponseDto doesn't show tripId in user's paste.
-                // But LogDiaryDto needs tripId for click handler?
-                // userLogSummaryDto had tripId.
-                // If feed doesn't have tripId, we might lose navigation capability if not careful.
-                // Let's assume for now we use 0 or try to preserve if possible.
-                // Re-reading spec: TripLogSearchDoc has trip_id. TripLogDetail has tripId.
-                // TripLogFeedResponseDto in user paste: logId, authorId, title, content... NO tripId.
-                // This is a problem if `handleDiaryClick(card.tripId)` relies on it.
-                // LogContentTabs: `handleDiaryClick(card.tripId)`.
-                // It calls `getTripDetail(tripId)`.
-                // This means the card MUST HAVE tripId.
-                // If `TripLogFeedResponseDto` lacks tripId, we can't fully substitute it.
-                // But `UserLogSummaryDto` (from profile) HAS `tripId`.
-                // Maybe we can merge?
-                // Match by logId.
-                ...log,
-                id: log.logId,
-                likes: log.likeCount,
-                comments: log.commentCount,
-                thumbnailUrl: log.images && log.images.length > 0 ? log.images[0].imageUrl : null,
-                // Reserve tripId from existing summary if available
-                tripId: profileData.value?.diaries.find(d => d.id === log.logId)?.tripId || 0
-            }))
-        }
-      } catch (e) {
-        console.error("Failed to fetch rich logs", e)
-      }
+      await fetchLogs(userId, 1)
     }
   } catch (error) {
     console.error(`Failed to fetch profile for user ${userId}:`, error);
@@ -80,6 +48,28 @@ const fetchAndSetProfileData = async (userId: number, showLoading = true) => {
   } finally {
     if (showLoading) isLoading.value = false
   }
+}
+
+const fetchLogs = async (userId: number, page: number) => {
+    try {
+        const logsRes = await getTripLogsByUser(userId, { page, limit: 9 })
+        if (logsRes && logsRes.content) {
+            if (profileData.value) {
+                profileData.value.diaries = logsRes.content.map((log: any) => ({
+                    ...log,
+                    id: log.logId,
+                    likes: log.likeCount,
+                    comments: log.commentCount,
+                    thumbnailUrl: log.images && log.images.length > 0 ? log.images[0].imageUrl : null,
+                    tripId: profileData.value?.diaries.find(d => d.id === log.logId)?.tripId || 0
+                }))
+            }
+            currentPage.value = page
+            totalPages.value = logsRes.totalPages
+        }
+    } catch (e) {
+        console.error("Failed to fetch logs", e)
+    }
 }
 
 const setMyProfileData = async (showLoading = true) => {
@@ -94,29 +84,21 @@ const setMyProfileData = async (showLoading = true) => {
         const response = await requestFetchUser()
         if (response){
           profileData.value = toLogViewProfile(response, true)
-          
-           // Fetch rich logs for me
-          try {
-            const logsRes = await getTripLogsByUser(loggedInUser.value.id, { limit: 100 })
-            if (logsRes && logsRes.content) {
-                profileData.value.diaries = logsRes.content.map((log: any) => ({
-                    ...log,
-                    id: log.logId,
-                    likes: log.likeCount,
-                    comments: log.commentCount,
-                     thumbnailUrl: log.images && log.images.length > 0 ? log.images[0].imageUrl : null,
-                     tripId: profileData.value?.diaries.find(d => d.id === log.logId)?.tripId || 0
-                }))
-            }
-          } catch (e) {
-            console.error("Failed to fetch rich logs for me", e)
-          }
+          await fetchLogs(loggedInUser.value.id, 1)
         }
     } catch (error) {
         console.error('내 프로필 정보를 가져오는 데 실패했습니다.', error);
         if (showLoading) profileData.value = null;
     } finally {
         if (showLoading) isLoading.value = false;
+    }
+}
+
+const handlePageChange = async (page: number) => {
+    if (profileData.value) {
+        await fetchLogs(profileData.value.id, page)
+         // Scroll to top of tabs? Optional.
+        window.scrollTo({ top: 300, behavior: 'smooth' })
     }
 }
 
@@ -174,6 +156,9 @@ onMounted(() => {
             :is-my-profile="isMyProfile"
             :user-diaries="profileData.diaries || []"
             :user-plans="profileData.userPlans || []"
+            :current-page="currentPage"
+            :total-pages="totalPages"
+            @page-change="handlePageChange"
           />
         </section>
       </div>

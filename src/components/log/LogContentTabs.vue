@@ -12,7 +12,7 @@ import type {
 
 import { createTrip, getTripDetail } from '@/apis/trip/index'
 import type { LogDiaryDto } from '@/apis/trip/types'
-import { Heart, MessageCircle } from 'lucide-vue-next'
+import { Heart, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import { handleImageError } from '@/utils/imageHandler'
@@ -22,6 +22,8 @@ interface Props {
   isMyProfile: boolean
   userDiaries: (LogDiaryDto | UserLogSummaryDto)[]
   userPlans: TripPlanView[]
+  currentPage?: number
+  totalPages?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -98,6 +100,8 @@ const handleDiaryClick = async (tripId: number) => {
   }
 }
 
+const emit = defineEmits(['page-change'])
+
 // Helpers
 const stripHtml = (html?: string) => {
   if (!html) return ''
@@ -173,40 +177,73 @@ const formatDate = (dateStr?: string) => {
               새 일기 쓰기
             </button>
           </div>
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-              <div v-for="card in normalizedDiaries" :key="card.tripId"
-                  @click="handleDiaryClick(card.tripId)"
-                  class="cursor-pointer bg-white border-[2px] border-[#2C2C2C] rounded-2xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] flex flex-col overflow-hidden transition-transform hover:scale-105"
-              >
-                <div class="relative w-full h-40">
-                  <img :src="card.thumbnailUrl || '/default-profile.svg'" :alt="card.title" class="w-full h-full object-cover" @error="handleImageError($event, 'thumbnail')">
-                   <span v-if="card.visibility === 'PRIVATE'" class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                    PRIVATE
-                  </span>
-                  <span class="absolute top-2 left-2 bg-[#9BCCC4] text-[#2C2C2C] text-xs font-bold px-2 py-1 rounded-full">
-                    DIARY
-                  </span>
-                </div>
-                <div class="p-4 flex-1 flex flex-col">
-                  <h3 class="font-black text-xl text-[#2C2C2C] mb-2 truncate">{{ card.title }}</h3>
-                  <p class="text-sm text-gray-600 mb-3 line-clamp-2 h-10">
-                    {{ card.content ? stripHtml(card.content) : '내용이 없습니다.' }}
-                  </p>
-                  <div v-if="card.tags" class="flex flex-wrap gap-1 mb-3 h-5 overflow-hidden">
-                    <span v-for="tag in card.tags" :key="tag"
-                          class="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full"
-                    >#{{ tag }}</span>
-                  </div>
-                  <div class="mt-auto text-xs text-gray-500 flex justify-between items-center">
-                    <span>{{ formatDate(card.createdAt) }}</span>
-                    <div class="flex items-center gap-2">
-                      <span class="flex items-center text-gray-600"><Heart class="w-4 h-4 mr-1" />{{ card.likes || 0 }}</span>
-                      <span class="flex items-center text-gray-600"><MessageCircle class="w-4 h-4 mr-1" />{{ card.comments || 0 }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-          </div>
+            <div v-else>
+               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 mb-12 min-h-[1000px] content-start">
+                   <div v-for="card in normalizedDiaries" :key="card.tripId"
+                       @click="handleDiaryClick(card.tripId)"
+                       class="cursor-pointer bg-white border-[2px] border-[#2C2C2C] rounded-2xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] flex flex-col overflow-hidden transition-transform hover:scale-105"
+                   >
+                     <div class="relative w-full h-40">
+                       <img :src="card.thumbnailUrl || '/default-profile.svg'" :alt="card.title" class="w-full h-full object-cover" @error="handleImageError($event, 'thumbnail')">
+                        <span v-if="card.visibility === 'PRIVATE'" class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                         PRIVATE
+                       </span>
+                       <span class="absolute top-2 left-2 bg-[#9BCCC4] text-[#2C2C2C] text-xs font-bold px-2 py-1 rounded-full">
+                         DIARY
+                       </span>
+                     </div>
+                     <div class="p-4 flex-1 flex flex-col">
+                       <h3 class="font-black text-xl text-[#2C2C2C] mb-2 truncate">{{ card.title }}</h3>
+                       <p class="text-sm text-gray-600 mb-3 line-clamp-2 h-10">
+                         {{ card.content ? stripHtml(card.content) : '내용이 없습니다.' }}
+                       </p>
+                       <div v-if="card.tags" class="flex flex-wrap gap-1 mb-3 h-5 overflow-hidden">
+                         <span v-for="tag in card.tags" :key="tag"
+                               class="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full"
+                         >#{{ tag }}</span>
+                       </div>
+                       <div class="mt-auto text-xs text-gray-500 flex justify-between items-center">
+                         <span>{{ formatDate(card.createdAt) }}</span>
+                         <div class="flex items-center gap-2">
+                           <span class="flex items-center text-gray-600"><Heart class="w-4 h-4 mr-1" />{{ card.likes || 0 }}</span>
+                           <span class="flex items-center text-gray-600"><MessageCircle class="w-4 h-4 mr-1" />{{ card.comments || 0 }}</span>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+               </div>
+
+               <!-- Pagination -->
+               <div v-if="totalPages && totalPages > 1" class="flex justify-center items-center gap-2">
+                 <button
+                   @click="emit('page-change', currentPage! - 1)"
+                   :disabled="currentPage === 1"
+                   class="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                 >
+                   <ChevronLeft class="w-5 h-5" />
+                 </button>
+                 
+                 <div class="flex gap-1">
+                   <button
+                     v-for="page in totalPages"
+                     :key="page"
+                     @click="emit('page-change', page)"
+                     class="w-8 h-8 rounded-full text-sm font-bold transition-all"
+                     :class="currentPage === page ? 'bg-[#2C2C2C] text-white' : 'hover:bg-gray-100 text-gray-600'"
+                   >
+                     {{ page }}
+                   </button>
+                 </div>
+
+                 <button
+                   @click="emit('page-change', currentPage! + 1)"
+                   :disabled="currentPage === totalPages"
+                   class="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                 >
+                   <ChevronRight class="w-5 h-5" />
+                 </button>
+               </div>
+           </div>
         </div>
       </div>
     </div>
