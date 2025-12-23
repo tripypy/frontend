@@ -197,6 +197,7 @@
       <DiaryCommentModal
         v-if="showCommentModal"
         :log-id="props.logId"
+        :author-id="props.authorId"
         :initial-liked="isLiked"
         @close="showCommentModal = false"
         @update="handleModalUpdate"

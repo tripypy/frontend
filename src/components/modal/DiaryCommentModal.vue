@@ -51,6 +51,7 @@ import TripDetailModal from './TripDetailModal.vue'
 
 const props = defineProps<{
   logId: number
+  authorId?: number // Optional since it might be missing in some contexts, but passed from feed
   initialLiked?: boolean
 }>()
 
@@ -71,7 +72,8 @@ const fetchLogDetail = async () => {
     const fetchedLogDetail = await getTripLogDetail(props.logId)
     logDetail.value = {
       ...fetchedLogDetail,
-      logId: props.logId
+      logId: props.logId,
+      authorId: props.authorId || fetchedLogDetail.authorId || 0
     }
 
     // 2. Trip 상세 조회 (Log에 연결된 Trip)

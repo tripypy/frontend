@@ -140,16 +140,22 @@
           <div v-for="comment in logDetail.comments" :key="comment.commentId" class="flex items-start gap-3">
             <div
               :class="[
-                'border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
+                'border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] cursor-pointer hover:opacity-80',
                 layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10'
               ]"
+              @click="navigateToUserLog(comment.authorId)"
             >
               <img :src="comment.authorImageUrl" :alt="comment.authorNickname" class="w-full h-full object-cover" />
             </div>
             <div class="flex-1 min-w-0 flex items-start">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
-                  <span :class="['font-black text-[#2C2C2C]', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.authorNickname }}</span>
+                  <span 
+                    :class="['font-black text-[#2C2C2C] cursor-pointer hover:underline', layout === 'horizontal' ? 'text-xs' : 'text-sm']"
+                    @click="navigateToUserLog(comment.authorId)"
+                  >
+                    {{ comment.authorNickname }}
+                  </span>
                   <span :class="['font-bold text-gray-400', layout === 'horizontal' ? 'text-[10px]' : 'text-xs']">{{ formatCommentDate(comment.createdAt) }}</span>
                 </div>
 
@@ -366,6 +372,7 @@ import AlertDialog from '@/components/common/AlertDialog.vue'
 import { format, parseISO } from 'date-fns'
 import type { TripLogDetail } from '@/types/trip/trip.model'
 import type { TripDetailResponseDto } from '@/apis/trip/types'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { likeTripLog, unlikeTripLog, postTripLogComment, getTripLogDetail, getTripLogLikeStatus, updateTripLogComment, deleteTripLogComment } from '@/apis/trip-log/index'
 // import { requestScrapTrip } from '@/apis/trip/index'
@@ -384,6 +391,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits(['update-like', 'place-click', 'login-required', 'refresh-comments', 'edit', 'delete'])
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const showDropdown = ref(false)
 const showToast = ref(false)
@@ -680,6 +688,15 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('keydown', handleKeydown)
 })
+
+const navigateToUserLog = (userId: number) => {
+  if (userId) {
+    router.push({ name: 'user-log', params: { userId } })
+  } else {
+    console.warn('작성자 ID가 없습니다. API 응답을 확인해주세요.')
+    // alert('정보가 부족하여 이동할 수 없습니다.') // Optional: User facing feedback
+  }
+}
 </script>
 
 <style scoped>

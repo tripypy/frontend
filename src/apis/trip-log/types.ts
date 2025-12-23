@@ -47,6 +47,7 @@ export interface TripLogCommentResponse {
   commentId: number
   authorNickname: string
   authorImageUrl: string
+  authorId: number
   content: string
   createdAt: string
 }
