@@ -119,6 +119,9 @@ export function useTripPlan() {
     isEditMode.value = true
   }
 
+  const normalizeDate = (dateStr: string): string => {
+    return dateStr.replace(/\./g, '-').replace(/\//g, '-');
+  };
   const saveTrip = async (callback?: () => void) => {
     if (!tripId.value) return alert('여행 정보가 올바르게 로드되지 않았습니다.')
     if (!tripTitle.value.trim()) return alert('제목을 입력해주세요.')
@@ -148,10 +151,34 @@ export function useTripPlan() {
       await apiSyncTripItems(tripId.value, itemPayload)
 
       // 2. 여행 기본 정보 (제목, 날짜, 상태, 공개 여부) 업데이트
-      const updatePayload: TripUpdateRequestDto = {
+      let updatePayload: TripUpdateRequestDto = {
         title: tripTitle.value,
         startDate: tripDate.value || undefined,
-        endDate: tripDate.value || undefined, // Assuming endDate is not managed by frontend yet
+        endDate: tripDate.value || undefined,
+        status: tripStatus.value || TripStatus.PLANNED,
+        visibility: tripVisibility.value || 'PRIVATE',
+      }
+      let calculatedEndDate: string | undefined = undefined;
+      const durationDays = days.value.length; // 여행 일수 (예: 3일차까지 있으면 3)
+
+      if (tripDate.value && durationDays > 0) {
+        // 시작 날짜를 정확하게 파싱합니다. (타임존 문제 방지를 위해 YYYY-MM-DDT00:00:00 형식 사용)
+        const normalizedStartDate = normalizeDate(tripDate.value) + 'T00:00:00';
+        const startDateObj = new Date(normalizedStartDate);
+        startDateObj.setDate(startDateObj.getDate() + durationDays - 1);
+
+        // 최종 YYYY-MM-DD 형식으로 변환
+        const y = startDateObj.getFullYear();
+        const m = (startDateObj.getMonth() + 1).toString().padStart(2, '0');
+        const d = startDateObj.getDate().toString().padStart(2, '0');
+
+        calculatedEndDate = `${y}-${m}-${d}`;
+      }
+
+      updatePayload = {
+        title: tripTitle.value,
+        startDate: tripDate.value || undefined,
+        endDate: calculatedEndDate,
         status: tripStatus.value || TripStatus.PLANNED,
         visibility: tripVisibility.value || 'PRIVATE',
       }
