@@ -554,7 +554,12 @@ const showToast = ref(false) // Add if needed, or reuse in TripLogContent
 
 const handleShare = () => {
     showDropdown.value = false
-    const url = window.location.href // Or construct trip link
+    const logId = tripLog.value?.logId || props.trip.logId
+    if (!logId) {
+        alert('로그 정보를 찾을 수 없습니다.')
+        return
+    }
+    const url = `${window.location.origin}/diary/${logId}`
     navigator.clipboard.writeText(url).then(() => {
         alert('링크가 복사되었습니다!')
     })
