@@ -1,7 +1,7 @@
 <template>
   <div
     class="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-50 p-6"
-    @click="emit('close')"
+    @click="handleBackdropClick"
   >
     <button
       @click="emit('close')"
@@ -12,7 +12,6 @@
 
     <div
       class="relative w-full max-w-4xl h-[85vh] flex flex-col"
-      @click.stop
     >
       <div class="flex-shrink-0 self-end">
         <div class="flex items-center justify-end">
@@ -618,6 +617,12 @@ const handleClickOutside = (e: MouseEvent) => {
   const target = e.target as HTMLElement
   if (showDropdown.value && !target.closest('.relative')) {
     showDropdown.value = false
+  }
+}
+
+const handleBackdropClick = (e: MouseEvent) => {
+  if (e.target === e.currentTarget) {
+    emit('close')
   }
 }
 </script>
