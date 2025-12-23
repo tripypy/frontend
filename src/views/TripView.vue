@@ -76,17 +76,18 @@
     <TripDetailModal
       v-if="selectedTrip"
       :trip="selectedTrip"
-      @close="router.back()"
-      @edit="handleEditFromModal"
+      @close="handleCloseModal"
+      @edit="handleNavigate('trip-edit', { id: $event.id })"
       @write="handleWriteLogFromModal"
       @edit-log="handleEditLogFromModal"
       @refresh="fetchTrips"
+      @delete="handleTripDelete"
     />
 
     <AlertDialog
       :show="showCopyAlert"
       title="여행 복사"
-      message="이 여행 계획을 복사할까요?"
+      message="계획을 복사하시겠습니까?"
       confirm-button-text="복사"
       close-button-text="취소"
       @close="showCopyAlert = false"
@@ -102,6 +103,29 @@
       @close="infoAlert.visible = false"
       @confirm="infoAlert.visible = false"
     />
+
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      leave-active-class="transition-all duration-200 ease-in"
+      enter-from-class="opacity-0 translate-y-[-20px]"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-[-20px]"
+    >
+      <div
+        v-if="showToast"
+        class="fixed top-24 right-6 z-[90] bg-white border-[3px] border-[#2C2C2C] rounded-xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.3)] px-5 py-3 flex items-center gap-3"
+      >
+        <div class="w-6 h-6 bg-[#FFD60A] border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#2C2C2C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="font-black text-sm text-[#2C2C2C]">
+          {{ toastMessage }}
+        </span>
+      </div>
+    </Transition>
 
     <ScrollToTop />
   </div>
@@ -140,6 +164,17 @@ const showAlert = (message: string, title = '알림') => {
   infoAlert.message = message
   infoAlert.title = title
   infoAlert.visible = true
+}
+
+// 토스트 메시지 상태
+const showToast = ref(false)
+const toastMessage = ref('')
+const showToastMessage = (message: string) => {
+    toastMessage.value = message
+    showToast.value = true
+    setTimeout(() => {
+        showToast.value = false
+    }, 2000)
 }
 
 // 데이터 조회
@@ -250,6 +285,12 @@ const fetchTripDetailAndOpen = async (tripId: number) => {
     }
 }
 
+const handleCloseModal = () => {
+    const query = { ...route.query }
+    delete query.tripId
+    router.replace({ query })
+}
+
 watch(() => route.query.tripId, async (newTripId) => {
     console.log('TripView: watcher triggered with', newTripId)
     if (newTripId) {
@@ -299,11 +340,23 @@ const handleCopyConfirm = async () => {
     targetTripId.value = null
     // 성공 시 목록 새로고침
     await fetchTrips()
-    showAlert('여행이 복사되었습니다.')
+    showToastMessage('여행이 복사되었습니다.')
   } catch (error) {
     console.error('여행 복사 실패:', error)
     showAlert('여행 복사에 실패했습니다.')
   }
+}
+
+// 6. 여행 삭제 (Optimistic Update)
+const handleTripDelete = (tripId: number) => {
+    // 1. 목록에서 즉시 제거
+    tripsList.value = tripsList.value.filter(t => t.id !== tripId)
+    
+    // 2. 모달 닫기 (이미 TripDetailModal에서 emit close를 했지만, 확실히 처리)
+    handleCloseModal()
+
+    // 3. 토스트 표시
+    showToastMessage('여행이 삭제되었습니다.')
 }
 </script>
 

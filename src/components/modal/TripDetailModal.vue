@@ -194,6 +194,15 @@
                   <Edit class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
                   <span class="font-bold text-sm text-[#2C2C2C]">일정 수정</span>
                 </button>
+
+                <button 
+                  v-if="trip.isOwner" 
+                  @click="handleDeleteTripClick" 
+                  class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-red-50 transition-colors text-left border-t border-gray-200"
+                >
+                  <Trash2 class="w-4 h-4 text-red-500" stroke-width="2.5" />
+                  <span class="font-bold text-sm text-red-500">여행 삭제</span>
+                </button>
               </div>
             </div>
           </div>
@@ -339,11 +348,31 @@
     <AlertDialog
       :show="showCopyConfirm"
       title="여행 복사"
-      message="이 여행 계획을 복사하시겠습니까?"
+      message="계획을 복사하시겠습니까?"
       confirm-button-text="복사"
       close-button-text="취소"
       @close="showCopyConfirm = false"
       @confirm="handleCopyConfirm"
+    />
+
+    <AlertDialog
+      :show="showDeleteConfirm"
+      title="여행 삭제"
+      message="계획을 삭제하시겠습니까?"
+      confirm-button-text="삭제"
+      close-button-text="취소"
+      @close="showDeleteConfirm = false"
+      @confirm="handleDeleteTripConfirm"
+    />
+
+    <AlertDialog
+      :show="showLogDeleteConfirm"
+      title="기록 삭제"
+      message="이 기록을 삭제하시겠습니까?"
+      confirm-button-text="삭제"
+      close-button-text="취소"
+      @close="showLogDeleteConfirm = false"
+      @confirm="handleLogDeleteConfirm"
     />
   </div>
 </template>
@@ -355,7 +384,7 @@ import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import TripLogContent from '@/components/trip-log/TripLogContent.vue'
-import { updateTrip, requestScrapTrip } from '@/apis/trip/index'
+import { updateTrip, requestScrapTrip, deleteTrip } from '@/apis/trip/index'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
 import { TripStatus } from '@/types/common'
 import type { TripLogDetail } from '@/types/trip/trip.model'
@@ -577,19 +606,31 @@ const handleVisibilityChange = async (event: Event) => {
 }
 
 // 로그 관련 핸들러
+const showLogDeleteConfirm = ref(false)
+
 const handleDeleteLogClick = async () => {
   showDropdown.value = false // Close dropdown
-// ... existing logic ...
   if (!logLoading.value && tripLog.value && props.trip.isOwner){
+     showLogDeleteConfirm.value = true
+  }
+}
+
+const handleLogDeleteConfirm = async () => {
+    if(!tripLog.value) return 
+
     try {
       await deleteTripLog(tripLog.value.logId)
-      alert('로그가 삭제되었습니다.')
+      showLogDeleteConfirm.value = false
+      
+      toastMessage.value = '기록이 삭제되었습니다.'
+      showToast.value = true
+
+      emit('delete-log', tripLog.value!.logId)
       emit('close')
     } catch (error) {
       console.error('로그 삭제 실패', error)
       alert('로그 삭제 실패')
     }
-  }
 }
 
 const handleEditLogClick = () => {
@@ -656,6 +697,31 @@ const handleCopyConfirm = async () => {
   } catch (error) {
     console.error('Copy trip failed:', error)
     alert('여행 복사에 실패했습니다.')
+  }
+}
+
+// 여행 삭제 관련
+const showDeleteConfirm = ref(false)
+
+const handleDeleteTripClick = () => {
+  showMapDropdown.value = false
+  showDeleteConfirm.value = true
+}
+
+const handleDeleteTripConfirm = async () => {
+  try {
+    await deleteTrip(props.trip.id)
+    showDeleteConfirm.value = false
+    
+    toastMessage.value = '여행이 삭제되었습니다.'
+    showToast.value = true
+
+    // emit('refresh') // Refactored to emit 'delete' for optimistic update
+    emit('delete', props.trip.id)
+    emit('close')
+  } catch (error) {
+    console.error('Delete trip failed:', error)
+    alert('여행 삭제에 실패했습니다.')
   }
 }
 
