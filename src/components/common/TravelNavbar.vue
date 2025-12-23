@@ -240,7 +240,8 @@ const handleNotificationClick = async (notif: any) => {
 }
 
 const formatTime = (dateString: string) => {
-  return formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko })
+  const dateToParse = dateString.endsWith('Z') || dateString.includes('+') ? dateString : dateString + 'Z'
+  return formatDistanceToNow(new Date(dateToParse), { addSuffix: true, locale: ko })
 }
 
 const highlightMessage = (message: string, type: string) => {
