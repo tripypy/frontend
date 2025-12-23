@@ -26,10 +26,11 @@
           :key="tab.id"
           @click="activeTab = tab.id"
           :class="[
-            'px-3 py-1.5 rounded-lg transition-all text-xs font-bold whitespace-nowrap focus:outline-none border-[2px] border-transparent',
+            'px-3 py-1.5 rounded-lg transition-all text-base font-bold whitespace-nowrap focus:outline-none border-[2px] border-transparent',
+            // **수정된 부분**
             activeTab === tab.id
-              ? 'bg-black text-white border-black'
-              : 'bg-white text-gray-600 hover:bg-gray-100 border-gray-200',
+              ? tab.activeColorClasses // 활성화된 경우: tab.activeColorClasses 사용
+              : tab.inactiveColorClasses, // 비활성화된 경우: tab.inactiveColorClasses 사용
           ]"
         >
           {{ tab.label }} {{ getCount(tab.id) }}
@@ -217,12 +218,38 @@ const displayTrips = computed(() => {
   return filteredTrips
 })
 
-// [수정됨] 스크랩 탭 제거
-const tabs: { id: TripStatus | 'all'; label: string }[] = [
-  { id: 'all', label: '전체' },
-  { id: TripStatus.PLANNED, label: '계획중' },
-  { id: TripStatus.COMPLETED, label: '완료' },
-]
+const tabs: {
+  id: TripStatus | 'all';
+  label: string;
+  // **추가된 부분**
+  activeColorClasses: string;
+  inactiveColorClasses: string;
+}[] = [
+  {
+    id: 'all',
+    label: '전체',
+    // 활성화: 파랑
+    activeColorClasses: 'bg-black text-white border-black transition-colors',
+    // 비활성화: 파랑 계열
+    inactiveColorClasses: 'bg-white text-black hover:bg-gray-50 hover:border-black transition-colors',
+  },
+  {
+    id: TripStatus.PLANNED,
+    label: '계획중',
+    // 활성화: 초록
+    activeColorClasses: 'bg-[#9bccc4] text-black border-[#9bccc4] transition-colors',
+    // 비활성화: 주황 계열
+    inactiveColorClasses: 'bg-white text-black hover:bg-[#dbe8e1] transition-colors hover:border-[#9bccc4]',
+  },
+  {
+    id: TripStatus.COMPLETED,
+    label: '완료',
+    // 활성화: 초록
+    activeColorClasses: 'bg-[#F9CA6B] text-black border-[#F9CA6B] transition-colors',
+    // 비활성화: 초록 계열
+    inactiveColorClasses: 'bg-white text-black hover:bg-[#ffeecb] hover:border-[#F9CA6B] transition-colors',
+  },
+];
 
 const getCount = (tabId: TripStatus | 'all') => {
   if (tabId === 'all') return tripsList.value.length
