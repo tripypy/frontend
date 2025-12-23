@@ -229,7 +229,7 @@
 
               <!-- Thumbnail Image -->
               <div
-                class="w-36 h-28 border-[2px] border-[#2C2C2C] rounded-xl overflow-hidden flex-shrink-0"
+                class="w-32 h-32 border-[2px] border-[#2C2C2C] rounded-xl overflow-hidden flex-shrink-0"
               >
                 <img
                   :src="place.imageUrl"
@@ -273,11 +273,8 @@
                     </span>
                   </div>
                   
-                  <!-- Views -->
-                  <div class="text-xs font-bold text-gray-500">
-                    {{ place.views.toLocaleString() }} 조회
+                  <!-- Views removed -->
                   </div>
-                </div>
               </div>
             </div>
           </div>
@@ -346,6 +343,7 @@ import { usePlaceSearch } from '@/composables/trip/usePlaceSearch'
 import { searchApi, type TripSearchDoc, type TripLogSearchDoc } from '@/apis/search'
 import { getTripDetail } from '@/apis/trip'
 import { spotApi } from '@/apis/spot'
+import { spotReviewApi } from '@/apis/spot-review'
 
 const router = useRouter()
 const { handleNavigate } = useNavigate()
@@ -738,14 +736,30 @@ onMounted(async () => {
     // 2. Load Hot Places
     try {
         const places = await spotApi.getHotPlaces()
-        hotPlaces.value = places.map((place: any) => ({
-            ...place,
-            imageUrl: place.thumbnailUrl,
-            location: place.address,
-            rating: 0.0,
-            views: 0,
-            tags: place.category ? place.category.split(' > ').slice(-1) : ['핫플레이스']
+        // Fetch stats for each place
+        const placesWithStats = await Promise.all(places.map(async (place) => {
+             try {
+                const stats = await spotReviewApi.getSpotReviewStats(place.id)
+                return {
+                    ...place,
+                    imageUrl: place.thumbnailUrl,
+                    location: place.address,
+                    rating: stats.averageRating || 0.0,
+                    reviewCount: stats.reviewCount || 0,
+                    tags: place.category ? place.category.split(' > ').slice(-1) : ['핫플레이스']
+                }
+             } catch (e) {
+                 return {
+                    ...place,
+                    imageUrl: place.thumbnailUrl,
+                    location: place.address,
+                    rating: 0.0,
+                    reviewCount: 0,
+                    tags: place.category ? place.category.split(' > ').slice(-1) : ['핫플레이스']
+                 }
+             }
         }))
+        hotPlaces.value = placesWithStats
     } catch (e) {
         console.error("Failed to fetch hot places", e)
         hotPlaces.value = []
