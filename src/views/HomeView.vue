@@ -81,7 +81,7 @@
           <!-- Feed Items -->
           <div class="space-y-8">
             <template v-for="diary in diaryEntries" :key="diary.logId">
-              <DiaryFeedItem v-bind="diary" />
+              <DiaryFeedItem v-bind="diary" @open-log="handleOpenLogFromFeed" />
             </template>
           </div>
 
@@ -188,14 +188,16 @@
     <DiaryCommentModal
         v-if="selectedLogId"
         :log-id="selectedLogId"
+        :author-id="selectedAuthorId"
         @close="handleLogClose"
         @update="handleLogUpdate"
+        @edit="handleEditFromModal"
     />
 
     <TripDetailModal
         v-if="selectedTrip"
         :trip="selectedTrip"
-        @close="selectedTrip = null"
+        @close="router.back()"
         @edit="handleEditFromModal"
     />
 
@@ -204,7 +206,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
@@ -221,18 +223,44 @@ import { spotApi } from '@/apis/spot'
 import { getMyTrips, createTrip, getTripDetail } from '@/apis/trip' // Added getTripDetail
 import type { TripResponseDto } from '@/apis/trip/types'
 import { differenceInCalendarDays, isAfter, isSameDay, startOfDay, parseISO } from 'date-fns'
+import { useRoute } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 const { handleNavigate } = useNavigate()
 
 const selectedPlaceForDetail = ref<any>(null) // For PlaceDetailModal
 const placeDetailModalRef = ref<any>(null)
 const selectedLogId = ref<number | null>(null)
+const selectedAuthorId = ref<number | undefined>(undefined)
 const hasLogUpdates = ref(false)
 const selectedTrip = ref<any>(null)
 
 const handleOpenTripLog = (logId: number) => {
-    selectedLogId.value = logId
+    router.push({ query: { ...route.query, logId } })
+}
+
+// Watch URL for modal state
+watch(() => route.query.logId, (newLogId) => {
+  console.log('HomeView: route.query.logId changed:', newLogId)
+  if (newLogId) {
+    selectedLogId.value = Number(newLogId)
+    // authorId is not in URL, but if opening from feed, handleOpenLog sets it. 
+    // If refreshing page, authorId will be undefined, but Modal handles fallback/missing ID.
+  } else {
+    selectedLogId.value = null
+    selectedAuthorId.value = undefined
+  }
+}, { immediate: true })
+
+const handleOpenLogFromFeed = (payload: { logId: number, authorId: number }) => {
+  console.log('HomeView: handleOpenLogFromFeed called with', payload)
+  selectedAuthorId.value = payload.authorId
+  router.push({ query: { ...route.query, logId: payload.logId } })
+    .then(() => console.log('HomeView: router.push success'))
+    .catch(err => {
+      console.error('HomeView: router.push failed:', err)
+    })
 }
 
 const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
@@ -243,7 +271,7 @@ const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boo
 }
 
 const handleLogClose = () => {
-    selectedLogId.value = null
+    router.back()
     if (hasLogUpdates.value) {
         if (placeDetailModalRef.value) {
             placeDetailModalRef.value.refreshWithEffect()
@@ -252,7 +280,19 @@ const handleLogClose = () => {
     }
 }
 
-const handleNavigateToTrip = async (tripId: number) => {
+const handleNavigateToTrip = (tripId: number) => {
+    router.push({ query: { ...route.query, tripId } })
+}
+
+watch(() => route.query.tripId, async (newTripId) => {
+    if (newTripId) {
+        await fetchTripDetailAndOpen(Number(newTripId))
+    } else {
+        selectedTrip.value = null
+    }
+}, { immediate: true })
+
+const fetchTripDetailAndOpen = async (tripId: number) => {
     try {
         const detail = await getTripDetail(tripId)
         selectedTrip.value = {
@@ -268,6 +308,7 @@ const handleNavigateToTrip = async (tripId: number) => {
     } catch (error) {
         console.error('Failed to fetch trip detail:', error)
         alert('여행 정보를 불러오는데 실패했습니다.')
+        router.replace({ query: { ...route.query, tripId: undefined } })
     }
 }
 

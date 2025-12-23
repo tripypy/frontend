@@ -74,7 +74,7 @@
     <TripDetailModal
       v-if="selectedTrip"
       :trip="selectedTrip"
-      @close="selectedTrip = null"
+      @close="router.back()"
       @edit="handleEditFromModal"
       @write="handleWriteLogFromModal"
       @edit-log="handleEditLogFromModal"
@@ -86,14 +86,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index'
 import type { TripResponseDto, TripDetailResponseDto, TripItemResponseDto } from '@/apis/trip/types'
 import { TripStatus } from '@/types/common'
@@ -101,6 +101,7 @@ import type { TripLogDetail } from '@/types/trip/trip.model'
 
 const { handleNavigate } = useNavigate()
 const router = useRouter()
+const route = useRoute()
 
 const activeTab = ref<TripStatus | 'all'>('all')
 const tripsList = ref<TripResponseDto[]>([])
@@ -188,22 +189,39 @@ const formatMonth = (monthStr: string) => {
 // --- 핸들러 함수들 ---
 
 // 1. 모달 열기 로직
-const handleOpenModal = async (tripId: number) => {
-  try {
-    const detail = await getTripDetail(tripId)
-    selectedTrip.value = {
-      ...detail,
-      description:
-        detail.tripItems && detail.tripItems.length > 0
-          ? detail.tripItems.map((item : TripItemResponseDto) => item.spot.name).join(' → ')
-          : '장소 없음',
-    }
-  } catch (error) {
-    console.error(`여행 상세 조회 실패 (ID: ${tripId}):`, error)
-    alert('여행 상세 정보를 불러오는데 실패했습니다.')
-    selectedTrip.value = null
-  }
+const handleOpenModal = (tripId: number) => {
+    router.push({ query: { ...route.query, tripId } })
 }
+
+const fetchTripDetailAndOpen = async (tripId: number) => {
+    console.log('TripView: fetching detail for', tripId)
+    try {
+        const detail = await getTripDetail(tripId)
+        selectedTrip.value = {
+            ...detail,
+             description:
+                detail.tripItems && detail.tripItems.length > 0
+                ? detail.tripItems.map((item : TripItemResponseDto) => item.spot.name).join(' → ')
+                : '장소 없음',
+        }
+        console.log('TripView: selectedTrip set', selectedTrip.value)
+
+    } catch (error) {
+        console.error(`여행 상세 조회 실패 (ID: ${tripId}):`, error)
+        alert('여행 상세 정보를 불러오는데 실패했습니다.')
+        selectedTrip.value = null
+        router.replace({ query: { ...route.query, tripId: undefined } }) // Remove invalid ID
+    }
+}
+
+watch(() => route.query.tripId, async (newTripId) => {
+    console.log('TripView: watcher triggered with', newTripId)
+    if (newTripId) {
+        await fetchTripDetailAndOpen(Number(newTripId))
+    } else {
+        selectedTrip.value = null
+    }
+}, { immediate: true })
 
 // 2. TripPlanView로 이동
 const handleEditFromModal = (trip: TripDetailResponseDto) => {

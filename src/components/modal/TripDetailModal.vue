@@ -46,7 +46,7 @@
 
       <!-- Log Header -->
       <div v-if="activeTab === 'log' && tripLog" class="px-6 py-5 flex-shrink-0 rounded-t-xl z-20 border-[3px] border-[#2C2C2C] border-b-0 bg-white bg-gradient-to-br from-[#FFD60A]/10 to-white flex items-center justify-between">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity w-fit" @click.stop="navigateToUserLog(tripLog.authorId)">
           <div class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]">
             <img :src="tripLog.authorImageUrl" :alt="tripLog.authorNickname" class="w-full h-full object-cover" @error="handleImageError($event, 'profile')" />
           </div>
@@ -62,10 +62,15 @@
           </div>
         </div>
 
-        <div class="relative" ref="headerDropdownContainer">
-          <button @click="showDropdown = !showDropdown" class="p-2 hover:bg-gray-100 rounded transition-all">
-            <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
+        <div class="flex items-center gap-1">
+          <button @click="handleExpandClick" class="p-2 hover:bg-gray-100 rounded transition-all">
+             <Maximize2 class="w-5 h-5 text-[#2C2C2C]" stroke-width="2.5" />
           </button>
+          
+          <div class="relative" ref="headerDropdownContainer">
+            <button @click="showDropdown = !showDropdown" class="p-2 hover:bg-gray-100 rounded transition-all">
+              <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
+            </button>
 
           <div v-if="showDropdown" class="absolute right-0 top-full mt-2 w-40 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-20">
             <button @click="handleShare" class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left">
@@ -85,6 +90,7 @@
               </button>
             </template>
           </div>
+        </div>
         </div>
       </div>
 
@@ -295,7 +301,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect, reactive, watch } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash, MoreHorizontal, Share, Trash2 } from 'lucide-vue-next'
+import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash, MoreHorizontal, Share, Trash2, Maximize2 } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
@@ -307,7 +313,7 @@ import type { TripLogDetail } from '@/types/trip/trip.model'
 import { getTripLogDetail, deleteTripLog, getTripLogLikeStatus } from '@/apis/trip-log/index'
 import AlertDialog from '@/components/common/AlertDialog.vue'
 import { handleImageError } from '@/utils/imageHandler'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 interface DayPlanDisplay {
@@ -327,7 +333,11 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh', 'update'])
+
+
 const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
 // 1. 상태 동기화 (드롭다운 즉시 반응용)
 const localTrip = reactive({ ...props.trip })
@@ -337,7 +347,7 @@ watchEffect(() => {
 
 // 2. 탭 & 로그 상태
 // 2. 탭 & 로그 상태
-const activeTab = ref<'map' | 'log'>(props.initialTab)
+const activeTab = ref<'map' | 'log'>((route.query.tab as 'map' | 'log') || props.initialTab || 'map')
 const tripLog = ref<TripLogDetail | null>(props.logData || null)
 const isLoginAlertVisible = ref(false)
 
@@ -466,8 +476,18 @@ const handleLogPlaceClick = (placeId: number) => {
 
 // 탭 핸들러
 const handleTabClick = (tab: 'map' | 'log') => {
-    activeTab.value = tab;
+  activeTab.value = tab
+  router.replace({ query: { ...route.query, tab } })
 }
+
+// URL 변경 감지 (뒤로가기 등)
+watch(() => route.query.tab, (newTab) => {
+  if (newTab === 'map' || newTab === 'log') {
+    activeTab.value = newTab
+  } else {
+    activeTab.value = 'map'
+  }
+})
 
 // 탭 변경 감지 및 로그 데이터 로드
 watch(activeTab, (newTab) => {
@@ -589,6 +609,12 @@ const handleOpenPlaceDetailModal = (place: SpotResponseDto) => {
     showPlaceDetailModal.value = true
 }
 
+const handleExpandClick = () => {
+  if (tripLog.value) {
+    router.push({ name: 'trip-log-detail', params: { logId: tripLog.value.logId } })
+  }
+}
+
 const displayDuration = computed(() => {
   const start = props.trip.startDate
   if (start) {
@@ -625,6 +651,16 @@ const handleClickOutside = (e: MouseEvent) => {
 const handleBackdropClick = (e: MouseEvent) => {
   if (e.target === e.currentTarget) {
     emit('close')
+  }
+}
+
+const navigateToUserLog = (userId: number) => {
+  const targetId = userId || (props.trip.isOwner && authStore.user?.id);
+  
+  if (targetId) {
+    router.push({ name: 'user-log', params: { userId: targetId } })
+  } else {
+    console.warn('Navigation failed: Missing author ID')
   }
 }
 </script>

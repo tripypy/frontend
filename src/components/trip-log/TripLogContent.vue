@@ -71,7 +71,7 @@
 
       <!-- Content Body -->
       <div class="p-5 border-b border-gray-200">
-        <h3 class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ logDetail.title }}</h3>
+        <h3 v-if="!hideTitle" class="font-black text-lg mb-2 text-[#2C2C2C] font-sans">{{ logDetail.title }}</h3>
 
         <div v-if="groupedCourse.length > 0" class="mb-4">
           <!-- Tabs -->
@@ -129,191 +129,154 @@
     </div>
 
     <!-- Comments & Footer Section (Right in Horizontal) -->
-    <div :class="[
+    <div 
+      v-if="!hideComments"
+      :class="[
       layout === 'horizontal' 
         ? 'w-[35%] h-full flex flex-col border-l border-gray-200' 
         : 'flex-1 flex flex-col min-h-0'
-    ]">
-      <!-- Comments List -->
-      <div class="flex-1 overflow-y-auto p-4 pt-3 space-y-4">
-        <template v-if="logDetail.comments && logDetail.comments.length > 0">
-          <div v-for="comment in logDetail.comments" :key="comment.commentId" class="flex items-start gap-3">
-            <div
-              :class="[
-                'border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
-                layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10'
-              ]"
-            >
-              <img :src="comment.authorImageUrl" :alt="comment.authorNickname" class="w-full h-full object-cover" />
-            </div>
-            <div class="flex-1 min-w-0 flex items-start">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span :class="['font-black text-[#2C2C2C]', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.authorNickname }}</span>
-                  <span :class="['font-bold text-gray-400', layout === 'horizontal' ? 'text-[10px]' : 'text-xs']">{{ formatCommentDate(comment.createdAt) }}</span>
-                </div>
-
-                <div v-if="editingCommentId === comment.commentId" class="flex flex-col gap-2">
-                   <input
-                      v-model="editingContent"
-                      type="text"
-                      ref="editInputRef"
-                      class="w-full border-[2px] border-[#2C2C2C] rounded-lg px-3 py-2 text-sm font-medium bg-white focus:outline-none focus:ring-1 focus:ring-[#2C2C2C]"
-                      @keydown.enter.prevent="handleEditKeydown($event, comment.commentId)"
-                      @keydown.esc="cancelEditComment"
-                    />
-                    <div class="flex justify-end gap-2">
-                      <button @click="cancelEditComment" class="text-xs font-bold text-gray-500 hover:text-gray-700">취소</button>
-                      <button @click="handleUpdateComment(comment.commentId)" class="text-xs font-bold text-blue-500 hover:text-blue-700">저장</button>
-                    </div>
-                </div>
-                <p v-else :class="['font-medium text-gray-800 leading-relaxed break-all', layout === 'horizontal' ? 'text-xs' : 'text-sm']">{{ comment.content }}</p>
-              </div>
-
-              <div v-if="authStore.user?.nickname === comment.authorNickname && editingCommentId !== comment.commentId" class="relative ml-2 flex-shrink-0">
-                <button 
-                  @click.stop="toggleCommentDropdown(comment.commentId)"
-                  class="p-1 hover:bg-gray-100 rounded-full transition-colors -mt-1"
-                  :data-comment-dropdown-trigger="comment.commentId"
-                >
-                  <MoreHorizontal class="w-4 h-4 text-gray-400" stroke-width="2" />
-                </button>
-                
-                <div
-                  v-if="activeCommentDropdownId === comment.commentId"
-                  class="absolute right-0 top-full mt-1 w-20 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-10"
-                  :data-comment-dropdown-menu="comment.commentId"
-                >
-                  <button
-                    @click="handleEditClick(comment)"
-                    class="w-full px-3 py-2 flex items-center justify-center hover:bg-gray-50 transition-colors text-xs font-bold text-[#2C2C2C] border-b border-gray-100"
-                  >
-                    수정
-                  </button>
-                  <button
-                    @click="handleDeleteClick(comment.commentId)"
-                    class="w-full px-3 py-2 flex items-center justify-center hover:bg-red-50 transition-colors text-xs font-bold text-red-500"
-                  >
-                    삭제
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-        <div v-else class="h-full flex flex-col items-center justify-center text-center opacity-60">
-            <MessageCircle class="w-12 h-12 mb-2 text-gray-300" stroke-width="1.5" />
-            <p class="text-sm font-bold text-gray-400">댓글이 아직 없어요</p>
-            <p class="text-xs text-gray-400">첫 번째 댓글을 남겨보세요!</p>
-        </div>
-      </div>
-
-      <!-- Footer: Actions & Input -->
-      <div class="border-t border-gray-200 bg-white">
-        <div class="p-4 flex items-center gap-2">
-          <button
-            @click="handleLike"
-            :class="[
-              'flex items-center gap-1.5 border-[2px] border-[#2C2C2C] rounded-full font-black text-xs transition-all uppercase',
-              layout === 'horizontal' ? 'px-3 py-1.5' : 'px-4 py-2.5',
-              isLiked
-                ? 'bg-[#FF6B9D] text-white shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-                : 'bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
-            ]"
-          >
-            <Heart :class="[layout === 'horizontal' ? 'w-3.5 h-3.5' : 'w-4 h-4', isLiked ? 'fill-current' : '']" stroke-width="2.5" />
-            <span>{{ currentLikes }}</span>
-          </button>
-
-          <button
-            @click="handleScrap"
-            :disabled="isScrapping"
-            :class="[
-              'flex items-center justify-center border-[2px] border-[#2C2C2C] rounded-full transition-all focus:outline-none',
-              layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10',
-              isBookmarked
-                ? 'bg-[#98D8C8] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-                : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
-              isScrapping && 'opacity-50 cursor-not-allowed',
-            ]"
-          >
-            <Bookmark
-              :class="[layout === 'horizontal' ? 'w-4 h-4' : 'w-5 h-5', isBookmarked ? 'text-[#2C2C2C] fill-[#2C2C2C]' : 'text-[#2C2C2C]']"
-              stroke-width="2.5"
-            />
-          </button>
-
-          <button
-            @click="handleShare"
-            :class="[
-              'flex items-center justify-center border-[2px] border-[#2C2C2C] rounded-full bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all focus:outline-none',
-              layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10'
-            ]"
-          >
-            <Share2
-              :class="[layout === 'horizontal' ? 'w-4 h-4' : 'w-5 h-5', 'text-[#2C2C2C]']"
-              stroke-width="2.5"
-            />
-          </button>
-        </div>
-
-        <div class="p-4 pt-0">
-          <form @submit.prevent="handleCommentSubmit" class="flex items-center gap-2.5">
-            <div
-              :class="[
-                'border-[2px] border-[#2C2C2C] rounded-full overflow-hidden flex-shrink-0 shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
-                layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10'
-              ]"
-            >
-               <img
-                v-if="authStore.isLoggedIn && authStore.user?.profileImageUrl"
-                :src="authStore.user.profileImageUrl"
-                alt="My Profile"
-                class="w-full h-full object-cover"
-              />
-              <img
-                v-else
-                src="/default-profile.svg"
-                alt="Default Profile"
-                class="w-full h-full object-cover"
-              />
-            </div>
-            <div class="relative flex-1">
-              <input
-                v-model="newComment"
-                :disabled="!authStore.isLoggedIn"
-                type="text"
-                :placeholder="
-                  authStore.isLoggedIn ? '댓글을 입력하세요...' : '로그인 후 댓글을 남길 수 있습니다.'
-                "
+     ]"
+    >
+      <TripLogComments 
+        :comments="logDetail.comments"
+        :current-user-nickname="authStore.user?.nickname"
+        :current-user-profile-image="authStore.user?.profileImageUrl"
+        :is-logged-in="authStore.isLoggedIn"
+        @post-comment="handlePostComment"
+        @update-comment="handleUpdateComment"
+        @delete-comment="handleDeleteComment"
+        @login-required="emit('login-required')"
+        @navigate-user="navigateToUserLog"
+        :layout="layout"
+        class="flex-1 min-h-0"
+      >
+        <template #footer-actions>
+           <div class="p-4 py-3 flex items-center gap-2">
+              <!-- Like Button -->
+              <button 
+                @click="handleLike" 
                 :class="[
-                  'w-full border-[2px] border-[#2C2C2C] rounded-lg font-medium bg-white focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(107,143,212,0.3)] transition-all placeholder:text-gray-400',
-                  layout === 'horizontal' ? 'px-3 py-2 text-xs' : 'px-4 py-3 text-sm',
-                  !authStore.isLoggedIn ? 'bg-gray-100' : '',
+                  'flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-[#2C2C2C] rounded-full transition-all group',
+                  isLiked ? 'bg-[#FF6B9D] text-white shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]' : 'bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
                 ]"
-                @keydown.enter.prevent="handleKeydownSubmit"
-              />
-              <div
-                v-if="!authStore.isLoggedIn"
-                @click="emit('login-required')"
-                class="absolute inset-0 cursor-pointer"
-              ></div>
-            </div>
-            <button
-              type="submit"
-              :disabled="!authStore.isLoggedIn"
-              :class="[
-                'border-[2px] border-[#2C2C2C] rounded-lg font-black bg-[#F9CA6B] text-[#2C2C2C] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,0.15)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed',
-                layout === 'horizontal' ? 'px-3 py-2 text-[10px]' : 'px-5 py-3 text-xs'
-              ]"
-            >
-              작성
-            </button>
-          </form>
-        </div>
-      </div>
+              >
+                <Heart 
+                  :class="['w-4 h-4 transition-all', isLiked ? 'fill-white text-white' : 'text-[#2C2C2C]']" 
+                  stroke-width="2.5" 
+                />
+                <span 
+                  class="text-xs font-black"
+                  :class="isLiked ? 'text-white' : 'text-[#2C2C2C]'"
+                >
+                  {{ currentLikes }}
+                </span>
+              </button>
+              
+              <!-- Scrap Button -->
+              <button 
+                @click="handleScrap" 
+                :class="[
+                  'flex items-center justify-center p-1.5 border-[2px] border-[#2C2C2C] rounded-full transition-all group',
+                  isBookmarked ? 'bg-[#FFD60A] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]' : 'bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
+                ]"
+              >
+                <Bookmark 
+                  :class="['w-4 h-4 transition-all', isBookmarked ? 'fill-white text-white' : 'text-[#2C2C2C]']" 
+                  stroke-width="2.5" 
+                />
+              </button>
+
+               <!-- Share Button -->
+               <button 
+                @click="handleShare" 
+                class="flex items-center justify-center p-1.5 border-[2px] border-[#2C2C2C] rounded-full bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all group"
+              >
+                 <Share2 class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+               </button>
+           </div>
+        </template>
+      </TripLogComments>
+
+       <!-- Footer Actions (Like, Scrap, Share) - Re-added here if TripLogComments is primarily for list+input but Like is distinct -->
+       <!-- Wait, I moved Like/Scrap into Footer in previous version.
+            TripLogComments handles comments list and input.
+            But Like/Scrap logic was separate.
+            If I want to reuse TripLogComments purely for comments, I should keep Like/Scrap here OR move them to TripLogComments.
+            The user request said "좋아요 댓글 버튼은 처음엔 안 보였다가...". This implies View mode manages Like button visibility.
+            BUT Modal mode needs Like button visible as footer.
+            
+            If I put Like button in TripLogComments, it will show in Drawer (as Header or Footer?).
+            TripLogComments design just has list and input.
+            
+            In MODAL mode: We want Like button fixed at bottom or top of footer?
+            The previous code had Like/Scrap/Share in a Footer div ABOVE the Input form.
+            TripLogComments has Input form at bottom.
+            I should probably inject the Like/Scrap buttons via slot or keep them outside TripLogComments if layouts differ significantly.
+            
+            However, for the Modal, the layout is:
+            [Comments List]
+            [Like/Scrap Row]
+            [Input Form]
+            
+            TripLogComments currently implements:
+            [Comments List]
+            [Input Form] -- Wait, I missed the Like/Scrap row in TripLogComments in step 997.
+            
+            Let's re-read TripLogComments created in 997.
+            It has:
+            1. Comments List
+            2. Input Section
+            
+            It MISSES the Like/Scrap/Share row that was present in `TripLogContent`.
+            
+            So, `TripLogContent` (in Modal) needs to render Like/Scrap/Share row.
+            Where? Between List and Input?
+            `TripLogComments` doesn't support slot between List and Input easily unless I modify it.
+            
+            Alternatively, I can pass `showFooterActions` prop to `TripLogComments` and implement them there.
+            But `TripLogComments` is reused in Drawer where we might NOT want Like button inside the drawer (since floating bar has it).
+            
+            Actually, the Drawer is for "Seeing comments". It probably should just be comments.
+            The Like button is on the Floating Bar.
+            So `TripLogComments` handles List + Input is correct for Drawer.
+            
+            For Modal (TripLogContent):
+            It needs Like/Scrap buttons.
+            I can put them *above* `TripLogComments`? No, they were *below* list, above input.
+            
+            I will modify `TripLogComments` to check if I can insert them.
+            OR I can leave `TripLogComments` as is, and `TripLogContent` renders:
+            [Comments List (via TripLogComments - List Only?)]
+            
+            Refactoring strategy adjust:
+            `TripLogContent` needs to maintain Modal appearance.
+            Modal appearance: List -> Like Row -> Input.
+            
+            If I delegate everything to `TripLogComments`, it forces Drawer to have same layout?
+            Drawer usually: List -> Input. (Like is outside).
+            So `TripLogComments` matches Drawer.
+            
+            For Modal:
+            We want Like Row.
+            I can add a Slot to `TripLogComments` named `actions` just before the Input form.
+            Then `TripLogContent` provides the Like/Scrap buttons into that slot.
+            
+            Let's do that. I'll utilize `TripLogComments` with a slot.
+            Wait, I already wrote `TripLogComments` in step 997 without slot.
+            I should update `TripLogComments` to add `<slot name="actions" />` before `<form>`.
+            
+      -->
     </div>
     
+     <!-- If hideComments is true (Full Page View), we might still want the Like/Scrap buttons NOT to be here because they are in Floating Bar.
+          So `TripLogContent` logic removes the right column entirely if `hideComments` is true.
+          This matches requirements.
+          
+          Issues:
+          1. Modal loses Like/Scrap buttons because they were removed from `TripLogContent` template in this proposed file and not added to `TripLogComments`.
+          2. `TripLogComments` needs to support the Like/Scrap row for Modal usage.
+      -->
+
      <Transition
       enter-active-class="transition-all duration-300 ease-out"
       leave-active-class="transition-all duration-200 ease-in"
@@ -349,7 +312,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watchEffect, onMounted, onUnmounted } from 'vue'
 import {
   Heart,
   Bookmark,
@@ -360,15 +323,15 @@ import {
   Share2,
   Edit,
   Trash2,
-  MessageCircle,
 } from 'lucide-vue-next'
 import AlertDialog from '@/components/common/AlertDialog.vue'
+import TripLogComments from './TripLogComments.vue'
 import { format, parseISO } from 'date-fns'
 import type { TripLogDetail } from '@/types/trip/trip.model'
 import type { TripDetailResponseDto } from '@/apis/trip/types'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { likeTripLog, unlikeTripLog, postTripLogComment, getTripLogDetail, getTripLogLikeStatus, updateTripLogComment, deleteTripLogComment } from '@/apis/trip-log/index'
-// import { requestScrapTrip } from '@/apis/trip/index'
+import { likeTripLog, unlikeTripLog, postTripLogComment, updateTripLogComment, deleteTripLogComment } from '@/apis/trip-log/index'
 
 const props = withDefaults(defineProps<{
   logDetail: TripLogDetail
@@ -376,20 +339,24 @@ const props = withDefaults(defineProps<{
   initialLiked: boolean
   showHeader?: boolean
   layout?: 'vertical' | 'horizontal'
+  hideTitle?: boolean
+  hideComments?: boolean
 }>(), {
   showHeader: true,
-  layout: 'vertical'
+  layout: 'vertical',
+  hideTitle: false,
+  hideComments: false
 })
 
 const emit = defineEmits(['update-like', 'place-click', 'login-required', 'refresh-comments', 'edit', 'delete'])
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const showDropdown = ref(false)
 const showToast = ref(false)
 const activeDay = ref(1)
-const newComment = ref('')
-const isBookmarked = ref(false) // Local state for bookmark (Mock)
+const isBookmarked = ref(false) 
 const isLiked = ref(props.initialLiked)
 const currentLikes = ref(props.logDetail.likeCount)
 
@@ -428,19 +395,12 @@ const showAlert = (title: string, message: string) => {
   }
 }
 
-const activeCommentDropdownId = ref<number | null>(null)
-
-const editingCommentId = ref<number | null>(null)
-const editingContent = ref('')
-const editInputRef = ref<HTMLInputElement | null>(null)
-
-// Update local state when props change
 watchEffect(() => {
     isLiked.value = props.initialLiked
     currentLikes.value = props.logDetail.likeCount
 })
 
-const isAuthor = computed(() => props.logDetail.authorNickname === authStore.user?.nickname) // Adjust as needed
+const isAuthor = computed(() => props.logDetail.authorNickname === authStore.user?.nickname)
 
 const formattedDate = computed(() => {
   if (!props.logDetail.createdAt) return ''
@@ -509,14 +469,6 @@ const handleScrap = async () => {
 
   try {
     isScrapping.value = true
-    // const response = await requestScrapTrip(props.logDetail.logId)
-    // if (response.tripId) {
-    //   isBookmarked.value = true
-    //   showToast.value = true
-    //   setTimeout(() => {
-    //     showToast.value = false
-    //   }, 2500)
-    // }
     alert('아직 준비 중인 기능입니다!')
   } catch (err) {
     console.error('스크랩 실패:', err)
@@ -526,15 +478,9 @@ const handleScrap = async () => {
   }
 }
 
-const handleCommentSubmit = async () => {
-  if (!authStore.isLoggedIn) {
-     emit('login-required')
-    return
-  }
-  if (!newComment.value.trim()) return
+const handlePostComment = async (content: string) => {
   try {
-    await postTripLogComment(props.logDetail.logId, { content: newComment.value })
-    newComment.value = ''
+    await postTripLogComment(props.logDetail.logId, { content })
     emit('refresh-comments')
   } catch (error) {
     console.error('Failed to post comment:', error)
@@ -542,36 +488,9 @@ const handleCommentSubmit = async () => {
   }
 }
 
-const startEditComment = async (comment: any) => {
-  editingCommentId.value = comment.commentId
-  editingContent.value = comment.content
-  await nextTick()
-  if (editInputRef.value) {
-    editInputRef.value.focus()
-  }
-}
-
-const handleEditKeydown = (e: KeyboardEvent, commentId: number) => {
-  if (e.isComposing) return
-  handleUpdateComment(commentId)
-}
-
-const handleKeydownSubmit = (e: KeyboardEvent) => {
-  if (e.isComposing) return
-  handleCommentSubmit()
-}
-
-const cancelEditComment = () => {
-  editingCommentId.value = null
-  editingContent.value = ''
-}
-
-const handleUpdateComment = async (commentId: number) => {
-  if (!editingContent.value.trim()) return
+const handleUpdateComment = async (commentId: number, content: string) => {
   try {
-    await updateTripLogComment(commentId, { content: editingContent.value })
-    editingCommentId.value = null
-    editingContent.value = ''
+    await updateTripLogComment(commentId, { content })
     emit('refresh-comments')
   } catch (error) {
     console.error('Failed to update comment:', error)
@@ -614,72 +533,29 @@ const handleDelete = () => {
 const colors = ['#FFD60A', '#FF6B9D', '#98D8C8', '#B4E4FF', '#E88555']
 const getBadgeColor = (idx: number) => colors[idx % colors.length]
 
-const formatCommentDate = (dateString: string) => {
-  const date = parseISO(dateString)
-  const now = new Date()
-  const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000)
-  if (diffSeconds < 60) return `${diffSeconds}초 전`
-  const diffMinutes = Math.round(diffSeconds / 60)
-  if (diffMinutes < 60) return `${diffMinutes}분 전`
-  const diffHours = Math.round(diffMinutes / 60)
-  if (diffHours < 24) return `${diffHours}시간 전`
-  return format(date, 'yyyy.MM.dd')
-}
-
 const dropdownContainer = ref<HTMLElement | null>(null)
 
 const handleClickOutside = (e: MouseEvent) => {
-  // Main dropdown
   if (showDropdown.value && dropdownContainer.value && !dropdownContainer.value.contains(e.target as Node)) {
     showDropdown.value = false
-  }
-  
-  // Comment dropdowns
-  if (activeCommentDropdownId.value !== null) {
-    const target = e.target as HTMLElement
-    const trigger = target.closest(`[data-comment-dropdown-trigger="${activeCommentDropdownId.value}"]`)
-    const menu = target.closest(`[data-comment-dropdown-menu="${activeCommentDropdownId.value}"]`)
-    
-    if (!trigger && !menu) {
-      activeCommentDropdownId.value = null
-    }
-  }
-}
-
-const toggleCommentDropdown = (commentId: number) => {
-  if (activeCommentDropdownId.value === commentId) {
-    activeCommentDropdownId.value = null
-  } else {
-    activeCommentDropdownId.value = commentId
-  }
-}
-
-const handleEditClick = (comment: any) => {
-  activeCommentDropdownId.value = null
-  startEditComment(comment)
-}
-
-const handleDeleteClick = (commentId: number) => {
-  activeCommentDropdownId.value = null
-  handleDeleteComment(commentId)
-}
-
-const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') {
-    if (showDropdown.value) showDropdown.value = false
-    if (activeCommentDropdownId.value !== null) activeCommentDropdownId.value = null
   }
 }
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
-  document.removeEventListener('keydown', handleKeydown)
 })
+
+const navigateToUserLog = (userId: number) => {
+  if (userId) {
+    router.push({ name: 'user-log', params: { userId } })
+  } else {
+    console.warn('작성자 ID가 없습니다. API 응답을 확인해주세요.')
+  }
+}
 </script>
 
 <style scoped>

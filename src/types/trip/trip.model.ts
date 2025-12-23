@@ -1,7 +1,7 @@
 import type { Place } from '@/types/trip/place.model'
 import type { TripLogCommentResponse } from '@/apis/trip-log/types'
 import type { TripResponseDto } from '@/apis/trip/types'
-import type { TripVisibility } from '@/types/trip/trip.model'
+
 
 /**
  * 여행 가시성 상태
@@ -24,27 +24,28 @@ export interface TripPlanItem {
  */
 
 export interface TripLogImage {
-    imageRefKey: string
-    imageUrl: string
-    orderIndex: number
+  imageRefKey: string
+  imageUrl: string
+  orderIndex: number
 }
 
 
 export interface TripLogDetail {
-logId: number
-title: string
-content: string
-locationSummary: string
-likeCount: number
-commentCount: number
-createdAt: string
-authorNickname: string
-authorImageUrl: string
-tripId: number
-tripTitle: string
-images: TripLogImage[]
-comments: TripLogCommentResponse[]
-visibility: TripVisibility
+  logId: number
+  title: string
+  content: string
+  locationSummary: string
+  likeCount: number
+  commentCount: number
+  createdAt: string
+  authorNickname: string
+  authorImageUrl: string
+  tripId: number
+  tripTitle: string
+  images: TripLogImage[]
+  comments: TripLogCommentResponse[]
+  visibility: TripVisibility
+  authorId: number
 }
 
 export interface TripDiaryView {
