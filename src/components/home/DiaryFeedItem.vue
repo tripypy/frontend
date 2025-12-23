@@ -26,7 +26,7 @@
       class="bg-white rounded-xl border-[2px] border-[#2C2C2C] p-6 shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] transition-all"
     >
       <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+        <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" @click="navigateToUserLog">
           <div
             class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-[2px] border-[#2C2C2C] bg-gray-100"
           >
@@ -209,6 +209,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Heart,
   MessageCircle,
@@ -229,6 +230,13 @@ interface CourseItem {
 }
 
 const props = defineProps<TripLogFeedItemDto>();
+const router = useRouter()
+
+const navigateToUserLog = () => {
+  if (props.authorId) {
+    router.push({ name: 'user-log', params: { userId: props.authorId } })
+  }
+}
 // State
 const isLiked = ref(props.liked)
 const isBookmarked = ref(false)
