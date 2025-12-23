@@ -265,17 +265,15 @@ const handleOpenModal = (tripId: number) => {
 }
 
 const fetchTripDetailAndOpen = async (tripId: number) => {
-    console.log('TripView: fetching detail for', tripId)
     try {
         const detail = await getTripDetail(tripId)
         selectedTrip.value = {
             ...detail,
-             description:
+            description:
                 detail.tripItems && detail.tripItems.length > 0
                 ? detail.tripItems.map((item : TripItemResponseDto) => item.spot.name).join(' → ')
                 : '장소 없음',
         }
-        console.log('TripView: selectedTrip set', selectedTrip.value)
 
     } catch (error) {
         console.error(`여행 상세 조회 실패 (ID: ${tripId}):`, error)
@@ -292,7 +290,6 @@ const handleCloseModal = () => {
 }
 
 watch(() => route.query.tripId, async (newTripId) => {
-    console.log('TripView: watcher triggered with', newTripId)
     if (newTripId) {
         await fetchTripDetailAndOpen(Number(newTripId))
     } else {

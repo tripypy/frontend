@@ -271,7 +271,6 @@ const handleOpenTripLog = (logId: number) => {
 
 // Watch URL for modal state
 watch(() => route.query.logId, (newLogId) => {
-  console.log('HomeView: route.query.logId changed:', newLogId)
   if (newLogId) {
     selectedLogId.value = Number(newLogId)
     // authorId is not in URL, but if opening from feed, handleOpenLog sets it. 
@@ -284,11 +283,9 @@ watch(() => route.query.logId, (newLogId) => {
 }, { immediate: true })
 
 const handleOpenLogFromFeed = (payload: { logId: number, authorId: number, liked: boolean }) => {
-  console.log('HomeView: handleOpenLogFromFeed called with', payload)
   selectedAuthorId.value = payload.authorId
   selectedLiked.value = payload.liked
   router.push({ query: { ...route.query, logId: payload.logId } })
-    .then(() => console.log('HomeView: router.push success'))
     .catch(err => {
       console.error('HomeView: router.push failed:', err)
     })
