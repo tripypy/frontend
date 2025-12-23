@@ -46,7 +46,7 @@
 
       <!-- Log Header -->
       <div v-if="activeTab === 'log' && tripLog" class="px-6 py-5 flex-shrink-0 rounded-t-xl z-20 border-[3px] border-[#2C2C2C] border-b-0 bg-white bg-gradient-to-br from-[#FFD60A]/10 to-white flex items-center justify-between">
-        <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" @click="navigateToUserLog(tripLog.authorId)">
+        <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity w-fit" @click.stop="navigateToUserLog(tripLog.authorId)">
           <div class="w-12 h-12 border-[2px] border-[#2C2C2C] rounded-full overflow-hidden shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]">
             <img :src="tripLog.authorImageUrl" :alt="tripLog.authorNickname" class="w-full h-full object-cover" @error="handleImageError($event, 'profile')" />
           </div>
@@ -327,7 +327,10 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh', 'update'])
+
+
 const router = useRouter()
+const authStore = useAuthStore()
 
 // 1. 상태 동기화 (드롭다운 즉시 반응용)
 const localTrip = reactive({ ...props.trip })
@@ -629,9 +632,13 @@ const handleBackdropClick = (e: MouseEvent) => {
 }
 
 const navigateToUserLog = (userId: number) => {
-  if (userId) {
-    router.push({ name: 'user-log', params: { userId } })
+  const targetId = userId || (props.trip.isOwner && authStore.user?.id);
+  
+  if (targetId) {
+    router.push({ name: 'user-log', params: { userId: targetId } })
     emit('close')
+  } else {
+    console.warn('Navigation failed: Missing author ID')
   }
 }
 </script>
