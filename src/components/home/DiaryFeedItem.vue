@@ -49,22 +49,7 @@
           >
             <Share2 class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
           </button>
-          <button
-            @click="handleScrap"
-            :disabled="isScrapping"
-            :class="[
-              'w-8 h-8 flex items-center justify-center border-[2px] border-[#2C2C2C] rounded-lg transition-all focus:outline-none',
-              isBookmarked
-                ? 'bg-[#98D8C8] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-                : 'bg-white hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]',
-              isScrapping && 'opacity-50 cursor-not-allowed',
-            ]"
-          >
-            <Bookmark
-              :class="['w-4 h-4', isBookmarked ? 'text-[#2C2C2C] fill-[#2C2C2C]' : 'text-[#2C2C2C]']"
-              stroke-width="2.5"
-            />
-          </button>
+
         </div>
       </div>
 
@@ -194,7 +179,6 @@ import { useRouter } from 'vue-router'
 import {
   Heart,
   MessageCircle,
-  Bookmark,
   Share2,
   ChevronRight,
   ChevronLeft,
@@ -202,7 +186,6 @@ import {
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { likeTripLog, unlikeTripLog } from '@/apis/trip-log/index'
-import { requestScrapTrip } from '@/apis/trip/index'
 
 interface CourseItem {
   number: number
@@ -219,42 +202,31 @@ const navigateToUserLog = () => {
 }
 // State
 const isLiked = ref(props.liked)
-const isBookmarked = ref(false)
 const currentLikes = ref(props.likeCount)
 const currentCommentCount = ref(props.commentCount)
 const currentImageIndex = ref(0)
 const showToast = ref(false)
-const isScrapping = ref(false)
 const toastMessage = ref('')
+
+// Watch props for external updates (e.g. from modal sync)
+import { watch } from 'vue'
+watch(() => props.liked, (newVal) => isLiked.value = newVal)
+watch(() => props.likeCount, (newVal) => currentLikes.value = newVal)
+watch(() => props.commentCount, (newVal) => currentCommentCount.value = newVal)
 
 // Modal States
 const selectedPlace = ref<CourseItem | null>(null)
 
 const emit = defineEmits<{
-  (e: 'open-log', payload: { logId: number; authorId: number }): void
+  (e: 'open-log', payload: { logId: number; authorId: number; liked: boolean }): void
 }>()
 
 const handleOpenLog = () => {
-    emit('open-log', { logId: props.logId, authorId: props.authorId })
+    emit('open-log', { logId: props.logId, authorId: props.authorId, liked: isLiked.value })
 }
 
 // Scrap Logic
-const handleScrap = async () => {
-  if (isScrapping.value || isBookmarked.value) return
 
-  try {
-    isScrapping.value = true
-    toastMessage.value = '아직 준비 중인 기능입니다!'
-    showToast.value = true
-    setTimeout(() => {
-      showToast.value = false
-    }, 2000)
-  } catch (err) {
-    console.error('스크랩 실패:', err)
-  } finally {
-    isScrapping.value = false
-  }
-}
 
 
 // Images Logic

@@ -190,6 +190,7 @@
         v-if="selectedLogId"
         :log-id="selectedLogId"
         :author-id="selectedAuthorId"
+        :initial-liked="selectedLiked"
         @close="handleLogClose"
         @update="handleLogUpdate"
         @edit="handleEditFromModal"
@@ -260,6 +261,7 @@ const selectedPlaceForDetail = ref<any>(null) // For PlaceDetailModal
 const placeDetailModalRef = ref<any>(null)
 const selectedLogId = ref<number | null>(null)
 const selectedAuthorId = ref<number | undefined>(undefined)
+const selectedLiked = ref<boolean>(false)
 const hasLogUpdates = ref(false)
 const selectedTrip = ref<any>(null)
 
@@ -277,12 +279,14 @@ watch(() => route.query.logId, (newLogId) => {
   } else {
     selectedLogId.value = null
     selectedAuthorId.value = undefined
+    selectedLiked.value = false
   }
 }, { immediate: true })
 
-const handleOpenLogFromFeed = (payload: { logId: number, authorId: number }) => {
+const handleOpenLogFromFeed = (payload: { logId: number, authorId: number, liked: boolean }) => {
   console.log('HomeView: handleOpenLogFromFeed called with', payload)
   selectedAuthorId.value = payload.authorId
+  selectedLiked.value = payload.liked
   router.push({ query: { ...route.query, logId: payload.logId } })
     .then(() => console.log('HomeView: router.push success'))
     .catch(err => {
@@ -290,10 +294,23 @@ const handleOpenLogFromFeed = (payload: { logId: number, authorId: number }) => 
     })
 }
 
-const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
-    hasLogUpdates.value = true
+const handleLogUpdate = (payload: { type?: string; logId: number; likeCount: number; liked: boolean; commentCount?: number }) => {
+    // Update Feed Item State
+    const feedItem = diaryEntries.value.find(item => item.logId === payload.logId)
+    if (feedItem) {
+        feedItem.likeCount = payload.likeCount
+        feedItem.liked = payload.liked
+        if (typeof payload.commentCount === 'number') {
+            feedItem.commentCount = payload.commentCount
+        }
+    }
+
     if (placeDetailModalRef.value) {
-        placeDetailModalRef.value.updateTripLogState(payload.logId, { likeCount: payload.likeCount, liked: payload.liked })
+        placeDetailModalRef.value.updateTripLogState(payload.logId, { 
+            likeCount: payload.likeCount, 
+            liked: payload.liked,
+            commentCount: payload.commentCount 
+        })
     }
 }
 
