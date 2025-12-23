@@ -88,6 +88,13 @@
           >
             <Save class="w-4 h-4" stroke-width="3" /> Save
           </button>
+          <button
+              @click="$emit('delete')"
+              class="w-10 h-10 bg-white border-[2px] border-[#2C2C2C] rounded-lg flex items-center justify-center transition-all flex-shrink-0 shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+              title="삭제"
+            >
+              <Trash2 class="w-5 h-5" stroke-width="2.5" />
+            </button>
         </template>
         <template v-else>
           <div class="flex items-center gap-2">
