@@ -16,10 +16,12 @@ const props = defineProps({
   }
 });
 
+console.log(props.completedTrips);
+
 const colors = [
   '#E6194B', '#3CB44B', '#FFE119', '#4363D8', '#F58231',
   '#911EB4', '#46F0F0', '#F032E6', '#BCF60C', '#FABEBE',
-].reverse(); // Use reversed colors to have more distinct ones first for recent trips
+].reverse();
 
 const currentMonth = ref(new Date());
 const dateColorMap = ref<Map<string, string>>(new Map());
@@ -50,7 +52,42 @@ const daysInMonth = computed(() => {
   return days;
 });
 
-// Date 객체를 'YYYY-MM-DD' 문자열로 변환 (로컬 시간 기준)
+// 1. 날짜 문자열(YYYY-MM-DD, YYYY.MM.DD 등)을 표준 YYYY-MM-DD 형식으로 통일
+const normalizeDate = (dateStr: string): string => {
+  return dateStr.replace(/\./g, '-').replace(/\//g, '-');
+};
+
+// 2. 시작일과 종료일 사이의 모든 날짜(YYYY-MM-DD)를 배열로 반환하는 튼튼한 함수
+const getDatesInRange = (startDateStr: string, endDateStr: string): string[] => {
+  const dates: string[] = [];
+  
+  // 문자열을 숫자로 분리하여 순수 로컬 날짜 생성 (타임존 간섭 방지)
+  const [sYear, sMonth, sDay] = normalizeDate(startDateStr).split('-').map(Number);
+  const [eYear, eMonth, eDay] = normalizeDate(endDateStr).split('-').map(Number);
+
+  // 월은 0부터 시작하므로 -1
+  const current = new Date(sYear!, sMonth! - 1, sDay!);
+  const end = new Date(eYear!, eMonth! - 1, eDay!);
+
+  // 날짜 유효성 검사
+  if (isNaN(current.getTime()) || isNaN(end.getTime())) return [];
+
+  // current가 end보다 작거나 같을 때까지 반복
+  while (current <= end) {
+    // 현재 날짜를 YYYY-MM-DD 포맷으로 저장
+    const y = current.getFullYear();
+    const m = (current.getMonth() + 1).toString().padStart(2, '0');
+    const d = current.getDate().toString().padStart(2, '0');
+    dates.push(`${y}-${m}-${d}`);
+
+    // 하루 더하기
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
+};
+
+// 3. 캘린더 표시용 Date -> String 변환기
 const toYYYYMMDD = (date: Date): string => {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -58,14 +95,16 @@ const toYYYYMMDD = (date: Date): string => {
   return `${year}-${month}-${day}`;
 }
 
+// 4. 데이터 감지 및 맵핑 로직
 watchEffect(() => {
   const newDateColorMap = new Map<string, string>();
   const newTripsForLegend: LegendTrip[] = [];
 
+  // 날짜순 정렬
   const sortedTrips = [...props.completedTrips].sort((a, b) => {
-    const dateA = new Date(a.endDate || a.startDate || 0).getTime();
-    const dateB = new Date(b.endDate || b.startDate || 0).getTime();
-    return dateA - dateB; // 오래된 여행부터 순회하여 최신 여행 색상으로 덮어쓰게 함
+    const dateA = new Date(a.startDate || 0).getTime();
+    const dateB = new Date(b.startDate || 0).getTime();
+    return dateA - dateB;
   });
 
   sortedTrips.forEach((trip, index) => {
@@ -78,19 +117,23 @@ watchEffect(() => {
       color: tripColor,
     });
 
-    if (trip.startDate && trip.endDate) {
-      const currentDate = new Date(trip.startDate + 'T00:00:00');
-      const endDate = new Date(trip.endDate + 'T00:00:00');
-
-      while (currentDate <= endDate) {
-        newDateColorMap.set(toYYYYMMDD(currentDate), tripColor!);
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
+    // 시작일이 있으면 로직 수행
+    if (trip.startDate) {
+      // 종료일이 없으면 시작일과 동일하게 처리 (당일치기)
+      const endDate = trip.endDate ? trip.endDate : trip.startDate;
+      
+      // 기간 내의 모든 날짜 문자열 가져오기
+      const dateList = getDatesInRange(trip.startDate, endDate);
+      
+      // 맵에 색상 등록
+      dateList.forEach(dateStr => {
+        newDateColorMap.set(dateStr, tripColor!);
+      });
     }
   });
 
   dateColorMap.value = newDateColorMap;
-  tripsForLegend.value = newTripsForLegend.reverse(); // 범례는 최신순으로 표시
+  tripsForLegend.value = newTripsForLegend.reverse();
 });
 
 function getColorForDate(date: Date | null): string | undefined {
@@ -114,11 +157,11 @@ function nextMonth() {
     </div>
 
     <div class="flex items-center justify-between mb-4 px-2">
-      <button @click="prevMonth" class="p-1 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+      <button @click="prevMonth" class="p-1 rounded-full hover:bg-gray-100 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <span class="text-lg font-bold text-gray-800">{{ formattedMonth }}</span>
-      <button @click="nextMonth" class="p-1 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+      <button @click="nextMonth" class="p-1 rounded-full hover:bg-gray-100 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
       </button>
     </div>
