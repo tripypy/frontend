@@ -22,17 +22,11 @@
           </button>
 
           <button
-            @click.stop="isBookmarked = !isBookmarked"
-            :class="[
-              'w-7 h-7 border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none',
-              isBookmarked ? 'bg-[#2C2C2C]' : 'bg-white',
-            ]"
+            @click.stop="emit('copy', trip.id)"
+            class="w-7 h-7 border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none bg-white"
+            title="여행 복사"
           >
-            <Bookmark
-              class="w-3.5 h-3.5"
-              stroke-width="2.5"
-              :class="isBookmarked ? 'text-white fill-white' : 'text-[#2C2C2C]'"
-            />
+            <Copy class="w-3.5 h-3.5 text-[#2C2C2C]" stroke-width="2.5" />
           </button>
         </div>
       </div>
@@ -87,7 +81,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { Calendar, Bookmark, MapPin, Check } from 'lucide-vue-next'
+import { Calendar, MapPin, Check, Copy } from 'lucide-vue-next'
 import type { TripResponseDto } from '@/apis/trip/types'
 import { updateTrip } from '@/apis/trip/index'
 import { TripStatus } from '@/types/common'
@@ -104,9 +98,8 @@ const emit = defineEmits<{
   (e: 'openModal', id: number): void
   (e: 'navigate', page: string, id?: number): void
   (e: 'refresh'): void
+  (e: 'copy', id: number): void
 }>()
-
-const isBookmarked = ref(false)
 
 const statusColors: Record<TripStatus, string> = {
   COMPLETED: '#F9CA6B',
