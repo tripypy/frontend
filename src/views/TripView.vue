@@ -93,12 +93,22 @@
       @confirm="handleCopyConfirm"
     />
 
+    <AlertDialog
+      :show="infoAlert.visible"
+      :title="infoAlert.title"
+      :message="infoAlert.message"
+      :show-cancel-button="false"
+      confirm-button-text="확인"
+      @close="infoAlert.visible = false"
+      @confirm="infoAlert.visible = false"
+    />
+
     <ScrollToTop />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, reactive } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { useNavigate } from '@/composables/common/useNavagation'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
@@ -119,6 +129,19 @@ const route = useRoute()
 const activeTab = ref<TripStatus | 'all'>('all')
 const tripsList = ref<TripResponseDto[]>([])
 
+// 6. 알림 모달 상태 및 헬퍼
+const infoAlert = reactive({
+  visible: false,
+  title: '알림',
+  message: '',
+})
+
+const showAlert = (message: string, title = '알림') => {
+  infoAlert.message = message
+  infoAlert.title = title
+  infoAlert.visible = true
+}
+
 // 데이터 조회
 const fetchTrips = async () => {
   try {
@@ -126,7 +149,7 @@ const fetchTrips = async () => {
     tripsList.value = response
   } catch (error) {
     console.error('내 여행 목록 조회 실패:', error)
-    // alert('내 여행 목록 조회에 실패했습니다.') // 필요시 주석 해제
+     showAlert('내 여행 목록 조회에 실패했습니다.') // 필요시 주석 해제
   }
 }
 
@@ -141,7 +164,7 @@ const handleCreateNewTrip = async () => {
     handleNavigate('trip-edit', { id: newTrip.id })
   } catch (error) {
     console.error('여행 계획 생성 실패:', error)
-    alert('여행 계획 생성에 실패했습니다.')
+    showAlert('여행 계획 생성에 실패했습니다.')
   }
 }
 
@@ -221,7 +244,7 @@ const fetchTripDetailAndOpen = async (tripId: number) => {
 
     } catch (error) {
         console.error(`여행 상세 조회 실패 (ID: ${tripId}):`, error)
-        alert('여행 상세 정보를 불러오는데 실패했습니다.')
+        showAlert('여행 상세 정보를 불러오는데 실패했습니다.')
         selectedTrip.value = null
         router.replace({ query: { ...route.query, tripId: undefined } }) // Remove invalid ID
     }
@@ -276,10 +299,10 @@ const handleCopyConfirm = async () => {
     targetTripId.value = null
     // 성공 시 목록 새로고침
     await fetchTrips()
-    alert('여행이 복사되었습니다.')
+    showAlert('여행이 복사되었습니다.')
   } catch (error) {
     console.error('여행 복사 실패:', error)
-    alert('여행 복사에 실패했습니다.')
+    showAlert('여행 복사에 실패했습니다.')
   }
 }
 </script>
