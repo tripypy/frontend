@@ -7,7 +7,7 @@ export function toLogViewProfile(
     data: BaseUserProfileDto,
     isMyProfile: boolean,
     email?: string
-    ): LogViewProfile {
+): LogViewProfile {
     return {
         id: data.id,
         nickname: data.nickname,
@@ -20,23 +20,25 @@ export function toLogViewProfile(
         travelStyleSummary: data.travelStyleSummary,
         completedTrips: data.completedTripDetails,
         userPlans: data.tripOverviews.map(plan => ({
-          ...plan,
-          likes: 0,
-          comments: 0,
+            ...plan,
+            likes: 0,
+            comments: 0,
         })),
         // logs를 TripDiaryResponseDto 형태로 변환
         diaries: data.logs.map(log => ({
-          id: log.logId,
-          tripId: log.tripId,
-          title: log.title,
-          thumbnailUrl: log.thumbnailUrl,
-          visibility: 'PUBLIC',
-          spotPreviews: [],
-          tags: [],
-          startDate: null,
-          endDate: null,
-          likes: 0,
-          comments: 0,
+            id: log.logId,
+            tripId: log.tripId,
+            title: log.title,
+            thumbnailUrl: log.thumbnailUrl,
+            visibility: 'PUBLIC',
+            spotPreviews: [],
+            tags: [],
+            startDate: null,
+            endDate: null,
+            likes: log.likes || 0,
+            comments: log.comments || 0,
+            content: log.content,
+            createdAt: log.createdAt
         })),
     }
 }
@@ -55,8 +57,10 @@ export function normalizeDiary(diary: LogDiaryDto | UserLogSummaryDto): LogDiary
             tags: [],
             startDate: null,
             endDate: null,
-            likes: 0,
-            comments: 0
+            likes: diary.likes || 0,
+            comments: diary.comments || 0,
+            content: diary.content,
+            createdAt: diary.createdAt
         };
     }
     // 이미 TripDiaryResponseDto인 경우

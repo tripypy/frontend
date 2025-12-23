@@ -71,6 +71,10 @@ export interface UserLogSummaryDto {
     logId: number
     title: string
     thumbnailUrl: string | null
+    content?: string
+    createdAt?: string // 로그 작성일
+    likes?: number
+    comments?: number
 }
 
 export type UserProfileResponseDto = BaseUserProfileDto
@@ -78,18 +82,18 @@ export type UserProfileResponseDto = BaseUserProfileDto
 export type UserFriendsResponseDto = BaseUserProfileDto[]
 
 export interface UserMeResponseDto
-  extends BaseUserProfileDto {
-  email: string
+    extends BaseUserProfileDto {
+    email: string
 }
 
 export interface UserAIAnalysisResponseDto {
-  keywords : string[]
-  summary: string
-  scores: {
-    rest: number
-    exploration: number
-    activity: number
-    gourmet: number
-  }
+    keywords: string[]
+    summary: string
+    scores: {
+        rest: number
+        exploration: number
+        activity: number
+        gourmet: number
+    }
 }
 

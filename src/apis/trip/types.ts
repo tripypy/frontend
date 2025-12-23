@@ -125,6 +125,8 @@ export interface TripDiaryResponseDto {
   endDate: string | null;
   likes: number;
   comments: number;
+  content?: string;
+  createdAt?: string;
 }
 
 export interface LogDiaryDto extends TripDiaryResponseDto {

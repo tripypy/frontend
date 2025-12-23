@@ -97,6 +97,20 @@ const handleDiaryClick = async (tripId: number) => {
     isLoadingDetail.value = false
   }
 }
+
+// Helpers
+const stripHtml = (html?: string) => {
+  if (!html) return ''
+  const tmp = document.createElement('DIV')
+  tmp.innerHTML = html
+  return tmp.textContent || tmp.innerText || ''
+}
+
+const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '날짜 미정'
+    const date = new Date(dateStr)
+    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
+}
 </script>
 
 
@@ -176,16 +190,15 @@ const handleDiaryClick = async (tripId: number) => {
                 <div class="p-4 flex-1 flex flex-col">
                   <h3 class="font-black text-xl text-[#2C2C2C] mb-2 truncate">{{ card.title }}</h3>
                   <p class="text-sm text-gray-600 mb-3 line-clamp-2 h-10">
-                    {{
-                      card.spotPreviews && card.spotPreviews.length > 0
-                      ? card.spotPreviews.map(s => s.name).join(', ') : '아직 방문지가 없습니다.' }}</p>
+                    {{ card.content ? stripHtml(card.content) : '내용이 없습니다.' }}
+                  </p>
                   <div v-if="card.tags" class="flex flex-wrap gap-1 mb-3 h-5 overflow-hidden">
                     <span v-for="tag in card.tags" :key="tag"
                           class="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full"
                     >#{{ tag }}</span>
                   </div>
                   <div class="mt-auto text-xs text-gray-500 flex justify-between items-center">
-                    <span>{{ card.startDate && card.endDate ? `${card.startDate} ~ ${card.endDate}` : '날짜 미정' }}</span>
+                    <span>{{ formatDate(card.createdAt) }}</span>
                     <div class="flex items-center gap-2">
                       <span class="flex items-center text-gray-600"><Heart class="w-4 h-4 mr-1" />{{ card.likes || 0 }}</span>
                       <span class="flex items-center text-gray-600"><MessageCircle class="w-4 h-4 mr-1" />{{ card.comments || 0 }}</span>
