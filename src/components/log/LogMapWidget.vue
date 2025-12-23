@@ -161,6 +161,7 @@ const focusTripOnMap = (tripId: number) => {
         :level="mapLevel" :polylines="tripPaths"
         :markers="tripMarkers"
         :is-clickable="false"
+        :show-plan-line="false"
       />
     </div>
 
