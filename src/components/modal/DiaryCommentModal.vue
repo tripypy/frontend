@@ -34,9 +34,10 @@
     :trip="tripDetail"
     :initial-tab="'log'"
     :log-data="logDetail"
-    :initial-is-liked="isLiked"
+    :initial-is-liked="props.initialLiked"
     @close="emit('close')"
     @refresh="fetchLogDetail"
+    @update="emit('update', $event)"
   />
 </template>
 
@@ -50,6 +51,7 @@ import TripDetailModal from './TripDetailModal.vue'
 
 const props = defineProps<{
   logId: number
+  initialLiked?: boolean
 }>()
 
 const emit = defineEmits(['close', 'update'])

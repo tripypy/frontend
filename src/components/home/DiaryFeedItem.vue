@@ -188,7 +188,7 @@
              class="flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-[#2C2C2C] rounded-md font-black text-xs transition-all uppercase focus:outline-none bg-white text-[#2C2C2C] shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
           >
             <MessageCircle class="w-3.5 h-3.5" stroke-width="2.5" />
-            <span>Comment {{ props.commentCount }}</span>
+            <span>Comment {{ currentCommentCount }}</span>
           </button>
         </div>
       </div>
@@ -197,7 +197,9 @@
       <DiaryCommentModal
         v-if="showCommentModal"
         :log-id="props.logId"
+        :initial-liked="isLiked"
         @close="showCommentModal = false"
+        @update="handleModalUpdate"
       />
 
       <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
@@ -231,6 +233,7 @@ const props = defineProps<TripLogFeedItemDto>();
 const isLiked = ref(props.liked)
 const isBookmarked = ref(false)
 const currentLikes = ref(props.likeCount)
+const currentCommentCount = ref(props.commentCount)
 const isExpanded = ref(false)
 const currentImageIndex = ref(0)
 const showToast = ref(false)
@@ -308,6 +311,21 @@ const handleShare = async () => {
     }, 2500)
   } catch (err) {
     console.error('클립보드 복사 실패:', err)
+  }
+}
+
+
+
+const handleModalUpdate = (payload: any) => {
+  if (payload.type === 'like') {
+    isLiked.value = payload.liked
+    currentLikes.value = payload.likeCount
+  } else if (payload.type === 'sync') {
+    isLiked.value = payload.liked
+    currentLikes.value = payload.likeCount
+    if (typeof payload.commentCount === 'number') {
+      currentCommentCount.value = payload.commentCount
+    }
   }
 }
 

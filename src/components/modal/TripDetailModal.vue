@@ -327,7 +327,7 @@ const props = withDefaults(defineProps<{
   initialIsLiked: false
 })
 
-const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh'])
+const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh', 'update'])
 const router = useRouter()
 
 // 1. 상태 동기화 (드롭다운 즉시 반응용)
@@ -433,6 +433,15 @@ const fetchTripLog = async (tripId: number) => {
         else alert('로그를 불러오는 중 오류가 발생했습니다.')
     } finally {
         logLoading.value = false;
+        if(tripLog.value) {
+           emit('update', { 
+              type: 'sync', 
+              logId: tripLog.value.logId, 
+              likeCount: tripLog.value.likeCount, 
+              liked: isLiked.value,
+              commentCount: tripLog.value.commentCount 
+           })
+        }
     }
 }
 
@@ -440,6 +449,7 @@ const handleLogLikeUpdate = (payload: { logId: number; likeCount: number; liked:
     if(tripLog.value && tripLog.value.logId === payload.logId) {
         tripLog.value.likeCount = payload.likeCount
         isLiked.value = payload.liked
+        emit('update', { type: 'like', ...payload })
     }
 }
 
