@@ -93,7 +93,7 @@
       <div
         v-if="allImages.length > 0"
         class="mb-5 select-none cursor-pointer rounded-xl overflow-hidden border-[2px] border-[#2C2C2C] shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)]"
-        @click="showCommentModal = true"
+        @click="handleOpenLog"
       >
         <div v-if="allImages.length === 1" class="w-full">
           <img :src="allImages[0]" class="w-full h-auto max-h-[500px] object-cover" />
@@ -184,7 +184,7 @@
           </button>
 
           <button
-            @click="showCommentModal = true"
+            @click="handleOpenLog"
              class="flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-[#2C2C2C] rounded-md font-black text-xs transition-all uppercase focus:outline-none bg-white text-[#2C2C2C] shadow-[2px_2px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
           >
             <MessageCircle class="w-3.5 h-3.5" stroke-width="2.5" />
@@ -194,15 +194,6 @@
       </div>
     </div>
     <Teleport to="body">
-      <DiaryCommentModal
-        v-if="showCommentModal"
-        :log-id="props.logId"
-        :author-id="props.authorId"
-        :initial-liked="isLiked"
-        @close="showCommentModal = false"
-        @update="handleModalUpdate"
-      />
-
       <PlaceDetailModal v-if="selectedPlace" :place="selectedPlace" @close="selectedPlace = null" />
     </Teleport>
   </div>
@@ -219,7 +210,6 @@ import {
   ChevronRight,
   ChevronLeft,
 } from 'lucide-vue-next'
-import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
 import { likeTripLog, unlikeTripLog } from '@/apis/trip-log/index'
@@ -250,8 +240,15 @@ const isScrapping = ref(false)
 const toastMessage = ref('')
 
 // Modal States
-const showCommentModal = ref(false)
 const selectedPlace = ref<CourseItem | null>(null)
+
+const emit = defineEmits<{
+  (e: 'open-log', payload: { logId: number; authorId: number }): void
+}>()
+
+const handleOpenLog = () => {
+    emit('open-log', { logId: props.logId, authorId: props.authorId })
+}
 
 // Scrap Logic
 const handleScrap = async () => {

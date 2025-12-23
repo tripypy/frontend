@@ -307,7 +307,7 @@ import type { TripLogDetail } from '@/types/trip/trip.model'
 import { getTripLogDetail, deleteTripLog, getTripLogLikeStatus } from '@/apis/trip-log/index'
 import AlertDialog from '@/components/common/AlertDialog.vue'
 import { handleImageError } from '@/utils/imageHandler'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 interface DayPlanDisplay {
@@ -330,6 +330,7 @@ const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh', 'upda
 
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 // 1. 상태 동기화 (드롭다운 즉시 반응용)
@@ -340,7 +341,7 @@ watchEffect(() => {
 
 // 2. 탭 & 로그 상태
 // 2. 탭 & 로그 상태
-const activeTab = ref<'map' | 'log'>(props.initialTab)
+const activeTab = ref<'map' | 'log'>((route.query.tab as 'map' | 'log') || props.initialTab || 'map')
 const tripLog = ref<TripLogDetail | null>(props.logData || null)
 const isLoginAlertVisible = ref(false)
 
@@ -469,8 +470,18 @@ const handleLogPlaceClick = (placeId: number) => {
 
 // 탭 핸들러
 const handleTabClick = (tab: 'map' | 'log') => {
-    activeTab.value = tab;
+  activeTab.value = tab
+  router.replace({ query: { ...route.query, tab } })
 }
+
+// URL 변경 감지 (뒤로가기 등)
+watch(() => route.query.tab, (newTab) => {
+  if (newTab === 'map' || newTab === 'log') {
+    activeTab.value = newTab
+  } else {
+    activeTab.value = 'map'
+  }
+})
 
 // 탭 변경 감지 및 로그 데이터 로드
 watch(activeTab, (newTab) => {
@@ -636,7 +647,6 @@ const navigateToUserLog = (userId: number) => {
   
   if (targetId) {
     router.push({ name: 'user-log', params: { userId: targetId } })
-    emit('close')
   } else {
     console.warn('Navigation failed: Missing author ID')
   }
