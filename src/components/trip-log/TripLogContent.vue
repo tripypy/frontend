@@ -172,19 +172,7 @@
                 </span>
               </button>
               
-              <!-- Scrap Button -->
-              <button 
-                @click="handleScrap" 
-                :class="[
-                  'flex items-center justify-center p-1.5 border-[2px] border-[#2C2C2C] rounded-full transition-all group',
-                  isBookmarked ? 'bg-[#FFD60A] shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]' : 'bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)]'
-                ]"
-              >
-                <Bookmark 
-                  :class="['w-4 h-4 transition-all', isBookmarked ? 'fill-white text-white' : 'text-[#2C2C2C]']" 
-                  stroke-width="2.5" 
-                />
-              </button>
+
 
                <!-- Share Button -->
                <button 
@@ -314,15 +302,15 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect, onMounted, onUnmounted } from 'vue'
 import {
+  Share,
+  Share2,
+  Edit,
+  Trash2,
   Heart,
-  Bookmark,
   MapPin,
   Calendar,
   ChevronRight,
   MoreHorizontal,
-  Share2,
-  Edit,
-  Trash2,
 } from 'lucide-vue-next'
 import AlertDialog from '@/components/common/AlertDialog.vue'
 import TripLogComments from './TripLogComments.vue'
@@ -356,7 +344,6 @@ const router = useRouter()
 const showDropdown = ref(false)
 const showToast = ref(false)
 const activeDay = ref(1)
-const isBookmarked = ref(false) 
 const isLiked = ref(props.initialLiked)
 const currentLikes = ref(props.logDetail.likeCount)
 
@@ -458,25 +445,7 @@ const handleLike = async () => {
   }
 }
 
-const isScrapping = ref(false)
 
-const handleScrap = async () => {
-  if (isScrapping.value || isBookmarked.value) return
-  if (!authStore.isLoggedIn) {
-    emit('login-required')
-    return
-  }
-
-  try {
-    isScrapping.value = true
-    alert('아직 준비 중인 기능입니다!')
-  } catch (err) {
-    console.error('스크랩 실패:', err)
-    showAlert('오류', '스크랩에 실패했습니다.')
-  } finally {
-    isScrapping.value = false
-  }
-}
 
 const handlePostComment = async (content: string) => {
   try {

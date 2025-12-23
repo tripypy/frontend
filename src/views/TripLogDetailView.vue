@@ -90,13 +90,7 @@
                  <span>{{ currentLikes }}</span>
                </button>
 
-               <!-- Scrap Button -->
-               <button
-                 @click="handleScrap"
-                 class="flex items-center justify-center px-4 py-2 border-[2px] border-[#2C2C2C] rounded-full bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.1)] transition-all group"
-               >
-                 <Bookmark class="w-4 h-5 text-[#2C2C2C]" stroke-width="2.5" />
-               </button>
+
                
                <button 
                   @click="handleShare"
@@ -203,7 +197,7 @@ import AlertDialog from '@/components/common/AlertDialog.vue'
 import { useNavigate } from '@/composables/common/useNavagation'
 import { getTripLogDetail, getTripLogLikeStatus, likeTripLog, unlikeTripLog, postTripLogComment, updateTripLogComment, deleteTripLogComment } from '@/apis/trip-log/index'
 import { getTripDetail } from '@/apis/trip/index'
-import { Share2, Heart, MessageCircle, Bookmark } from 'lucide-vue-next'
+import { Share2, Heart, MessageCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import type { TripLogDetail } from '@/types/trip/trip.model'
 import type { TripDetailResponseDto } from '@/apis/trip/types'
@@ -385,9 +379,7 @@ const handleLoginConfirm = () => {
   router.push({ name: 'login' })
 }
 
-const handleScrap = () => {
-    alert('아직 준비 중인 기능입니다!')
-}
+
 
 const handleShare = () => {
     const url = window.location.href

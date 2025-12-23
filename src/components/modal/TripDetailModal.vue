@@ -175,15 +175,39 @@
             </div>
           </div>
 
-          <button
-            v-if="trip.isOwner"
-            @click="handleEditClick"
-            class="flex items-center gap-2 px-5 py-2.5 bg-[#9BCCC4] border-[2px] border-[#2C2C2C] rounded-xl font-black text-sm tracking-tight shadow-[3px_3px_0px_0px_rgba(44,44,44,1)] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all uppercase"
-          >
-            <Edit :size="16" :stroke-width="3" /> EDIT PLAN
-          </button>
+            <div class="relative" ref="mapDropdownContainer">
+              <button @click="showMapDropdown = !showMapDropdown" class="p-2 hover:bg-gray-100 rounded transition-all">
+                <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
+              </button>
+
+              <div v-if="showMapDropdown" class="absolute right-0 top-full mt-2 w-40 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-20">
+                 <button @click="handleCopyTripClick" class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left">
+                  <Copy class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+                  <span class="font-bold text-sm text-[#2C2C2C]">여행 복사</span>
+                </button>
+
+                <button 
+                  v-if="trip.isOwner" 
+                  @click="handleEditClick" 
+                  class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left border-t border-gray-200"
+                >
+                  <Edit class="w-4 h-4 text-[#2C2C2C]" stroke-width="2.5" />
+                  <span class="font-bold text-sm text-[#2C2C2C]">일정 수정</span>
+                </button>
+
+                <button 
+                  v-if="trip.isOwner" 
+                  @click="handleDeleteTripClick" 
+                  class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-red-50 transition-colors text-left border-t border-gray-200"
+                >
+                  <Trash2 class="w-4 h-4 text-red-500" stroke-width="2.5" />
+                  <span class="font-bold text-sm text-red-500">여행 삭제</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+
 
       <div
         class="flex-1 flex overflow-hidden border-[3px] border-[#2C2C2C] rounded-b-xl isolate transform-gpu"
@@ -320,17 +344,47 @@
       @close="isLoginAlertVisible = false"
       @confirm="handleLoginConfirm"
     />
+
+    <AlertDialog
+      :show="showCopyConfirm"
+      title="여행 복사"
+      message="계획을 복사하시겠습니까?"
+      confirm-button-text="복사"
+      close-button-text="취소"
+      @close="showCopyConfirm = false"
+      @confirm="handleCopyConfirm"
+    />
+
+    <AlertDialog
+      :show="showDeleteConfirm"
+      title="여행 삭제"
+      message="계획을 삭제하시겠습니까?"
+      confirm-button-text="삭제"
+      close-button-text="취소"
+      @close="showDeleteConfirm = false"
+      @confirm="handleDeleteTripConfirm"
+    />
+
+    <AlertDialog
+      :show="showLogDeleteConfirm"
+      title="기록 삭제"
+      message="이 기록을 삭제하시겠습니까?"
+      confirm-button-text="삭제"
+      close-button-text="취소"
+      @close="showLogDeleteConfirm = false"
+      @confirm="handleLogDeleteConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect, reactive, watch } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash, MoreHorizontal, Share, Trash2, Maximize2 } from 'lucide-vue-next'
+import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash, MoreHorizontal, Share, Trash2, Maximize2, Copy } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
 import TripLogContent from '@/components/trip-log/TripLogContent.vue'
-import { updateTrip } from '@/apis/trip/index'
+import { updateTrip, requestScrapTrip, deleteTrip } from '@/apis/trip/index'
 import type { TripDetailResponseDto, SpotResponseDto} from '@/apis/trip/types'
 import { TripStatus } from '@/types/common'
 import type { TripLogDetail } from '@/types/trip/trip.model'
@@ -552,19 +606,31 @@ const handleVisibilityChange = async (event: Event) => {
 }
 
 // 로그 관련 핸들러
+const showLogDeleteConfirm = ref(false)
+
 const handleDeleteLogClick = async () => {
   showDropdown.value = false // Close dropdown
-// ... existing logic ...
   if (!logLoading.value && tripLog.value && props.trip.isOwner){
+     showLogDeleteConfirm.value = true
+  }
+}
+
+const handleLogDeleteConfirm = async () => {
+    if(!tripLog.value) return 
+
     try {
       await deleteTripLog(tripLog.value.logId)
-      alert('로그가 삭제되었습니다.')
+      showLogDeleteConfirm.value = false
+      
+      toastMessage.value = '기록이 삭제되었습니다.'
+      showToast.value = true
+
+      emit('delete-log', tripLog.value!.logId)
       emit('close')
     } catch (error) {
       console.error('로그 삭제 실패', error)
       alert('로그 삭제 실패')
     }
-  }
 }
 
 const handleEditLogClick = () => {
@@ -598,8 +664,65 @@ const handleWriteLogClick = () => {
   emit('write', props.trip)
 }
 
+const showMapDropdown = ref(false)
+const mapDropdownContainer = ref<HTMLElement | null>(null)
+
 const handleEditClick = () => {
+  showMapDropdown.value = false
   emit('edit', props.trip)
+}
+
+// 여행 복사 관련
+const showCopyConfirm = ref(false)
+
+const handleCopyTripClick = () => {
+  showMapDropdown.value = false
+  showCopyConfirm.value = true
+}
+
+const handleCopyConfirm = async () => {
+  try {
+    await requestScrapTrip(props.trip.id)
+    showCopyConfirm.value = false
+    
+    // Toast 표시
+    toastMessage.value = '여행이 복사되었습니다!'
+    showToast.value = true
+    setTimeout(() => {
+        showToast.value = false
+    }, 2000)
+
+    // 목록 갱신 요청
+    emit('refresh')
+  } catch (error) {
+    console.error('Copy trip failed:', error)
+    alert('여행 복사에 실패했습니다.')
+  }
+}
+
+// 여행 삭제 관련
+const showDeleteConfirm = ref(false)
+
+const handleDeleteTripClick = () => {
+  showMapDropdown.value = false
+  showDeleteConfirm.value = true
+}
+
+const handleDeleteTripConfirm = async () => {
+  try {
+    await deleteTrip(props.trip.id)
+    showDeleteConfirm.value = false
+    
+    toastMessage.value = '여행이 삭제되었습니다.'
+    showToast.value = true
+
+    // emit('refresh') // Refactored to emit 'delete' for optimistic update
+    emit('delete', props.trip.id)
+    emit('close')
+  } catch (error) {
+    console.error('Delete trip failed:', error)
+    alert('여행 삭제에 실패했습니다.')
+  }
 }
 
 // 지도 및 장소 핸들러
@@ -679,6 +802,9 @@ const handleClickOutside = (e: MouseEvent) => {
   const target = e.target as HTMLElement
   if (showDropdown.value && headerDropdownContainer.value && !headerDropdownContainer.value.contains(target)) {
     showDropdown.value = false
+  }
+  if (showMapDropdown.value && mapDropdownContainer.value && !mapDropdownContainer.value.contains(target)) {
+    showMapDropdown.value = false
   }
 }
 

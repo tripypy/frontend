@@ -190,10 +190,13 @@
         v-if="selectedLogId"
         :log-id="selectedLogId"
         :author-id="selectedAuthorId"
+        :initial-liked="selectedLiked"
         @close="handleLogClose"
         @update="handleLogUpdate"
         @edit="handleEditFromModal"
         @edit-log="handleEditLogFromModal"
+        @refresh="handleFeedRefresh"
+        @delete-log="handleLogDelete"
     />
 
     <TripDetailModal
@@ -202,6 +205,29 @@
         @close="router.back()"
         @edit="handleEditFromModal"
     />
+
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      leave-active-class="transition-all duration-200 ease-in"
+      enter-from-class="opacity-0 translate-y-[-20px]"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-[-20px]"
+    >
+      <div
+        v-if="showToast"
+        class="fixed top-24 right-6 z-[90] bg-white border-[3px] border-[#2C2C2C] rounded-xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.3)] px-5 py-3 flex items-center gap-3"
+      >
+        <div class="w-6 h-6 bg-[#FFD60A] border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#2C2C2C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="font-black text-sm text-[#2C2C2C]">
+          {{ toastMessage }}
+        </span>
+      </div>
+    </Transition>
 
     <ScrollToTop />
   </div>
@@ -235,16 +261,18 @@ const selectedPlaceForDetail = ref<any>(null) // For PlaceDetailModal
 const placeDetailModalRef = ref<any>(null)
 const selectedLogId = ref<number | null>(null)
 const selectedAuthorId = ref<number | undefined>(undefined)
+const selectedLiked = ref<boolean>(false)
 const hasLogUpdates = ref(false)
 const selectedTrip = ref<any>(null)
 
-const handleOpenTripLog = (logId: number) => {
-    router.push({ query: { ...route.query, logId } })
+const handleOpenTripLog = (payload: { logId: number, authorId: number, liked: boolean }) => {
+    selectedAuthorId.value = payload.authorId
+    selectedLiked.value = payload.liked
+    router.push({ query: { ...route.query, logId: payload.logId } })
 }
 
 // Watch URL for modal state
 watch(() => route.query.logId, (newLogId) => {
-  console.log('HomeView: route.query.logId changed:', newLogId)
   if (newLogId) {
     selectedLogId.value = Number(newLogId)
     // authorId is not in URL, but if opening from feed, handleOpenLog sets it. 
@@ -252,28 +280,44 @@ watch(() => route.query.logId, (newLogId) => {
   } else {
     selectedLogId.value = null
     selectedAuthorId.value = undefined
+    selectedLiked.value = false
   }
 }, { immediate: true })
 
-const handleOpenLogFromFeed = (payload: { logId: number, authorId: number }) => {
-  console.log('HomeView: handleOpenLogFromFeed called with', payload)
+const handleOpenLogFromFeed = (payload: { logId: number, authorId: number, liked: boolean }) => {
   selectedAuthorId.value = payload.authorId
+  selectedLiked.value = payload.liked
   router.push({ query: { ...route.query, logId: payload.logId } })
-    .then(() => console.log('HomeView: router.push success'))
     .catch(err => {
       console.error('HomeView: router.push failed:', err)
     })
 }
 
-const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
-    hasLogUpdates.value = true
+const handleLogUpdate = (payload: { type?: string; logId: number; likeCount: number; liked: boolean; commentCount?: number }) => {
+    // Update Feed Item State
+    const feedItem = diaryEntries.value.find(item => item.logId === payload.logId)
+    if (feedItem) {
+        feedItem.likeCount = payload.likeCount
+        feedItem.liked = payload.liked
+        if (typeof payload.commentCount === 'number') {
+            feedItem.commentCount = payload.commentCount
+        }
+    }
+
     if (placeDetailModalRef.value) {
-        placeDetailModalRef.value.updateTripLogState(payload.logId, { likeCount: payload.likeCount, liked: payload.liked })
+        placeDetailModalRef.value.updateTripLogState(payload.logId, { 
+            likeCount: payload.likeCount, 
+            liked: payload.liked,
+            commentCount: payload.commentCount 
+        })
     }
 }
 
 const handleLogClose = () => {
-    router.back()
+    const query = { ...route.query }
+    delete query.logId
+    router.replace({ query })
+    
     if (hasLogUpdates.value) {
         if (placeDetailModalRef.value) {
             placeDetailModalRef.value.refreshWithEffect()
@@ -342,6 +386,37 @@ const handlePlaceClick = (place: any) => {
 
 const handleKeywordClick = (keyword: string) => {
   router.push({ path: '/search', query: { q: keyword } })
+}
+
+const showAlert = (message: string, title = '알림') => {
+  // Assuming infoAlert is defined elsewhere or this is a placeholder
+  // infoAlert.message = message
+  // infoAlert.title = title
+  // infoAlert.visible = true
+  console.log(`Alert: ${title} - ${message}`); // Placeholder for actual alert logic
+}
+
+// 토스트 메시지 상태
+const showToast = ref(false)
+const toastMessage = ref('')
+const showToastMessage = (message: string) => {
+    toastMessage.value = message
+    showToast.value = true
+    setTimeout(() => {
+        showToast.value = false
+    }, 2000)
+}
+
+const handleFeedRefresh = async () => {
+    diaryEntries.value = []
+    cursorId.value = null
+    hasMore.value = true
+    await fetchMoreFeed()
+}
+
+const handleLogDelete = () => {
+    showToastMessage('기록이 삭제되었습니다.')
+    handleFeedRefresh()
 }
 
 // 상태 관리

@@ -303,6 +303,8 @@
     <DiaryCommentModal
       v-if="selectedLogId"
       :log-id="selectedLogId"
+      :author-id="selectedAuthorId"
+      :initial-liked="selectedLiked"
       @close="handleLogClose"
       @update="handleLogUpdate"
     />
@@ -361,6 +363,9 @@ const hasSearched = ref(false)
 const activeTab = ref<'all' | 'places' | 'trips' | 'logs'>('all')
 
 const selectedLogId = ref<number | null>(null)
+const selectedAuthorId = ref<number | undefined>(undefined)
+const selectedLiked = ref<boolean>(false)
+
 // selectedTrip type is effectively 'any' because TripDetailModal expects a complex object (TripResponseDto-ish + UI fields)
 // We will assign a mapped object to it.
 const selectedTrip = ref<any>(null)
@@ -373,85 +378,12 @@ const hasLogUpdates = ref(false)
 const filteredTrips = ref<TripSearchDoc[]>([])
 const filteredLogs = ref<TripLogSearchDoc[]>([])
 
-// Computed - Filtered Results
-// 장소: API 결과 사용
-const filteredPlaces = computed(() => {
-  return searchResults.value.map(place => ({
-    id: place.id,
-    name: place.name,
-    // API에서 이미지가 오면 사용, 없으면 null
-    imageUrl: place.thumbnailUrl || null,
-    // 평점 정보 없음
-    rating: 0.0,
-    location: place.address,
-    description: place.address, // 상세 설명이 없으므로 주소로 대체
-    // 카테고리를 태그로 사용
-    tags: place.category ? place.category.split(' > ').slice(-1) : ['장소'],
-    views: 0, // 조회수 정보 없음
-    phone: place.phone,
-    website: place.placeUrl,
-    kakaoPlaceId: place.kakaoPlaceId,
-    lat: place.lat,
-    lng: place.lng
-  }))
-})
+// ... (Rest of the computed properties) ...
 
-const handleSearch = () => {
-  if (searchQuery.value.trim()) {
-    currentSearchQuery.value = searchQuery.value
-    hasSearched.value = true
-    activeTab.value = 'all'
-    
-    // Call API
-    searchPlaces()
-    searchTrips()
-    searchLogs()
-  } else {
-    // 검색어가 비어있을 경우 초기화
-    hasSearched.value = false
-    currentSearchQuery.value = ''
-    searchQuery.value = ''
-    activeTab.value = 'all'
-    searchResults.value = []
-    filteredTrips.value = []
-    filteredLogs.value = []
-  }
-}
-
-const searchLogs = async () => {
-    try {
-        filteredLogs.value = await searchApi.searchTripLogs(currentSearchQuery.value)
-    } catch (e) {
-        console.error(e)
-        filteredLogs.value = []
-    }
-}
-
-const searchTrips = async () => {
-    try {
-        filteredTrips.value = await searchApi.searchTrips(currentSearchQuery.value)
-    } catch (e) {
-        console.error(e)
-        filteredTrips.value = []
-    }
-}
-
-const searchByKeyword = (keyword: string) => {
-  searchQuery.value = keyword
-  handleSearch()
-}
-
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement
-  target.src = '/images/no-image.jpg'
-}
-
-const handleLogClick = (log: TripLogSearchDoc) => {
-  selectedLogId.value = log.log_id
-}
-
-const handleOpenTripLog = (logId: number) => {
-    selectedLogId.value = logId
+const handleOpenTripLog = (payload: { logId: number, authorId: number, liked: boolean }) => {
+    selectedLogId.value = payload.logId
+    selectedAuthorId.value = payload.authorId
+    selectedLiked.value = payload.liked
 }
 
 const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boolean }) => {
