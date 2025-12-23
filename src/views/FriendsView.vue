@@ -49,7 +49,10 @@
                   :key="user.id"
                   class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-300 transition-colors h-[72px]"
                 >
-                  <div class="flex items-center gap-3 overflow-hidden">
+                  <div 
+                    class="flex items-center gap-3 overflow-hidden cursor-pointer"
+                    @click="goToLog(user.id)"
+                  >
                     <div class="w-10 h-10 rounded-full border border-gray-200 overflow-hidden shrink-0">
                       <img
                         :src="user.profileImageUrl || '/default-profile.svg'"
@@ -219,7 +222,10 @@
                 </div>
                 <div v-else class="space-y-3">
                     <div v-for="req in receivedRequests" :key="req.requestId" class="p-4 bg-[#FFF8ED] rounded-xl border border-orange-100 hover:border-orange-200 transition-colors">
-                        <div class="flex items-center gap-3 mb-4">
+                        <div 
+                            class="flex items-center gap-3 mb-4 cursor-pointer"
+                            @click="goToLog(req.user.userId)"
+                        >
                             <div class="w-12 h-12 rounded-full border border-gray-200 overflow-hidden shrink-0">
                                 <img :src="req.user.profileImageUrl || '/default-profile.svg'" alt="Profile" class="w-full h-full object-cover"/>
                             </div>
@@ -248,7 +254,10 @@
                   </div>
                   <div v-else class="space-y-3">
                       <div v-for="req in sentRequests" :key="req.requestId" class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-300 transition-colors">
-                          <div class="flex items-center gap-3">
+                          <div 
+                            class="flex items-center gap-3 cursor-pointer"
+                            @click="goToLog(req.user.userId)"
+                          >
                               <div class="w-10 h-10 rounded-full border border-gray-200 overflow-hidden shrink-0">
                                 <img :src="req.user.profileImageUrl || '/default-profile.svg'" alt="Profile" class="w-full h-full object-cover"/>
                               </div>
@@ -361,7 +370,11 @@ const loadData = async () => {
 }
 
 const handleSearch = async () => {
-    if (!searchQuery.value.trim()) return
+    if (!searchQuery.value.trim()) {
+        searchResults.value = []
+        hasSearched.value = false
+        return
+    }
     
     try {
         const results = await requestSearchUsers(searchQuery.value)
