@@ -282,11 +282,32 @@ onMounted(() => {
   checkKakao()
 })
 
+watch(() => props.center, (newCenter) => {
+    if (map.value && newCenter) {
+      const kakao = (window as any).kakao 
+      if (!kakao || !kakao.maps) return 
+      
+      const moveLatLon = new kakao.maps.LatLng(newCenter.lat, newCenter.lng);
+      map.value.setCenter(moveLatLon);
+    }
+}, { deep: true });
+
+watch(() => props.level, (newLevel) => {
+    // newLevel이 유효한 값인지 확인합니다.
+    if (map.value && newLevel !== undefined && newLevel !== null) {
+      // ✅ 수정된 부분: setLevel은 map 인스턴스 메서드이므로 kakao 참조는 필요 없지만,
+      // map이 로드된 상태인지 확인 후 레벨을 설정합니다.
+      map.value.setLevel(newLevel);
+    }
+});
+
 onUnmounted(() => {
   clearOverlays()
   clearPolylines()
   map.value = null
 })
+
+
 
 watch(
   () => props.markers,
