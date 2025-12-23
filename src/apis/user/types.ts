@@ -67,6 +67,7 @@ export interface UserCompletedTripDetailDto {
 }
 
 export interface UserLogSummaryDto {
+    tripId: number
     logId: number
     title: string
     thumbnailUrl: string | null

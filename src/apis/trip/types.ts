@@ -127,6 +127,10 @@ export interface TripDiaryResponseDto {
   comments: number;
 }
 
+export interface LogDiaryDto extends TripDiaryResponseDto {
+  tripId: number
+}
+
 /**
  * Scrap 관련 타입
  */
