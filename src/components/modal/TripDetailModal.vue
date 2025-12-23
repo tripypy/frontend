@@ -62,10 +62,15 @@
           </div>
         </div>
 
-        <div class="relative" ref="headerDropdownContainer">
-          <button @click="showDropdown = !showDropdown" class="p-2 hover:bg-gray-100 rounded transition-all">
-            <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
+        <div class="flex items-center gap-1">
+          <button @click="handleExpandClick" class="p-2 hover:bg-gray-100 rounded transition-all">
+             <Maximize2 class="w-5 h-5 text-[#2C2C2C]" stroke-width="2.5" />
           </button>
+          
+          <div class="relative" ref="headerDropdownContainer">
+            <button @click="showDropdown = !showDropdown" class="p-2 hover:bg-gray-100 rounded transition-all">
+              <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
+            </button>
 
           <div v-if="showDropdown" class="absolute right-0 top-full mt-2 w-40 bg-white border-[2px] border-[#2C2C2C] rounded-lg shadow-[4px_4px_0px_0px_rgba(44,44,44,0.2)] overflow-hidden z-20">
             <button @click="handleShare" class="w-full px-4 py-2.5 flex items-center gap-2 hover:bg-gray-50 transition-colors text-left">
@@ -85,6 +90,7 @@
               </button>
             </template>
           </div>
+        </div>
         </div>
       </div>
 
@@ -295,7 +301,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect, reactive, watch } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash, MoreHorizontal, Share, Trash2 } from 'lucide-vue-next'
+import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash, MoreHorizontal, Share, Trash2, Maximize2 } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
@@ -601,6 +607,12 @@ const handleMarkerClick = (id: number | string) => {
 const handleOpenPlaceDetailModal = (place: SpotResponseDto) => {
     detailedPlace.value = place
     showPlaceDetailModal.value = true
+}
+
+const handleExpandClick = () => {
+  if (tripLog.value) {
+    router.push({ name: 'trip-log-detail', params: { logId: tripLog.value.logId } })
+  }
 }
 
 const displayDuration = computed(() => {
