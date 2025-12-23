@@ -117,7 +117,7 @@
                   <!-- Content -->
                   <div class="p-3">
                      <h4 class="font-black text-sm text-[#2C2C2C] line-clamp-1 mb-1">{{ log.title }}</h4>
-                     <p class="text-xs text-gray-500 line-clamp-2 mb-2 h-8">{{ log.content }}</p>
+                     <p class="text-xs text-gray-500 line-clamp-2 mb-2 h-8">{{ stripHtml(log.content) }}</p>
                      
                      <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                         <div class="flex items-center gap-1.5">
@@ -647,6 +647,14 @@ const formatDate = (dateStr: string) => {
 const truncateUrl = (url: string) => {
   if (!url) return ''
   return url.length > 30 ? url.substring(0, 30) + '...' : url
+}
+
+// Helper to strip HTML
+const stripHtml = (html: string) => {
+  if (!html) return ''
+  const tmp = document.createElement('DIV')
+  tmp.innerHTML = html
+  return tmp.textContent || tmp.innerText || ''
 }
 
 // Sort & Pagination state
