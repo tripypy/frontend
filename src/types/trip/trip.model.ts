@@ -1,6 +1,6 @@
 import type { Place } from '@/types/trip/place.model'
 import type { TripLogCommentResponse } from '@/apis/trip-log/types'
-import type { TripResponseDto } from '@/apis/trip/types'
+import type { TripResponseDto, TripDiaryResponseDto } from '@/apis/trip/types'
 
 
 /**

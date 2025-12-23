@@ -1,6 +1,6 @@
 import type { BaseUserProfileDto } from '@/apis/user/types'
 import type { LogViewProfile } from '@/types/user/user.model'
-import type { TripDiaryResponseDto } from '@/apis/trip/types' // 추가 필요
+import type { LogDiaryDto } from '@/apis/trip/types'
 import type { UserLogSummaryDto } from '@/apis/user/types';
 
 export function toLogViewProfile(
@@ -27,6 +27,7 @@ export function toLogViewProfile(
         // logs를 TripDiaryResponseDto 형태로 변환
         diaries: data.logs.map(log => ({
           id: log.logId,
+          tripId: log.tripId,
           title: log.title,
           thumbnailUrl: log.thumbnailUrl,
           visibility: 'PUBLIC',
@@ -40,11 +41,12 @@ export function toLogViewProfile(
     }
 }
 
-export function normalizeDiary(diary: TripDiaryResponseDto | UserLogSummaryDto): TripDiaryResponseDto {
+export function normalizeDiary(diary: LogDiaryDto | UserLogSummaryDto): LogDiaryDto {
     // UserLogSummaryDto인 경우 (logId가 존재)
     if ('logId' in diary) {
         return {
             id: diary.logId,
+            tripId: diary.tripId,
             title: diary.title,
             thumbnailUrl: diary.thumbnailUrl,
             // 기본값 설정

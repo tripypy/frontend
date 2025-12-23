@@ -10,8 +10,8 @@ import type {
   TripDiaryResponseDto,
 } from '@/apis/trip/types'
 
-import { createTrip } from '@/apis/trip'
-import apiClient from '@/apis/http'
+import { createTrip, getTripDetail } from '@/apis/trip/index'
+import type { LogDiaryDto } from '@/apis/trip/types'
 import { Heart, MessageCircle } from 'lucide-vue-next'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
@@ -20,7 +20,7 @@ import { handleImageError } from '@/utils/imageHandler'
 interface Props {
 // ... existing props ...
   isMyProfile: boolean
-  userDiaries: (TripDiaryResponseDto | UserLogSummaryDto)[]
+  userDiaries: (LogDiaryDto | UserLogSummaryDto)[]
   userPlans: TripPlanView[]
 }
 
@@ -35,8 +35,9 @@ const activeTab = ref<'diary' | 'plan'>('diary')
 // --------------------
 // 일기 목록 정규화
 // --------------------
-const normalizedDiaries = computed<TripDiaryResponseDto[]>(() =>
+const normalizedDiaries = computed<LogDiaryDto[]>(() =>
   props.userDiaries.map(normalizeDiary),
+
 )
 
 // --- Modal State ---
@@ -59,12 +60,16 @@ const handleCreateNewPlan = async () => {
   router.push(`/trips/${newTrip.id}`)
 }
 
+const detailInitialTab = ref<'map' | 'log'>('map')
+
 const handlePlanClick = async (tripId: number) => {
   isLoadingDetail.value = true
   isDetailModalOpen.value = true
+  detailInitialTab.value = 'map'
   try {
-    const res = await apiClient.get<TripDetailResponseDto>(`/trips/${tripId}`)
-    selectedTrip.value = res.data
+    const res = await getTripDetail(tripId)
+
+    selectedTrip.value = res
   } finally {
     isLoadingDetail.value = false
   }
@@ -79,8 +84,18 @@ const handleEdit = (trip: TripDetailResponseDto) => {
   router.push(`/trips/${trip.id}`)
 }
 
-const handleDiaryClick = (diaryId: number) => {
-  console.log(`Diary ${diaryId} clicked`)
+const handleDiaryClick = async (tripId: number) => {
+  isLoadingDetail.value = true
+  isDetailModalOpen.value = true
+  detailInitialTab.value = 'log'
+  try {
+    const res = await getTripDetail(tripId)
+
+    selectedTrip.value = res
+    
+  } finally {
+    isLoadingDetail.value = false
+  }
 }
 </script>
 
@@ -145,8 +160,8 @@ const handleDiaryClick = (diaryId: number) => {
             </button>
           </div>
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-              <div v-for="card in normalizedDiaries" :key="card.id"
-                  @click="handleDiaryClick(card.id)"
+              <div v-for="card in normalizedDiaries" :key="card.tripId"
+                  @click="handleDiaryClick(card.tripId)"
                   class="cursor-pointer bg-white border-[2px] border-[#2C2C2C] rounded-2xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.15)] flex flex-col overflow-hidden transition-transform hover:scale-105"
               >
                 <div class="relative w-full h-40">
@@ -187,6 +202,7 @@ const handleDiaryClick = (diaryId: number) => {
     <TripDetailModal
       v-if="isDetailModalOpen && selectedTrip"
       :trip="selectedTrip"
+      :initial-tab="detailInitialTab"
       @close="handleCloseModal"
       @edit="handleEdit"
     />
