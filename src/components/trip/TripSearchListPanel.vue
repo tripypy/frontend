@@ -28,7 +28,7 @@
           :key="place.id"
           :ref="
             (el) => {
-              if (el && place.id) itemRefs[place.id] = el as HTMLElement
+              if (el && place.kakaoPlaceId) itemRefs[place.kakaoPlaceId] = el as HTMLElement
             }
           "
           class="mb-3 last:mb-0"
@@ -37,7 +37,7 @@
             @click="$emit('click-item', place)"
             class="p-3 border-[2px] border-[#2C2C2C] rounded-xl hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)] transition-all bg-white group cursor-pointer"
             :class="[
-              String(place.id) === String(selectedId)
+              String(place.kakaoPlaceId) === String(selectedId)
                 ? 'border-[#9BCCC4] bg-[#F0FAF9] shadow-[4px_4px_0px_0px_rgba(155,204,196,0.6)]'
                 : 'border-[#2C2C2C] bg-white hover:border-[#9BCCC4] hover:shadow-[4px_4px_0px_0px_rgba(44,44,44,0.1)]',
             ]"

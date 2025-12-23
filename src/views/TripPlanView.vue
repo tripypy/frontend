@@ -13,9 +13,9 @@
       @update:trip-date="trip.tripDate.value = $event"
       @update:trip-status="trip.tripStatus.value = $event"
       @update:trip-visibility="trip.tripVisibility.value = $event"
-      @back="tripBack"
-      @save="tripSave"
-      @delete="trip.deleteTrip"
+      @back="handleBack"
+      @save="handleSave"
+      @delete="handleDelete"
       @edit="trip.enterEditMode"
     />
 
@@ -108,6 +108,16 @@
       :formatted-date="trip.formattedDate.value"
       :all-selected-places="trip.allSelectedPlaces.value"
       @search-spot="handleChatSpotSearch"
+    />
+
+    <AlertDialog
+        :show="dialogState.show"
+        :title="dialogState.title"
+        :message="dialogState.message"
+        :confirm-button-text="dialogState.confirmButtonText"
+        :show-cancel-button="dialogState.showCancelButton"
+        @close="closeDialog"
+        @confirm="handleDialogConfirm"
     />
   </div>
 </template>
@@ -256,7 +266,6 @@ const showDetailAndPanFromMarker = (id: number | string) => {
     selectedPlaceForDetail.value = place
     mapInteraction.handleMarkerClick(id, { panWithOffset: true })
   } else {
-    // If place is not found (e.g., from a different day), just pan without detail
     mapInteraction.handleMarkerClick(id)
   }
 }
@@ -264,7 +273,6 @@ const showDetailAndPanFromMarker = (id: number | string) => {
 const handleAddPlace = (place: Place) => {
   const newPlace = trip.addPlace(place)
   if (newPlace) {
-    // 추가된 장소는 바로 패널을 띄우고 중심으로 이동
     showDetailAndPan(newPlace)
   }
 }
@@ -282,11 +290,94 @@ const handleChatSpotSearch = (keyword: string) => {
   mapInteraction.triggerSearch()
 }
 
-// 저장/뒤로가기 연결
-const tripSave = () => {
-  trip.saveTrip(closeSearchPanel)
+// --- Dialog Logic ---
+import AlertDialog from '@/components/common/AlertDialog.vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const dialogState = ref({
+    show: false,
+    title: '알림',
+    message: '',
+    confirmButtonText: '확인',
+    showCancelButton: false,
+    onConfirm: () => {},
+})
+
+const closeDialog = () => {
+    dialogState.value.show = false
 }
-const tripBack = () => trip.goBack(closeSearchPanel)
+
+const handleDialogConfirm = () => {
+    dialogState.value.onConfirm()
+    closeDialog()
+}
+
+const showAlert = (message: string, title = '알림', onConfirm?: () => void) => {
+    dialogState.value = {
+        show: true,
+        title,
+        message,
+        confirmButtonText: '확인',
+        showCancelButton: false,
+        onConfirm: onConfirm || (() => {}),
+    }
+}
+
+const showConfirm = (message: string, onConfirm: () => void, title = '확인') => {
+     dialogState.value = {
+        show: true,
+        title,
+        message,
+        confirmButtonText: '확인',
+        showCancelButton: true,
+        onConfirm,
+    }
+}
+
+
+// --- Action Handlers (Replaces direct composable calls) ---
+
+const handleSave = async () => {
+  try {
+     await trip.saveTrip(closeSearchPanel)
+     showAlert('저장되었습니다!')
+  } catch (error: any) {
+     const message = error.message || '저장에 실패했습니다.'
+     showAlert(message)
+  }
+}
+
+const handleBack = () => {
+  if (trip.isEditMode.value) {
+    showConfirm('작성을 취소하시겠습니까? \n 변경사항이 저장되지 않습니다.', async () => {
+       const wasDraft = trip.tripStatus.value === 'DRAFT' || trip.tripStatus.value === undefined;
+       await trip.discardChanges() 
+       closeSearchPanel()
+       
+       if (wasDraft) {
+           router.push('/trips')
+       }
+    })
+  } else {
+    router.push('/trips')
+  }
+}
+
+const handleDelete = () => {
+   showConfirm('정말 삭제하시겠습니까?', async () => {
+      try {
+        await trip.deleteTrip()
+        showAlert('삭제되었습니다.', '알림', () => {
+           router.push('/trips')
+        })
+      } catch (error: any) {
+        showAlert('삭제에 실패했습니다.')
+      }
+   })
+}
+
 </script>
 
 <style scoped>
