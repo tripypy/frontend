@@ -10,7 +10,7 @@ export const useNotificationStore = defineStore('notification', () => {
   const notifications = ref<NotificationResponse[]>([]);
   const eventSource = ref<EventSourcePolyfill | EventSource | null>(null);
 
-  const unreadCount = computed(() => 
+  const unreadCount = computed(() =>
     notifications.value.filter(n => !n.isRead).length
   );
 
@@ -26,10 +26,9 @@ export const useNotificationStore = defineStore('notification', () => {
     if (eventSource.value) return;
 
     const EventSourceClass = EventSourcePolyfill || NativeEventSource;
-    
-    // API baseURL is http://localhost:8080/api
-    const url = 'http://localhost:8080/api/notifications/subscribe';
-    
+
+    const url = 'https://tritt.o-r.kr/api/notifications/subscribe';
+
     const es = new EventSourceClass(url, {
       headers: {
         'Authorization': `Bearer ${authStore.accessToken}`
