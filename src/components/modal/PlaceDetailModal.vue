@@ -100,7 +100,7 @@
                   v-for="log in tripLogs" 
                   :key="log.logId"
                   class="bg-white border-[2px] border-[#2C2C2C] rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-transform hover:-translate-y-1"
-                  @click="emit('open-trip-log', log.logId)"
+                  @click="emit('open-trip-log', { logId: log.logId, liked: log.liked, authorId: log.authorId })"
                 >
                   <!-- Image -->
                   <div class="h-40 bg-gray-100 relative">

@@ -265,8 +265,10 @@ const selectedLiked = ref<boolean>(false)
 const hasLogUpdates = ref(false)
 const selectedTrip = ref<any>(null)
 
-const handleOpenTripLog = (logId: number) => {
-    router.push({ query: { ...route.query, logId } })
+const handleOpenTripLog = (payload: { logId: number, authorId: number, liked: boolean }) => {
+    selectedAuthorId.value = payload.authorId
+    selectedLiked.value = payload.liked
+    router.push({ query: { ...route.query, logId: payload.logId } })
 }
 
 // Watch URL for modal state
