@@ -82,6 +82,12 @@ const renderMarkers = (markers: MarkerOption[]) => {
   const kakao = (window as any).kakao
   clearOverlays()
 
+  // Also clear plan polyline
+  if (kakaoPlanPolyline) {
+    kakaoPlanPolyline.setMap(null)
+    kakaoPlanPolyline = null
+  }
+
   if (!markers || markers.length === 0) return
 
   const bounds = new kakao.maps.LatLngBounds()
@@ -99,26 +105,23 @@ const renderMarkers = (markers: MarkerOption[]) => {
     const pos = new kakao.maps.LatLng(m.lat, m.lng)
     const isSelected = props.selectedMarkerId && String(m.id) === String(props.selectedMarkerId)
 
-          if (m.type === 'plan') {
-          const content = document.createElement('div')
-          const bgColor = m.color ? '' : 'bg-[#9BCCC4]'
-          content.className = `
-            flex items-center justify-center w-8 h-8 rounded-full font-black text-black border-[2px] border-[#2C2C2C] text-xs
-            transition-all duration-200 ease-in-out
-            ${isSelected ? 'bg-[#FF8A00] scale-125' : bgColor}
-          `
-          if (m.color && !isSelected) {
-            content.style.backgroundColor = m.color;
-          }
-          content.innerHTML = String(m.order || '')
-    
-          const customOverlay = new kakao.maps.CustomOverlay({
-            position: pos,
-            content: content,
-            map: rawMap,
-            yAnchor: 0.8, // Adjust yAnchor for smaller size
-            zIndex: isSelected ? 999 : 50,
-          })
+    if (m.type === 'plan') {
+      const content = document.createElement('div')
+      content.className = `
+        flex items-center justify-center w-12 h-12 rounded-full font-black text-black border-[2px] border-[#2C2C2C]
+        transition-all duration-200 ease-in-out
+        ${isSelected ? 'bg-[#FF8A00] scale-110' : 'bg-[#9BCCC4]'}
+      `
+      content.innerHTML = String(m.order || '')
+
+      const customOverlay = new kakao.maps.CustomOverlay({
+        position: pos,
+        content: content,
+        map: rawMap,
+        yAnchor: 0.5,
+        zIndex: isSelected ? 999 : 100, // Increased zIndex for plan markers
+      })
+      
       content.onclick = () => {
         if (m.id !== undefined && m.id !== null) {
           emits('marker-click', m.id)
@@ -128,14 +131,13 @@ const renderMarkers = (markers: MarkerOption[]) => {
       customOverlay.customId = m.id
       customOverlay.customType = m.type
       customOverlay.customOrder = m.order
-      customOverlay.customColor = m.color
       kakaoOverlays.push(customOverlay)
     } else {
       const marker = new kakao.maps.Marker({
         position: pos,
         map: rawMap,
         image: isSelected ? selectedImage : normalImage,
-        zIndex: isSelected ? 999 : 1,
+        zIndex: isSelected ? 999 : 1, // Search markers stay low
         clickable: true,
       })
 
@@ -152,8 +154,36 @@ const renderMarkers = (markers: MarkerOption[]) => {
     bounds.extend(pos)
   })
 
+  // Draw polyline for plan markers
+  renderPlanPolyline(markers)
+
   if (!props.selectedMarkerId) {
     rawMap.setBounds(bounds)
+  }
+}
+
+let kakaoPlanPolyline: any = null
+
+const renderPlanPolyline = (markers: MarkerOption[]) => {
+  const rawMap = toRaw(map.value)
+  if (!rawMap) return
+  const kakao = (window as any).kakao
+
+  const linePath = markers
+    .filter((m) => m.type === 'plan')
+    .sort((a, b) => (a.order || 0) - (b.order || 0)) // Sort by order just in case
+    .map((m) => new kakao.maps.LatLng(m.lat, m.lng))
+
+  if (linePath.length > 1) {
+    kakaoPlanPolyline = new kakao.maps.Polyline({
+      path: linePath,
+      strokeWeight: 3,
+      strokeColor: '#000000', // Changed to Black
+      strokeOpacity: 0.8,
+      strokeStyle: 'solid',
+      zIndex: 10, // Above search markers (1), below plan markers (100)
+    })
+    kakaoPlanPolyline.setMap(rawMap)
   }
 }
 
@@ -192,10 +222,8 @@ const panTo = (lat: number, lng: number) => {
 watch(
   () => props.selectedMarkerId,
   (newId) => {
-    if (!mapLoaded.value) return // Add guard clause
-
     const kakao = (window as any).kakao
-    if (!kakao || !kakao.maps) return
+    if (!kakao) return
 
     const normalImage = new kakao.maps.MarkerImage(
       DEFAULT_MARKER_SRC,
@@ -213,15 +241,10 @@ watch(
         const content = overlay.getContent()
         if (isTarget) {
           content.classList.remove('bg-[#9BCCC4]')
-          content.style.backgroundColor = '';
           content.classList.add('bg-[#FF8A00]', 'scale-110')
         } else {
           content.classList.remove('bg-[#FF8A00]', 'scale-110')
-          if (overlay.customColor) {
-            content.style.backgroundColor = overlay.customColor;
-          } else {
-            content.classList.add('bg-[#9BCCC4]')
-          }
+          content.classList.add('bg-[#9BCCC4]')
         }
         overlay.setZIndex(isTarget ? 999 : 50)
       } else {

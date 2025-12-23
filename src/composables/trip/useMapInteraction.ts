@@ -69,22 +69,26 @@ export function useMapInteraction({
     lng?: number,
     options?: { panWithOffset?: boolean }
   ) => {
-    selectedMarkerId.value = id
-
-    // 좌표가 인자로 안 들어왔으면(마커 클릭 시), 리스트에서 찾음
+    // 1. 타겟 마커 찾기 (ID 또는 KakaoID 매칭)
     let targetLat = lat
     let targetLng = lng
+    let resolvedId = id
 
-    if (targetLat === undefined || targetLng === undefined) {
-      // id가 tripItemId일 수도, kakaoPlaceId일 수도 있으므로 둘 다 비교
-      const target = markerPositions.value.find(
-        (m) => String(m.id) === String(id) || String(m.kakaoPlaceId) === String(id)
-      )
-      if (target) {
+    const target = markerPositions.value.find(
+      (m) => String(m.id) === String(id) || String(m.kakaoPlaceId) === String(id)
+    )
+
+    if (target) {
+      // 마커가 존재하면, 마커의 ID(markerPositions에서 설정한 ID)를 선택된 ID로 설정해야 함
+      // (검색 결과의 경우 place.id(DB ID)가 들어와도 마커는 kakaoPlaceId를 쓰고 있을 수 있음)
+      resolvedId = target.id
+      if (targetLat === undefined || targetLng === undefined) {
         targetLat = target.lat
         targetLng = target.lng
       }
     }
+
+    selectedMarkerId.value = resolvedId
 
     if (targetLat !== undefined && targetLng !== undefined && kakaoMapRef.value?.panTo) {
       let finalLat = targetLat
@@ -117,8 +121,13 @@ export function useMapInteraction({
 
   // 2. 리스트에서 카드 클릭 핸들러
   const handlePlaceClick = (place: Place, options?: { panWithOffset?: boolean }) => {
-    // place.id (tripItemId)가 있으면 그걸 사용하고, 없으면 kakaoPlaceId 사용
-    selectAndPanToPlace(place.id || place.kakaoPlaceId, place.lat, place.lng, options)
+    // kakaoPlaceId를 우선 사용 (검색 결과 마커는 kakaoPlaceId를 ID로 가짐)
+    // Plan에 있는 마커라도 markerPositions 찾을 때 kakaoPlaceId로도 찾으므로 안전함
+    // ID가 반드시 존재한다고 가정 (Place 모델 상)
+    const targetId = place.kakaoPlaceId || place.id
+    if (targetId) {
+      selectAndPanToPlace(targetId, place.lat, place.lng, options)
+    }
   }
 
   // 3. 지도 마커 클릭 핸들러
