@@ -1,7 +1,7 @@
 <template>
   <div
     class="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-50 p-6"
-    @click="emit('close')"
+    @click="handleBackdropClick"
   >
     <button
       @click="emit('close')"
@@ -12,7 +12,6 @@
 
     <div
       class="relative w-full max-w-4xl h-[85vh] flex flex-col"
-      @click.stop
     >
       <div class="flex-shrink-0 self-end">
         <div class="flex items-center justify-end">
@@ -63,7 +62,7 @@
           </div>
         </div>
 
-        <div class="relative">
+        <div class="relative" ref="headerDropdownContainer">
           <button @click="showDropdown = !showDropdown" class="p-2 hover:bg-gray-100 rounded transition-all">
             <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
           </button>
@@ -295,8 +294,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watchEffect, reactive } from 'vue'
-import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, MoreHorizontal, Share, Trash2 } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted, watchEffect, reactive, watch } from 'vue'
+import { Calendar, MapPin, Edit, ListChecks, Shield, ChevronDown, Pencil, User, Heart, MessageCircle, Trash, MoreHorizontal, Share, Trash2 } from 'lucide-vue-next'
 import KakaoMap from '@/components/common/KakaoMap.vue'
 import PlaceDetailPanel from '@/components/trip/PlaceDetailPanel.vue'
 import PlaceDetailModal from '@/components/modal/PlaceDetailModal.vue'
@@ -316,12 +315,18 @@ interface DayPlanDisplay {
   places: SpotResponseDto[]
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   trip: TripDetailResponseDto & { duration?: string; description?: string; views?: number; imageUrl?: string }
   initialPlaceId?: number | null
-}>()
+  initialTab?: 'map' | 'log'
+  logData?: TripLogDetail | null
+  initialIsLiked?: boolean
+}>(), {
+  initialTab: 'map',
+  initialIsLiked: false
+})
 
-const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh'])
+const emit = defineEmits(['close', 'edit', 'write', 'edit-log', 'refresh', 'update'])
 const router = useRouter()
 
 // 1. 상태 동기화 (드롭다운 즉시 반응용)
@@ -331,8 +336,9 @@ watchEffect(() => {
 })
 
 // 2. 탭 & 로그 상태
-const activeTab = ref<'map' | 'log'>('map')
-const tripLog = ref<TripLogDetail | null>(null)
+// 2. 탭 & 로그 상태
+const activeTab = ref<'map' | 'log'>(props.initialTab)
+const tripLog = ref<TripLogDetail | null>(props.logData || null)
 const isLoginAlertVisible = ref(false)
 
 const handleLoginConfirm = () => {
@@ -403,16 +409,17 @@ const mapCenter = computed(() => {
 })
 
 const logLoading = ref(false)
-const isLiked = ref(false)
+const isLiked = ref(props.initialIsLiked)
 
 const fetchTripLog = async (tripId: number) => {
-    if(!props.trip.logId) return
+    const targetLogId = props.trip.logId || tripLog.value?.logId
+    if(!targetLogId) return
+
     logLoading.value = true;
-    tripLog.value = null;
     try {
         const [logResponse, likeResponse] = await Promise.all([
-          getTripLogDetail(props.trip.logId),
-          useAuthStore().isLoggedIn ? getTripLogLikeStatus(props.trip.logId) : Promise.resolve({ liked: false })
+          getTripLogDetail(targetLogId),
+          useAuthStore().isLoggedIn ? getTripLogLikeStatus(targetLogId) : Promise.resolve({ liked: false })
         ])
         tripLog.value = logResponse;
         isLiked.value = likeResponse.liked
@@ -420,10 +427,20 @@ const fetchTripLog = async (tripId: number) => {
         console.error('fetchTripLog error:', error)
         if (error?.response?.status === 404){
           console.warn(`tripId[${tripId}] 로그가 없습니다`)
+          tripLog.value = null // Only nullify if 404
         }
         else alert('로그를 불러오는 중 오류가 발생했습니다.')
     } finally {
         logLoading.value = false;
+        if(tripLog.value) {
+           emit('update', {
+              type: 'sync',
+              logId: tripLog.value.logId,
+              likeCount: tripLog.value.likeCount,
+              liked: isLiked.value,
+              commentCount: tripLog.value.commentCount
+           })
+        }
     }
 }
 
@@ -431,6 +448,7 @@ const handleLogLikeUpdate = (payload: { logId: number; likeCount: number; liked:
     if(tripLog.value && tripLog.value.logId === payload.logId) {
         tripLog.value.likeCount = payload.likeCount
         isLiked.value = payload.liked
+        emit('update', { type: 'like', ...payload })
     }
 }
 
@@ -449,10 +467,19 @@ const handleLogPlaceClick = (placeId: number) => {
 // 탭 핸들러
 const handleTabClick = (tab: 'map' | 'log') => {
     activeTab.value = tab;
-    if (tab === 'log' && !tripLog.value && !logLoading.value) {
-        fetchTripLog(props.trip.id);
-    }
 }
+
+// 탭 변경 감지 및 로그 데이터 로드
+watch(activeTab, (newTab) => {
+    if (newTab === 'log' && !tripLog.value && !logLoading.value) {
+        if (props.logData) {
+            tripLog.value = props.logData
+            isLiked.value = props.initialIsLiked
+        } else if (props.trip.logId) {
+             fetchTripLog(props.trip.id);
+        }
+    }
+}, { immediate: true })
 
 // 상태 변경 핸들러
 const handleStatusChange = async (event: Event) => {
@@ -502,6 +529,8 @@ const handleEditLogClick = () => {
 }
 
 const showDropdown = ref(false)
+const headerDropdownContainer = ref<HTMLElement | null>(null)
+const showToast = ref(false) // Add if needed, or reuse in TripLogContent
 
 const handleShare = () => {
     showDropdown.value = false
@@ -588,8 +617,14 @@ onUnmounted(() => {
 
 const handleClickOutside = (e: MouseEvent) => {
   const target = e.target as HTMLElement
-  if (showDropdown.value && !target.closest('.relative')) {
+  if (showDropdown.value && headerDropdownContainer.value && !headerDropdownContainer.value.contains(target)) {
     showDropdown.value = false
+  }
+}
+
+const handleBackdropClick = (e: MouseEvent) => {
+  if (e.target === e.currentTarget) {
+    emit('close')
   }
 }
 </script>

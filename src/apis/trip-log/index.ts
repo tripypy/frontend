@@ -39,6 +39,33 @@ export const postTripLogComment = async (
 }
 
 /**
+ * 여행 기록(로그)의 댓글을 수정합니다.
+ * @param commentId 수정할 댓글 ID
+ * @param commentData 수정할 댓글 내용
+ * @returns 수정된 댓글 정보
+ */
+export const updateTripLogComment = async (
+  commentId: number,
+  commentData: TripLogCommentRequest,
+): Promise<TripLogCommentResponse> => {
+  const response = await apiClient.patch<TripLogCommentResponse>(
+    `/trip-logs/comments/${commentId}`,
+    commentData,
+  )
+  return response.data
+}
+
+/**
+ * 여행 기록(로그)의 댓글을 삭제합니다.
+ * @param commentId 삭제할 댓글 ID
+ */
+export const deleteTripLogComment = async (
+  commentId: number,
+): Promise<void> => {
+  await apiClient.delete(`/trip-logs/comments/${commentId}`)
+}
+
+/**
  * 특정 여행 기록에 좋아요를 추가합니다.
  * @param logId 좋아요를 누를 여행 기록의 ID
  * @returns 업데이트된 좋아요 수 및 좋아요 상태 (TripLogLikeResponse)
