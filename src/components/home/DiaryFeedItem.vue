@@ -92,13 +92,16 @@
 
       <div
         v-if="allImages.length > 0"
-        class="mb-5 select-none cursor-pointer rounded-xl overflow-hidden border-[2px] border-[#2C2C2C] shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)]"
+        class="mb-5 select-none cursor-pointer bg-white border border-gray-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]"
         @click="handleOpenLog"
       >
+        <!-- Single Image -->
         <div v-if="allImages.length === 1" class="w-full">
-          <img :src="allImages[0]" class="w-full h-auto max-h-[500px] object-cover" />
+          <img :src="allImages[0]" class="h-[280px] w-full object-cover bg-gray-100" />
         </div>
-        <div v-else-if="allImages.length === 2" class="grid grid-cols-2 gap-0">
+        
+        <!-- Two Images -->
+        <div v-else-if="allImages.length === 2" class="grid grid-cols-2 gap-1">
           <div
             v-for="(img, idx) in allImages"
             :key="idx"
@@ -108,9 +111,10 @@
               :src="img"
               class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
             />
-            <div v-if="idx===0" class="absolute right-0 top-0 bottom-0 w-[2px] bg-[#2C2C2C] z-10"></div>
           </div>
         </div>
+
+        <!-- Carousel -->
         <div v-else class="relative group">
           <div class="overflow-hidden">
             <div
@@ -157,9 +161,8 @@
 
       <div class="relative mb-4">
         <p
-          class="text-sm leading-relaxed font-medium text-[#2C2C2C] whitespace-pre-line cursor-pointer"
-          :class="{ 'line-clamp-3': !isExpanded }"
-          @click="isExpanded = !isExpanded"
+          class="text-sm leading-relaxed font-medium text-[#2C2C2C] whitespace-pre-line cursor-pointer line-clamp-2"
+          @click="handleOpenLog"
           v-html="processedContent"
         >
         </p>
@@ -233,7 +236,6 @@ const isLiked = ref(props.liked)
 const isBookmarked = ref(false)
 const currentLikes = ref(props.likeCount)
 const currentCommentCount = ref(props.commentCount)
-const isExpanded = ref(false)
 const currentImageIndex = ref(0)
 const showToast = ref(false)
 const isScrapping = ref(false)
@@ -346,30 +348,12 @@ const imageMap = computed(() => {
 // 2. 본문 내용 처리: 플레이스홀더를 <img> 태그로 대체
 const processedContent = computed(() => {
   let text = props.content || '';
-  const map = imageMap.value;
+  
+  // 1. Remove {{img_key_...}} placeholders
+  text = text.replace(/\{\{img_key_(\d+)\}\}/g, '');
 
-  // 정규식을 사용하여 {{img_key_숫자}} 패턴을 찾고 대체합니다.
-  text = text.replace(/\{\{img_key_(\d+)\}\}/g, (match, keyIndex) => {
-    const refKey = `img_key_${keyIndex}`;
-
-    // 맵에서 해당 키에 맞는 URL을 찾습니다.
-    const imageUrl = map.get(refKey);
-
-    if (imageUrl) {
-      // 찾았다면 <img> 태그로 대체 (Tailwind CSS 스타일링 적용)
-      return `
-        <div class="my-3 flex justify-center">
-          <img
-            src="${imageUrl}"
-            alt="첨부 이미지"
-            class="w-full max-w-[400px] h-auto rounded-lg border-[2px] border-[#2C2C2C] object-cover"
-          />
-        </div>
-      `;
-    }
-    // 이미지를 찾지 못했거나 키가 잘못된 경우, 빈 문자열로 대체 (제거)
-    return '';
-  });
+  // 2. Remove raw <img> tags if any
+  text = text.replace(/<img[^>]*>/g, '');
 
   return text;
 });
