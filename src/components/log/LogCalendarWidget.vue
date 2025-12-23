@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect, type PropType } from 'vue';
 import type { UserCompletedTripDetailDto } from '@/apis/user/types';
+import { getTripDetail } from '@/apis/trip/index'
+import TripDetailModal from '@/components/modal/TripDetailModal.vue';
+import { useNavigate } from '@/composables/common/useNavagation'
+import type { TripDetailResponseDto } from '@/apis/trip/types';
+import type { TripLogDetail } from '@/types/trip/trip.model';
 
 interface LegendTrip {
+  tripId: number; 
   title: string;
   startDate?: string;
   endDate?: string;
@@ -15,9 +21,7 @@ const props = defineProps({
     required: true
   }
 });
-
-console.log(props.completedTrips);
-
+const { handleNavigate } = useNavigate()
 const colors = [
   '#E6194B', '#3CB44B', '#FFE119', '#4363D8', '#F58231',
   '#911EB4', '#46F0F0', '#F032E6', '#BCF60C', '#FABEBE',
@@ -26,6 +30,8 @@ const colors = [
 const currentMonth = ref(new Date());
 const dateColorMap = ref<Map<string, string>>(new Map());
 const tripsForLegend = ref<LegendTrip[]>([]);
+const selectedTrip = ref<TripDetailResponseDto | null>(null);
+const isLoadingDetail = ref(false);
 
 const formattedMonth = computed(() => {
   const year = currentMonth.value.getFullYear();
@@ -111,6 +117,7 @@ watchEffect(() => {
     const tripColor = colors[index % colors.length];
 
     newTripsForLegend.push({
+      tripId: trip.id,
       title: trip.title,
       startDate: trip.startDate,
       endDate: trip.endDate,
@@ -148,6 +155,57 @@ function prevMonth() {
 function nextMonth() {
   currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() + 1, 1);
 }
+
+// 여행 상세 정보를 불러오고 모달을 띄우는 함수
+async function showTripDetail(tripId: number) {
+  if (isLoadingDetail.value) return;
+
+  isLoadingDetail.value = true;
+  selectedTrip.value = null; // 이전 데이터 초기화
+
+  try {
+    // getTripDetail 함수를 사용하여 상세 정보 호출
+    const detail = await getTripDetail(tripId);
+    selectedTrip.value = detail;
+  } catch (error) {
+    console.error('Failed to fetch trip detail:', error);
+    // 에러 처리 로직 (예: 사용자에게 알림)
+  } finally {
+    isLoadingDetail.value = false;
+  }
+}
+
+// 모달 이벤트 핸들러 (부모 컴포넌트의 로직을 대체)
+function handleModalClose() {
+    selectedTrip.value = null;
+}
+// 실제 부모 컴포넌트에서 구현해야 할 다른 이벤트 핸들러는 단순 목업 처리
+const handleEditFromModal = (trip: TripDetailResponseDto) => {
+  selectedTrip.value = null
+  handleNavigate('trip-edit', { id: trip.id })
+}
+
+// 3. 로그 작성 이동
+const handleWriteLogFromModal = (trip: TripDetailResponseDto) => {
+  selectedTrip.value = null
+  handleNavigate('log-write', { tripId: trip.id })
+}
+
+// 4. 로그 수정 이동
+const handleEditLogFromModal = (tripLog: TripLogDetail) => {
+  selectedTrip.value = null
+  if (tripLog.logId){
+    handleNavigate('log-edit', { logId: tripLog.logId })
+  }
+}
+// // 부모에게 새로고침을 요청해야 할 경우를 대비해 emit 추가
+// const emits = defineEmits<{
+//    (e: 'refresh-trips'): void;
+// }>();
+// function handleRefreshFromModal() {
+//     emits('refresh-trips');
+//     selectedTrip.value = null;
+// }
 </script>
 
 <template>
@@ -193,7 +251,11 @@ function nextMonth() {
 
     <div class="mt-4 space-y-2 px-2 max-h-24 overflow-y-auto">
         <div v-if="tripsForLegend.length > 0">
-          <div v-for="trip in tripsForLegend" :key="trip.title" class="flex items-center text-sm text-[#2C2C2C]">
+          <div 
+            v-for="trip in tripsForLegend" :key="trip.title" 
+            class="flex items-center text-sm text-[#2C2C2C] cursor-pointer hover:bg-[#9BCCC4] hover:rounded-lg transition-all"
+            @click="showTripDetail(trip.tripId)"
+            >
             <div class="w-2 h-2 rounded-full mr-2 flex-shrink-0" :style="{ backgroundColor: trip.color }"></div>
             <span class="truncate" :title="trip.title">{{ trip.title }} ({{ trip.startDate }} ~ {{ trip.endDate }})</span>
           </div>
@@ -203,4 +265,13 @@ function nextMonth() {
         </div>
     </div>
   </div>
+
+  <TripDetailModal
+    v-if="selectedTrip"
+    :trip="selectedTrip"
+    @close="handleModalClose"
+    @edit="handleEditFromModal"
+    @write="handleWriteLogFromModal"
+    @edit-log="handleEditLogFromModal"
+  />
 </template>
