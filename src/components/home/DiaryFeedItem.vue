@@ -97,24 +97,10 @@
       >
         <!-- Single Image -->
         <div v-if="allImages.length === 1" class="w-full">
-          <img :src="allImages[0]" class="h-[280px] w-full object-cover bg-gray-100" />
+          <img :src="allImages[0]" class="aspect-[4/3] w-full object-cover bg-gray-100" />
         </div>
         
-        <!-- Two Images -->
-        <div v-else-if="allImages.length === 2" class="grid grid-cols-2 gap-1">
-          <div
-            v-for="(img, idx) in allImages"
-            :key="idx"
-            class="aspect-square relative overflow-hidden"
-          >
-            <img
-              :src="img"
-              class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-            />
-          </div>
-        </div>
-
-        <!-- Carousel -->
+        <!-- Carousel for 2+ Images -->
         <div v-else class="relative group">
           <div class="overflow-hidden">
             <div
