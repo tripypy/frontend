@@ -62,7 +62,7 @@
           </div>
         </div>
 
-        <div class="relative">
+        <div class="relative" ref="headerDropdownContainer">
           <button @click="showDropdown = !showDropdown" class="p-2 hover:bg-gray-100 rounded transition-all">
             <MoreHorizontal class="w-6 h-6 text-[#2C2C2C]" stroke-width="2.5" />
           </button>
@@ -433,12 +433,12 @@ const fetchTripLog = async (tripId: number) => {
     } finally {
         logLoading.value = false;
         if(tripLog.value) {
-           emit('update', { 
-              type: 'sync', 
-              logId: tripLog.value.logId, 
-              likeCount: tripLog.value.likeCount, 
+           emit('update', {
+              type: 'sync',
+              logId: tripLog.value.logId,
+              likeCount: tripLog.value.likeCount,
               liked: isLiked.value,
-              commentCount: tripLog.value.commentCount 
+              commentCount: tripLog.value.commentCount
            })
         }
     }
@@ -529,6 +529,8 @@ const handleEditLogClick = () => {
 }
 
 const showDropdown = ref(false)
+const headerDropdownContainer = ref<HTMLElement | null>(null)
+const showToast = ref(false) // Add if needed, or reuse in TripLogContent
 
 const handleShare = () => {
     showDropdown.value = false
@@ -615,7 +617,7 @@ onUnmounted(() => {
 
 const handleClickOutside = (e: MouseEvent) => {
   const target = e.target as HTMLElement
-  if (showDropdown.value && !target.closest('.relative')) {
+  if (showDropdown.value && headerDropdownContainer.value && !headerDropdownContainer.value.contains(target)) {
     showDropdown.value = false
   }
 }
