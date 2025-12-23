@@ -167,6 +167,12 @@
       </div>
     </div>
   </nav>
+
+  <DiaryCommentModal
+    v-if="showLogModal && selectedLogId"
+    :log-id="selectedLogId"
+    @close="handleLogClose"
+  />
 </template>
 
 <script setup lang="ts">
@@ -177,6 +183,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notification'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import DiaryCommentModal from '@/components/modal/DiaryCommentModal.vue'
 
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
@@ -206,6 +213,10 @@ const showNotifications = ref(false)
 const userMenuRef = ref<HTMLDivElement | null>(null)
 const notificationRef = ref<HTMLDivElement | null>(null)
 
+// Modal State
+const showLogModal = ref(false)
+const selectedLogId = ref<number | null>(null)
+
 const handleClickOutside = (event: MouseEvent) => {
   if (userMenuRef.value && !userMenuRef.value.contains(event.target as Node)) {
     showUserMenu.value = false
@@ -233,10 +244,29 @@ const handleNotificationClick = async (notif: any) => {
   if (!notif.isRead) {
     await notificationStore.readNotification(notif.id)
   }
-  if (notif.targetUrl) {
-    router.push(notif.targetUrl)
+  
+  // 친구 관련 알림은 친구 페이지로 이동
+  if (notif.type === 'FRIEND_REQUEST' || notif.type === 'FRIEND_ACCEPT') {
+    if (notif.targetUrl) {
+      router.push(notif.targetUrl)
+    }
+  } 
+  // 로그 관련 알림(좋아요, 댓글, 스크랩)은 모달 띄우기
+  else if (['LIKE', 'COMMENT', 'SCRAP'].includes(notif.type)) {
+      selectedLogId.value = notif.targetId
+      showLogModal.value = true
   }
+  // 그 외(혹시 모를 경우)는 targetUrl로 이동 시도
+  else if (notif.targetUrl) {
+      router.push(notif.targetUrl)
+  }
+
   showNotifications.value = false
+}
+
+const handleLogClose = () => {
+    showLogModal.value = false
+    selectedLogId.value = null
 }
 
 const formatTime = (dateString: string) => {
