@@ -54,6 +54,7 @@
               @click="handleOpenModal(trip.id)"
               @open-modal="handleOpenModal"
               @refresh="fetchTrips"
+              @copy="handleCopyClick"
             />
           </div>
         </div>
@@ -67,6 +68,7 @@
           @click="handleOpenModal(trip.id)"
           @open-modal="handleOpenModal"
           @refresh="fetchTrips"
+          @copy="handleCopyClick"
         />
       </div>
     </div>
@@ -81,6 +83,16 @@
       @refresh="fetchTrips"
     />
 
+    <AlertDialog
+      :show="showCopyAlert"
+      title="여행 복사"
+      message="이 여행 계획을 복사할까요?"
+      confirm-button-text="복사"
+      close-button-text="취소"
+      @close="showCopyAlert = false"
+      @confirm="handleCopyConfirm"
+    />
+
     <ScrollToTop />
   </div>
 </template>
@@ -93,8 +105,9 @@ import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
+import AlertDialog from '@/components/common/AlertDialog.vue'
 import { useRouter, useRoute } from 'vue-router'
-import { createTrip, getMyTrips, getTripDetail } from '@/apis/trip/index'
+import { createTrip, getMyTrips, getTripDetail, requestScrapTrip } from '@/apis/trip/index'
 import type { TripResponseDto, TripDetailResponseDto, TripItemResponseDto } from '@/apis/trip/types'
 import { TripStatus } from '@/types/common'
 import type { TripLogDetail } from '@/types/trip/trip.model'
@@ -243,6 +256,30 @@ const handleEditLogFromModal = (tripLog: TripLogDetail) => {
   selectedTrip.value = null
   if (tripLog.logId){
     router.push({ name: 'log-edit', params: { logId: tripLog.logId}})
+  }
+}
+// 5. 여행 복사 (스크랩) 로직
+const showCopyAlert = ref(false)
+const targetTripId = ref<number | null>(null)
+
+const handleCopyClick = (tripId: number) => {
+  targetTripId.value = tripId
+  showCopyAlert.value = true
+}
+
+const handleCopyConfirm = async () => {
+  if (!targetTripId.value) return
+  
+  try {
+    await requestScrapTrip(targetTripId.value)
+    showCopyAlert.value = false
+    targetTripId.value = null
+    // 성공 시 목록 새로고침
+    await fetchTrips()
+    alert('여행이 복사되었습니다.')
+  } catch (error) {
+    console.error('여행 복사 실패:', error)
+    alert('여행 복사에 실패했습니다.')
   }
 }
 </script>
