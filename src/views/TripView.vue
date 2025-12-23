@@ -13,7 +13,7 @@
 
         <button
           @click="handleCreateNewTrip"
-          class="flex items-center justify-center gap-3 px-6 py-4 bg-[#fe8a7d] border-[3px] border-black rounded-2xl font-black text-sm tracking-tight shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all uppercase w-full md:w-auto focus:outline-none"
+          class="flex items-center justify-center gap-3 px-6 py-4 bg-black text-white border-[3px] border-black rounded-2xl font-black text-sm tracking-tight hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-white hover:text-black hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all uppercase w-full md:w-auto focus:outline-none"
         >
           <BadgePlus class="w-7 h-7"/>
           새로운 여행 계획 만들기
