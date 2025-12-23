@@ -215,7 +215,7 @@ import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import DiaryFeedItem from '@/components/home/DiaryFeedItem.vue'
 import { Plus, Calendar} from 'lucide-vue-next'
 import type { TripLogFeedItemDto } from '@/apis/trip-log/types';
-import { getTripLogFeed } from '@/apis/trip-log/index';
+import { getTripLogFeed, getFriendTripLogFeed } from '@/apis/trip-log/index';
 import { dailyMissions } from '@/data/mockData'
 import { spotApi } from '@/apis/spot'
 import { getMyTrips, createTrip, getTripDetail } from '@/apis/trip' // Added getTripDetail
@@ -302,6 +302,10 @@ const observerTarget = ref<HTMLElement | null>(null)
 const nextCursor = ref<number | null>(null)
 const hasNext = ref(true)
 
+// 피드 로직용 상태
+const loadedLogIds = new Set<number>()
+const isFriendFeedLoaded = ref(false)
+
 // Daily Mission Logic
 const currentMission = ref(dailyMissions[Math.floor(Math.random() * dailyMissions.length)])
 
@@ -345,6 +349,13 @@ const upcomingTrips = computed(() => {
 
 // Initial Data Load
 onMounted(async () => {
+  // 초기화
+  diaryEntries.value = []
+  loadedLogIds.clear()
+  isFriendFeedLoaded.value = false
+  nextCursor.value = null
+  hasNext.value = true
+
   loadMore()
 
   // Load Hot Places
@@ -381,27 +392,64 @@ onMounted(async () => {
   }
 })
 
-// 무한 스크롤 로직
+// 무한 스크롤 로직 (친구 피드 우선 + 전체 피드 병합)
 const loadMore = async () => {
   if (isLoading.value || !hasNext.value) return
 
   isLoading.value = true
 
   try {
+    // 1. 친구 피드 로드 (아직 안 불러왔다면)
+    if (!isFriendFeedLoaded.value) {
+      try {
+        const friendFeedResponse = await getFriendTripLogFeed()
+        
+        if (friendFeedResponse.content && Array.isArray(friendFeedResponse.content)) {
+            friendFeedResponse.content.forEach(log => {
+            if (!loadedLogIds.has(log.logId)) {
+                loadedLogIds.add(log.logId)
+                diaryEntries.value.push(log)
+            }
+            })
+        }
+      } catch (error) {
+        console.warn('친구 피드 로드 실패 (무시하고 전체 피드 진행):', error)
+      } finally {
+        isFriendFeedLoaded.value = true
+      }
+    }
+
+    // 2. 전체 피드 로드 (친구 피드가 10개 미만이거나, 이미 친구 피드를 다 본 경우)
+    // 친구 피드로만 화면이 꽉 차지 않았으면 전체 피드를 가져와서 채운다.
+    // 혹은 스크롤이 내려가서 더 많은 데이터가 필요한 경우.
+    
+    // 목표: 한 번 로딩 사이클에서 적어도 10개는 보여주고 싶음.
+    // 하지만 API 구조상 '부족한 개수만큼 가져오기'는 어려우므로,
+    // 친구 피드 로드 후에도 전체 피드를 호출해서 밑에 붙인다.
+    
+    // 전체 피드 호출
     const response = await getTripLogFeed({
       cursor: nextCursor.value,
       limit: 10
     })
 
-    diaryEntries.value.push(...response.content)
+    const newLogs = response.content.filter(log => {
+      if (loadedLogIds.has(log.logId)) return false
+      loadedLogIds.add(log.logId)
+      return true
+    })
+
+    diaryEntries.value.push(...newLogs)
     nextCursor.value = response.nextCursor
     hasNext.value = response.hasNext
+
   } catch (error) {
     console.error('피드 로딩 중 오류 발생: ', error)
   } finally {
     isLoading.value = false
   }
 }
+
 
 // Observer Logic
 let observer: IntersectionObserver | null = null;
