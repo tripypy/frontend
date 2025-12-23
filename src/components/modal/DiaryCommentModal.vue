@@ -38,6 +38,7 @@
     @close="emit('close')"
     @refresh="fetchLogDetail"
     @update="emit('update', $event)"
+    @edit="emit('edit', $event)"
   />
 </template>
 
@@ -55,7 +56,7 @@ const props = defineProps<{
   initialLiked?: boolean
 }>()
 
-const emit = defineEmits(['close', 'update'])
+const emit = defineEmits(['close', 'update', 'edit'])
 
 const logDetail = ref<TripLogDetail | null>(null)
 const tripDetail = ref<TripDetailResponseDto | null>(null)

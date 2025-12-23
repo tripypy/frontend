@@ -191,6 +191,7 @@
         :author-id="selectedAuthorId"
         @close="handleLogClose"
         @update="handleLogUpdate"
+        @edit="handleEditFromModal"
     />
 
     <TripDetailModal
