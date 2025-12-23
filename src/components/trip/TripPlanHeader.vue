@@ -50,7 +50,7 @@
           <div class="flex items-center">
             <template v-if="isEditMode">
               <select
-                :value="tripStatus"
+                :value="tripStatus || 'PLANNED'"
                 @change="$emit('update:tripStatus', $event.target.value)"
                 class="px-3 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#9BCCC4] cursor-pointer bg-white"
               >
@@ -58,7 +58,7 @@
               </select>
             </template>
             <div v-else class="px-3 py-2 border-[2px] border-gray-300 rounded-lg bg-gray-50">
-              <span class="font-bold text-gray-700">{{ tripStatus }}</span>
+              <span class="font-bold text-gray-700">{{ tripStatus || 'PLANNED' }}</span>
             </div>
           </div>
 
@@ -66,7 +66,7 @@
           <div class="flex items-center">
             <template v-if="isEditMode">
               <select
-                :value="tripVisibility"
+                :value="tripVisibility || 'PUBLIC'"
                 @change="$emit('update:tripVisibility', $event.target.value)"
                 class="px-3 py-2 border-[2px] border-[#2C2C2C] rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#9BCCC4] cursor-pointer bg-white"
               >
@@ -75,7 +75,7 @@
               </select>
             </template>
             <div v-else class="px-3 py-2 border-[2px] border-gray-300 rounded-lg bg-gray-50">
-              <span class="font-bold text-gray-700">{{ tripVisibility }}</span>
+              <span class="font-bold text-gray-700">{{ tripVisibility || 'PUBLIC' }}</span>
             </div>
           </div>
         </div>
@@ -117,15 +117,21 @@ import { ArrowLeft, Save, Edit, Trash2, MapPin } from 'lucide-vue-next'
 import { TripStatus } from '@/types/common'
 import type { TripVisibility } from '@/types/trip/trip.model'
 
-defineProps<{
-  tripTitle: string
-  tripDate: string
-  formattedDate: string
-  isEditMode: boolean
-  totalPlacesCount: number
-  tripStatus: TripStatus | null
-  tripVisibility: TripVisibility | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    tripTitle: string
+    tripDate: string
+    formattedDate: string
+    isEditMode: boolean
+    totalPlacesCount: number
+    tripStatus: TripStatus | null
+    tripVisibility: TripVisibility | null
+  }>(),
+  {
+    tripStatus: TripStatus.PLANNED,
+    tripVisibility: 'PUBLIC' as any,
+  },
+)
 
 defineEmits<{
   (e: 'back'): void

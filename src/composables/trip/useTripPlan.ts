@@ -38,8 +38,8 @@ export function useTripPlan() {
   const route = useRoute()
   const router = useRouter()
   const tripId = ref<number | null>(null)
-  const tripStatus = ref<TripStatus | null>(null)
-  const tripVisibility = ref<TripVisibility | null>(null)
+  const tripStatus = ref<TripStatus>(TripStatus.PLANNED)
+  const tripVisibility = ref<TripVisibility>('PUBLIC')
 
   // State
   const isEditMode = ref(false)
@@ -64,8 +64,17 @@ export function useTripPlan() {
       tripTitle.value = tripDetail.title
       tripLocationSummary.value = tripDetail.locationSummary || '' // Added
       tripDate.value = tripDetail.startDate || ''
-      tripStatus.value = tripDetail.status
-      tripVisibility.value = tripDetail.visibility
+      // DRAFT인 경우 PLANNED로 표시 (UI에서 DRAFT를 지원하지 않음)
+      tripStatus.value = (tripDetail.status === TripStatus.DRAFT || !tripDetail.status)
+        ? TripStatus.PLANNED
+        : tripDetail.status
+
+      // 가시성 데이터 보정: 신규 여행(날짜 미정)이거나 DRAFT인 경우 PUBLIC으로 유도
+      if (tripDetail.status === TripStatus.DRAFT || !tripDetail.startDate) {
+        tripVisibility.value = 'PUBLIC'
+      } else {
+        tripVisibility.value = tripDetail.visibility || 'PUBLIC'
+      }
 
       // API 응답을 로컬 상태로 변환
       const maxDay = tripDetail.tripItems.reduce((max, item) => Math.max(max, item.dayNumber), 0)
