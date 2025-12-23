@@ -45,6 +45,8 @@ const props = defineProps<{
   markers?: MarkerOption[]
   polylines?: PolylineOption[]
   selectedMarkerId?: number | string | null
+  isClickable?: boolean // Added for Log Map Widget
+  showPlanLine?: boolean // Added: Check to show valid plan line
 }>()
 
 const emits = defineEmits<{
@@ -103,12 +105,22 @@ const renderMarkers = (markers: MarkerOption[]) => {
 
     if (m.type === 'plan') {
       const content = document.createElement('div')
+      // [Modified] Support custom color for Log Map (Travel Map) usage
+      const bgColor = m.color ? m.color : (isSelected ? '#FF8A00' : '#9BCCC4')
+      // If order is missing, just show a dot or empty string? LogMapWidget markers don't have order.
+      // Let's make it a smaller dot if no order, or just show empty string.
+      const hasOrder = m.order !== undefined && m.order !== null
+      
       content.className = `
-        flex items-center justify-center w-12 h-12 rounded-full font-black text-black border-[2px] border-[#2C2C2C]
+        flex items-center justify-center 
+        ${hasOrder ? 'w-12 h-12 border-[2px]' : 'w-4 h-4 border-[1px]'} 
+        rounded-full font-black text-black border-[#2C2C2C]
         transition-all duration-200 ease-in-out
-        ${isSelected ? 'bg-[#FF8A00] scale-110' : 'bg-[#9BCCC4]'}
+        ${isSelected && !m.color ? 'scale-110' : ''}
       `
-      content.innerHTML = String(m.order || '')
+      content.style.backgroundColor = bgColor
+      
+      content.innerHTML = hasOrder ? String(m.order) : ''
 
       const customOverlay = new kakao.maps.CustomOverlay({
         position: pos,
@@ -152,7 +164,10 @@ const renderMarkers = (markers: MarkerOption[]) => {
 
   // Draw polyline for plan markers
   // Draw polyline for plan markers
-  renderPlanPolylineAsOverlay(markers)
+  // Draw polyline for plan markers ONLY if enabled
+  if (props.showPlanLine !== false) {
+      renderPlanPolylineAsOverlay(markers)
+  }
 
   if (!props.selectedMarkerId) {
     rawMap.setBounds(bounds)
@@ -331,7 +346,7 @@ const initMap = () => {
   kakao.maps.event.addListener(mapInstance, 'zoom_changed', () => {
     emits('map-move')
     // Re-render polyline overlay to adjust line paths for new zoom level
-    if (props.markers && props.markers.length > 0) {
+    if (props.showPlanLine !== false && props.markers && props.markers.length > 0) {
       renderPlanPolylineAsOverlay(props.markers)
     }
   })
