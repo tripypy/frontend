@@ -181,6 +181,7 @@
       v-if="selectedPlaceForDetail"
       ref="placeDetailModalRef"
       :place="selectedPlaceForDetail"
+      :disable-keydown="!!selectedLogId"
       @close="selectedPlaceForDetail = null"
       @open-trip-log="handleOpenTripLog"
     />
@@ -192,6 +193,7 @@
         @close="handleLogClose"
         @update="handleLogUpdate"
         @edit="handleEditFromModal"
+        @edit-log="handleEditLogFromModal"
     />
 
     <TripDetailModal
@@ -315,6 +317,12 @@ const fetchTripDetailAndOpen = async (tripId: number) => {
 const handleEditFromModal = (trip: any) => {
     selectedTrip.value = null
     handleNavigate('trip-edit', { id: trip.id })
+}
+
+const handleEditLogFromModal = (log: any) => {
+    selectedLogId.value = null
+    // Assuming 'log-edit' route takes logId as param
+    router.push({ name: 'log-edit', params: { logId: log.logId } })
 }
 
 const handleCreateTrip = async () => {

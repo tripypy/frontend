@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="isLoading"
-    class="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-50 p-6"
+    class="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-[70] p-6"
     @click="emit('close')"
   >
     <button
@@ -21,7 +21,7 @@
   
   <div
     v-else-if="error"
-    class="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-50 p-6"
+    class="fixed inset-0 bg-black/60 flex flex-col items-center justify-center z-[70] p-6"
     @click="emit('close')"
   >
     <div class="text-red-500 font-black text-2xl bg-white p-8 rounded-lg">
@@ -39,6 +39,7 @@
     @refresh="fetchLogDetail"
     @update="emit('update', $event)"
     @edit="emit('edit', $event)"
+    @edit-log="emit('edit-log', $event)"
   />
 </template>
 
@@ -56,7 +57,7 @@ const props = defineProps<{
   initialLiked?: boolean
 }>()
 
-const emit = defineEmits(['close', 'update', 'edit'])
+const emit = defineEmits(['close', 'update', 'edit', 'edit-log'])
 
 const logDetail = ref<TripLogDetail | null>(null)
 const tripDetail = ref<TripDetailResponseDto | null>(null)
