@@ -13,21 +13,24 @@
         <div v-if="isEditable" class="flex items-center gap-1.5">
           <!-- Status Toggle Button -->
           <button
-            v-if="trip.isOwner"
-            @click.stop="handleToggleStatus"
-            class="w-7 h-7 border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none bg-white"
-            :title="trip.status === TripStatus.COMPLETED ? '계획중으로 변경' : '완료 처리'"
-          >
-            <Check class="w-4 h-4 text-[#2C2C2C]" stroke-width="3" />
-          </button>
-
-          <button
             @click.stop="emit('copy', trip.id)"
             class="w-7 h-7 border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none bg-white"
             title="여행 복사"
           >
             <Copy class="w-3.5 h-3.5 text-[#2C2C2C]" stroke-width="2.5" />
           </button>
+
+          <button
+            v-if="trip.isOwner"
+            @click.stop="handleToggleStatus"
+            class="w-7 h-7 border-[2px] border-[#2C2C2C] rounded-md hover:shadow-[2px_2px_0px_0px_rgba(44,44,44,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px] flex items-center justify-center transition-all focus:outline-none"
+            :class="[trip.status===TripStatus.COMPLETED ? 'bg-[#fe8a7d]' : 'bg-white']"
+            :title="trip.status === TripStatus.COMPLETED ? '계획중으로 변경' : '완료 처리'"
+          >
+            <Check 
+            class="w-4 h-4 text-[#2C2C2C]" 
+            stroke-width="3" />
+          </button> 
         </div>
       </div>
 

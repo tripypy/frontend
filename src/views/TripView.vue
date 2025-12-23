@@ -13,9 +13,9 @@
 
         <button
           @click="handleCreateNewTrip"
-          class="flex items-center justify-center gap-3 px-6 py-4 bg-[#F9CA6B] border-[3px] border-black rounded-2xl font-black text-sm tracking-tight shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all uppercase w-full md:w-auto focus:outline-none"
+          class="flex items-center justify-center gap-3 px-6 py-4 bg-[#fe8a7d] border-[3px] border-black rounded-2xl font-black text-sm tracking-tight shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all uppercase w-full md:w-auto focus:outline-none"
         >
-          <Plus class="w-5 h-5" stroke-width="3" />
+          <BadgePlus class="w-7 h-7"/>
           새로운 여행 계획 만들기
         </button>
       </div>
@@ -146,6 +146,7 @@ import { createTrip, getMyTrips, getTripDetail, requestScrapTrip } from '@/apis/
 import type { TripResponseDto, TripDetailResponseDto, TripItemResponseDto } from '@/apis/trip/types'
 import { TripStatus } from '@/types/common'
 import type { TripLogDetail } from '@/types/trip/trip.model'
+import { BadgePlus } from 'lucide-vue-next'
 
 const { handleNavigate } = useNavigate()
 const router = useRouter()
