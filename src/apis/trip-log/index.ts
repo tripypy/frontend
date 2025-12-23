@@ -156,6 +156,26 @@ export const getTripLogsBySpot = async (
 }
 
 /**
+ * 특정 유저(userId)의 여행 로그 목록을 조회합니다.
+ * @param userId 유저 ID
+ * @param params 페이징 파라미터 (page, limit)
+ * @returns 여행 로그 목록 (PageTripLogFeedResponseDto)
+ */
+export const getTripLogsByUser = async (
+  userId: number,
+  params: { page?: number; limit?: number }
+): Promise<any> => {
+  const response = await apiClient.get('/trip-logs', {
+    params: {
+      userId,
+      page: params.page ?? 1,
+      limit: params.limit ?? 10
+    }
+  })
+  return response.data
+}
+
+/**
  * 여행 로그 생성 API 함수
  * @param payload 여행 로그 생성 요청 데이터
  * @returns 생성된 로그 ID

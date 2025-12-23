@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useNavigate } from '@/composables/common/useNavagation'
 import { useAuthStore } from '@/stores/auth'
 import { fetchUserProfile, requestFetchUser } from '@/apis/user/index'
+import { getTripLogsByUser } from '@/apis/trip-log/index'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
 import ScrollToTop from '@/components/common/ScrollToTop.vue'
 import FriendsListModal from '@/components/log/FriendsListModal.vue'
@@ -23,6 +24,8 @@ const route = useRoute()
 const loggedInUser = computed(() => authStore.user)
 const profileData = ref<LogViewProfile | null>(null)
 const isLoading = ref(true)
+const currentPage = ref(1)
+const totalPages = ref(1)
 
 const isMyProfile = computed<boolean>(() => {
   const routeUserId = route.params.userId
@@ -37,6 +40,7 @@ const fetchAndSetProfileData = async (userId: number, showLoading = true) => {
     const response = await fetchUserProfile(userId);
     if (response){
       profileData.value = toLogViewProfile(response, false)
+      await fetchLogs(userId, 1)
     }
   } catch (error) {
     console.error(`Failed to fetch profile for user ${userId}:`, error);
@@ -44,6 +48,28 @@ const fetchAndSetProfileData = async (userId: number, showLoading = true) => {
   } finally {
     if (showLoading) isLoading.value = false
   }
+}
+
+const fetchLogs = async (userId: number, page: number) => {
+    try {
+        const logsRes = await getTripLogsByUser(userId, { page, limit: 9 })
+        if (logsRes && logsRes.content) {
+            if (profileData.value) {
+                profileData.value.diaries = logsRes.content.map((log: any) => ({
+                    ...log,
+                    id: log.logId,
+                    likes: log.likeCount,
+                    comments: log.commentCount,
+                    thumbnailUrl: log.images && log.images.length > 0 ? log.images[0].imageUrl : null,
+                    tripId: profileData.value?.diaries.find(d => d.id === log.logId)?.tripId || 0
+                }))
+            }
+            currentPage.value = page
+            totalPages.value = logsRes.totalPages
+        }
+    } catch (e) {
+        console.error("Failed to fetch logs", e)
+    }
 }
 
 const setMyProfileData = async (showLoading = true) => {
@@ -58,12 +84,21 @@ const setMyProfileData = async (showLoading = true) => {
         const response = await requestFetchUser()
         if (response){
           profileData.value = toLogViewProfile(response, true)
+          await fetchLogs(loggedInUser.value.id, 1)
         }
     } catch (error) {
         console.error('내 프로필 정보를 가져오는 데 실패했습니다.', error);
         if (showLoading) profileData.value = null;
     } finally {
         if (showLoading) isLoading.value = false;
+    }
+}
+
+const handlePageChange = async (page: number) => {
+    if (profileData.value) {
+        await fetchLogs(profileData.value.id, page)
+         // Scroll to top of tabs? Optional.
+        window.scrollTo({ top: 300, behavior: 'smooth' })
     }
 }
 
@@ -121,6 +156,9 @@ onMounted(() => {
             :is-my-profile="isMyProfile"
             :user-diaries="profileData.diaries || []"
             :user-plans="profileData.userPlans || []"
+            :current-page="currentPage"
+            :total-pages="totalPages"
+            @page-change="handlePageChange"
           />
         </section>
       </div>
