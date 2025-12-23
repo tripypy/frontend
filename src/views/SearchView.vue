@@ -320,6 +320,7 @@
       v-if="selectedPlace" 
       ref="placeDetailModalRef"
       :place="selectedPlace" 
+      :disable-keydown="!!selectedLogId"
       @close="selectedPlace = null" 
       @open-trip-log="handleOpenTripLog"
     />

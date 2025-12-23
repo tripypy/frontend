@@ -325,6 +325,7 @@ import AlertDialog from '@/components/common/AlertDialog.vue'
 
 const props = defineProps<{
   place: any
+  disableKeydown?: boolean
 }>()
 
 const emit = defineEmits(['close', 'open-trip-log'])
@@ -441,6 +442,7 @@ const handleDialogConfirm = () => {
 
 // Close on Esc
 const handleKeydown = (e: KeyboardEvent) => {
+    if (props.disableKeydown) return
     if (e.key === 'Escape' && !dialogState.value.show) {
         emit('close')
     }
@@ -448,11 +450,11 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => {
     fetchSpotData()
-    window.addEventListener('keydown', handleKeydown)
+    document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown)
+    document.removeEventListener('keydown', handleKeydown)
 })
 
 const showAlert = (message: string, title = '알림', onConfirm?: () => void) => {
