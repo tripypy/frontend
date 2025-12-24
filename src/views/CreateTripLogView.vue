@@ -65,6 +65,17 @@
         </div> -->
       </section>
     </div>
+
+    <!-- Alert Dialog -->
+    <AlertDialog
+      :show="dialogState.show"
+      :title="dialogState.title"
+      :message="dialogState.message"
+      :confirm-button-text="dialogState.confirmButtonText"
+      :show-cancel-button="dialogState.showCancelButton"
+      @close="closeDialog"
+      @confirm="handleDialogConfirm"
+    />
   </div>
 </template>
 
@@ -76,6 +87,7 @@ import ContentEditor from '@/components/log-write/ContentEditor.vue'
 import { useNavigate } from '@/composables/common/useNavagation'
 import { postTripLogCreate } from '@/apis/trip-log/index'
 import TravelNavbar from '@/components/common/TravelNavbar.vue'
+import AlertDialog from '@/components/common/AlertDialog.vue'
 
 const { handleNavigate } = useNavigate()
 const route = useRoute()
@@ -89,9 +101,6 @@ const postContent = ref('')
 const visibility = ref<'PUBLIC' | 'PRIVATE'>('PUBLIC')
 const isSubmitting = ref(false)
 
-// tripId는 route param 기준
-const tripId = Number(route.params.tripId)
-
 // ----------------------------
 // 유효성
 // ----------------------------
@@ -99,6 +108,37 @@ const isFormValid = computed(() => {
   return title.value.trim() !== '' && postContent.value.trim() !== ''
 })
 
+const dialogState = ref({
+  show: false,
+  title: '알림',
+  message: '',
+  confirmButtonText: '확인',
+  showCancelButton: false,
+  onConfirm: () => {},
+})
+
+const closeDialog = () => {
+    dialogState.value.show = false
+}
+
+const handleDialogConfirm = () => {
+    dialogState.value.onConfirm()
+    closeDialog()
+}
+
+const showAlert = (message: string, title = '알림') => {
+    dialogState.value = {
+        show: true,
+        title,
+        message,
+        confirmButtonText: '확인',
+        showCancelButton: false,
+        onConfirm: () => {},
+    }
+}
+
+// tripId는 route param 기준
+const tripId = Number(route.params.tripId)
 
 // ----------------------------
 // 제출 로직
@@ -120,7 +160,7 @@ const submitPost = async () => {
     router.back()
   } catch (err) {
     console.error('글 작성 실패', err)
-    alert('글 저장 중 오류가 발생했습니다.')
+    showAlert('글 저장 중 오류가 발생했습니다.')
   } finally {
     isSubmitting.value = false
   }
