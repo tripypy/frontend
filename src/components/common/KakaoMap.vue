@@ -87,9 +87,6 @@ const renderMarkers = (markers: MarkerOption[]) => {
 
   if (!markers || markers.length === 0) return
 
-  // DEBUG LOG
-  console.error('DEBUG: renderMarkers called. showPlanLine:', props.showPlanLine, 'Markers length:', markers.length, 'ID:', props.selectedMarkerId);
-
   const bounds = new kakao.maps.LatLngBounds()
 
   const normalImage = new kakao.maps.MarkerImage(
@@ -113,7 +110,7 @@ const renderMarkers = (markers: MarkerOption[]) => {
 
       content.className = `
         flex items-center justify-center
-        ${hasOrder ? 'w-12 h-12 border-[2px] text-base' : 'w-3 h-3 border-[1px]'}
+        ${hasOrder ? 'w-12 h-12 border-[2px] text-base' : 'w-5 h-5 border-[1px]'}
         rounded-full font-black text-black border-[#2C2C2C]
         transition-all duration-200 ease-in-out
         ${isSelected && !m.color ? 'scale-110' : ''}
@@ -190,8 +187,6 @@ const renderPlanPolylineAsOverlay = (markers: MarkerOption[]) => {
     .filter((m) => m.type === 'plan')
     .sort((a, b) => (a.order || 0) - (b.order || 0))
     .map((m) => ({ lat: m.lat, lng: m.lng }))
-
-  console.error('DEBUG: renderPlanPolylineAsOverlay linePath length:', linePath.length);
 
   if (linePath.length < 2) return
 
