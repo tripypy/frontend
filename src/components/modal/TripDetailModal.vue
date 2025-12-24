@@ -713,9 +713,6 @@ const handleDeleteTripConfirm = async () => {
     await deleteTrip(props.trip.id)
     showDeleteConfirm.value = false
     
-    toastMessage.value = '여행이 삭제되었습니다.'
-    showToast.value = true
-
     // emit('refresh') // Refactored to emit 'delete' for optimistic update
     emit('delete', props.trip.id)
     emit('close')

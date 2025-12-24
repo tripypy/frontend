@@ -158,6 +158,16 @@ const handleLogDelete = () => {
   emit('refresh-data')
 }
 
+const handleTripDelete = () => {
+  showToast.value = true
+  toastMessage.value = '여행이 삭제되었습니다.'
+  handleCloseModal()
+  setTimeout(() => {
+    showToast.value = false
+  }, 3000)
+  emit('refresh-data')
+}
+
 // Toast State
 const showToast = ref(false)
 const toastMessage = ref('')
@@ -322,6 +332,7 @@ const formatDate = (dateStr?: string) => {
       @refresh="handleCardRefresh"
       @edit-log="handleEditLog"
       @delete-log="handleLogDelete"
+      @delete="handleTripDelete"
     />
 
     <!-- Toast Notification -->
