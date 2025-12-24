@@ -445,6 +445,12 @@ const handlePlaceClick = (place: any, index?: number) => {
   }
 }
 
+const handleLogClick = (log: TripLogSearchDoc) => {
+    selectedLogId.value = log.log_id
+    selectedAuthorId.value = log.user_id
+    selectedLiked.value = false // Default, modal will fetch fresh data
+}
+
 // Mock Data
 const recommendedKeywords = [
   '성수동',
