@@ -65,6 +65,7 @@
             class="absolute inset-0"
             :center="{ lat: 37.5443, lng: 127.0557 }"
             :level="5"
+            :show-plan-line="true"
             :markers="mapInteraction.markerPositions.value"
             :selected-marker-id="mapInteraction.selectedMarkerId.value"
             @marker-click="showDetailAndPanFromMarker"

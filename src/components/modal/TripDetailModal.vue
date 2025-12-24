@@ -277,6 +277,7 @@
                 :level="7"
                 :markers="markerPositions"
                 :selected-marker-id="selectedMarkerId"
+                :show-plan-line="true"
                 @marker-click="handleMarkerClick"
               />
               <div v-if="markerPositions.length === 0" class="absolute inset-0 flex items-center justify-center pointer-events-none">

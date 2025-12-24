@@ -45,8 +45,7 @@ const props = defineProps<{
   markers?: MarkerOption[]
   polylines?: PolylineOption[]
   selectedMarkerId?: number | string | null
-  isClickable?: boolean // Added for Log Map Widget
-  showPlanLine?: boolean // Added: Check to show valid plan line
+  showPlanLine?: boolean
 }>()
 
 const emits = defineEmits<{
@@ -105,21 +104,19 @@ const renderMarkers = (markers: MarkerOption[]) => {
 
     if (m.type === 'plan') {
       const content = document.createElement('div')
-      // [Modified] Support custom color for Log Map (Travel Map) usage
-      const bgColor = m.color ? m.color : (isSelected ? '#FF8A00' : '#9BCCC4')
-      // If order is missing, just show a dot or empty string? LogMapWidget markers don't have order.
-      // Let's make it a smaller dot if no order, or just show empty string.
+
       const hasOrder = m.order !== undefined && m.order !== null
-      
+      const bgColor = m.color ? m.color : (isSelected ? '#FF8A00' : '#9BCCC4')
+
       content.className = `
-        flex items-center justify-center 
-        ${hasOrder ? 'w-12 h-12 border-[2px]' : 'w-4 h-4 border-[1px]'} 
+        flex items-center justify-center
+        ${hasOrder ? 'w-12 h-12 border-[2px] text-base' : 'w-5 h-5 border-[1px]'}
         rounded-full font-black text-black border-[#2C2C2C]
         transition-all duration-200 ease-in-out
         ${isSelected && !m.color ? 'scale-110' : ''}
       `
       content.style.backgroundColor = bgColor
-      
+
       content.innerHTML = hasOrder ? String(m.order) : ''
 
       const customOverlay = new kakao.maps.CustomOverlay({
@@ -127,9 +124,9 @@ const renderMarkers = (markers: MarkerOption[]) => {
         content: content,
         map: rawMap,
         yAnchor: 0.5,
-        zIndex: isSelected ? 999 : 100, // Increased zIndex for plan markers
+        zIndex: isSelected ? 999 : 100,
       })
-      
+
       content.onclick = () => {
         if (m.id !== undefined && m.id !== null) {
           emits('marker-click', m.id)
@@ -164,9 +161,8 @@ const renderMarkers = (markers: MarkerOption[]) => {
 
   // Draw polyline for plan markers
   // Draw polyline for plan markers
-  // Draw polyline for plan markers ONLY if enabled
   if (props.showPlanLine !== false) {
-      renderPlanPolylineAsOverlay(markers)
+    renderPlanPolylineAsOverlay(markers)
   }
 
   if (!props.selectedMarkerId) {
@@ -197,42 +193,42 @@ const renderPlanPolylineAsOverlay = (markers: MarkerOption[]) => {
   // SVG로 라인을 그릴 컨테이너 생성
   const svgNS = "http://www.w3.org/2000/svg"
   const svg = document.createElementNS(svgNS, "svg")
-  
+
   // Use a large canvas approach to ensure visibility and avoid clipping issues
   // Centered on the anchor point.
   const CANVAS_SIZE = 4000
   const OFFSET = CANVAS_SIZE / 2
-  
+
   svg.style.position = 'absolute'
   svg.style.pointerEvents = 'none'
   svg.style.width = `${CANVAS_SIZE}px`
   svg.style.height = `${CANVAS_SIZE}px`
   svg.style.overflow = 'visible'
-  
+
   // Center the SVG on the anchor point (which will be at top-left 0,0 locally)
   // so we shift it back by OFFSET
   svg.style.transform = `translate(-${OFFSET}px, -${OFFSET}px)`
-  
+
   // 지도 투영 변환을 사용하여 좌표 변환
   const projection = rawMap.getProjection()
-  
+
   const startPos = projection.pointFromCoords(new kakao.maps.LatLng(linePath[0].lat, linePath[0].lng))
 
   linePath.forEach((point, i) => {
     if (i === 0) return
-    
+
     const prevPoint = linePath[i - 1]
     const fromPos = projection.pointFromCoords(new kakao.maps.LatLng(prevPoint.lat, prevPoint.lng))
     const toPos = projection.pointFromCoords(new kakao.maps.LatLng(point.lat, point.lng))
-    
+
     const line = document.createElementNS(svgNS, "line")
-    
+
     // Coordinates relative to anchor, plus OFFSET to center in SVG
     const x1 = (fromPos.x - startPos.x) + OFFSET
     const y1 = (fromPos.y - startPos.y) + OFFSET
     const x2 = (toPos.x - startPos.x) + OFFSET
     const y2 = (toPos.y - startPos.y) + OFFSET
-    
+
     line.setAttribute("x1", String(x1))
     line.setAttribute("y1", String(y1))
     line.setAttribute("x2", String(x2))
@@ -241,7 +237,7 @@ const renderPlanPolylineAsOverlay = (markers: MarkerOption[]) => {
     line.setAttribute("stroke-width", "3")
     line.setAttribute("stroke-opacity", "0.9")
     line.setAttribute("stroke-linecap", "round") // Smooth joints
-    
+
     svg.appendChild(line)
   })
 
@@ -346,8 +342,10 @@ const initMap = () => {
   kakao.maps.event.addListener(mapInstance, 'zoom_changed', () => {
     emits('map-move')
     // Re-render polyline overlay to adjust line paths for new zoom level
-    if (props.showPlanLine !== false && props.markers && props.markers.length > 0) {
-      renderPlanPolylineAsOverlay(props.markers)
+    if (props.markers && props.markers.length > 0) {
+      if (props.showPlanLine !== false) {
+        renderPlanPolylineAsOverlay(props.markers)
+      }
     }
   })
 
@@ -382,9 +380,9 @@ onMounted(() => {
 
 watch(() => props.center, (newCenter) => {
     if (map.value && newCenter) {
-      const kakao = (window as any).kakao 
-      if (!kakao || !kakao.maps) return 
-      
+      const kakao = (window as any).kakao
+      if (!kakao || !kakao.maps) return
+
       const moveLatLon = new kakao.maps.LatLng(newCenter.lat, newCenter.lng);
       map.value.setCenter(moveLatLon);
     }
