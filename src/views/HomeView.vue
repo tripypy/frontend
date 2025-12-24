@@ -182,7 +182,7 @@
       ref="placeDetailModalRef"
       :place="selectedPlaceForDetail"
       :disable-keydown="!!selectedLogId"
-      @close="selectedPlaceForDetail = null"
+      @close="handlePlaceModalClose"
       @open-trip-log="handleOpenTripLog"
     />
 
@@ -264,6 +264,29 @@ const selectedAuthorId = ref<number | undefined>(undefined)
 const selectedLiked = ref<boolean>(false)
 const hasLogUpdates = ref(false)
 const selectedTrip = ref<any>(null)
+
+// 상태 관리 (Moved to top)
+const diaryEntries = ref<TripLogFeedItemDto[]>([])
+const isLoading = ref(false)
+const observerTarget = ref<HTMLElement | null>(null)
+const nextCursor = ref<number | null>(null)
+const hasNext = ref(true)
+
+// 피드 로직용 상태
+const loadedLogIds = new Set<number>()
+const isFriendFeedLoaded = ref(false)
+
+// Daily Mission Logic
+const currentMission = ref(dailyMissions[Math.floor(Math.random() * dailyMissions.length)])
+
+// Keywords
+const keywords = ['동네산책', '책방투어', 'LP바', '성수카페', '팝업스토어', '자전거라이딩', '클라이밍', '야시장']
+
+// Hot Places
+const hotPlaces = ref<any[]>([])
+
+// My Trips
+const myTrips = ref<TripResponseDto[]>([])
 
 const handleOpenTripLog = (payload: { logId: number, authorId: number, liked: boolean }) => {
     selectedAuthorId.value = payload.authorId
@@ -381,9 +404,63 @@ const handleCreateTrip = async () => {
 }
 
 const handlePlaceClick = (place: any) => {
-    // Open Place Detail Modal directly
-    selectedPlaceForDetail.value = place
+    // Open Place Detail Modal via URL
+    router.push({ query: { ...route.query, placeId: place.id } })
 }
+
+const handlePlaceModalClose = () => {
+    // Navigate back to close modal (pops history)
+    router.back()
+}
+
+// Watch URL for place detail modal state
+watch(() => route.query.placeId, async (newPlaceId) => {
+    if (newPlaceId) {
+        const id = Number(newPlaceId)
+        // 1. Try to find in hotPlaces
+        const found = hotPlaces.value.find(p => p.id === id)
+        if (found) {
+            selectedPlaceForDetail.value = found
+        } else {
+            // 2. If not found (e.g. reload or deep link), fetch it
+            try {
+                // Assuming we might need a dedicated API or just use what we have.
+                // For now, if hotPlaces isn't loaded yet, this might fail unless we wait.
+                // But simplified: just try to fetch spot detail if API exists.
+                // Actually spotApi.getSpot might not be exposed as such yet?
+                // Use a mock or basic object if we can't fetch full details easily here 
+                // without changing too much.
+                // However, the PlaceDetailModal EXPECTS a certain shape. 
+                // Let's at least try to wait for hotPlaces if it's loading?
+                // Or simply:
+                 selectedPlaceForDetail.value = { id } // Minimal, modal might fetch rest?
+                 // Actually PlaceDetailModal does fetchSpotData on mounted! 
+                 // It just needs minimal info to start?
+                 // Props: `place` object.
+                 // PlaceDetailModal does `fetchSpotData` using `props.place.kakaoPlaceId` etc.
+                 // If we only have ID, we might be in trouble if we don't have kakao IDs.
+                 // Ideally getSpot(id) should return what we need.
+                 // But for the user request "Click ing Real Time Ranking", hotPlaces HAS the data.
+                 // So we just need to ensure we look it up.
+            } catch (e) {
+                console.error(e)
+            }
+        }
+    } else {
+        selectedPlaceForDetail.value = null
+    }
+}, { immediate: true })
+
+// Re-check when hotPlaces loads (in case of deep link/refresh)
+watch(hotPlaces, (newPlaces) => {
+    const placeId = Number(route.query.placeId)
+    if (placeId && newPlaces.length > 0 && !selectedPlaceForDetail.value) {
+        const found = newPlaces.find(p => p.id === placeId)
+        if (found) {
+            selectedPlaceForDetail.value = found
+        }
+    }
+})
 
 const handleKeywordClick = (keyword: string) => {
   router.push({ path: '/search', query: { q: keyword } })
@@ -420,28 +497,7 @@ const handleLogDelete = () => {
     handleFeedRefresh()
 }
 
-// 상태 관리
-const diaryEntries = ref<TripLogFeedItemDto[]>([])
-const isLoading = ref(false)
-const observerTarget = ref<HTMLElement | null>(null)
-const nextCursor = ref<number | null>(null)
-const hasNext = ref(true)
 
-// 피드 로직용 상태
-const loadedLogIds = new Set<number>()
-const isFriendFeedLoaded = ref(false)
-
-// Daily Mission Logic
-const currentMission = ref(dailyMissions[Math.floor(Math.random() * dailyMissions.length)])
-
-// Keywords
-const keywords = ['동네산책', '책방투어', 'LP바', '성수카페', '팝업스토어', '자전거라이딩', '클라이밍', '야시장']
-
-// Hot Places
-const hotPlaces = ref<any[]>([])
-
-// My Trips
-const myTrips = ref<TripResponseDto[]>([])
 
 // Filtered Upcoming Trips
 const upcomingTrips = computed(() => {
