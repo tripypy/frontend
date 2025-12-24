@@ -50,7 +50,8 @@ export const resizeImage = (
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              const resizedFile = new File([blob], file.name, {
+              const newName = file.name.replace(/\.[^/.]+$/, '') + '.jpg'
+              const resizedFile = new File([blob], newName, {
                 type: 'image/jpeg',
                 lastModified: Date.now(),
               })

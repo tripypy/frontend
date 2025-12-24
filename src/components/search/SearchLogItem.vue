@@ -69,7 +69,7 @@
 
         <!-- Content Snippet -->
         <p class="text-sm font-medium text-gray-700 mb-0 line-clamp-2">
-          {{ log.content }}
+          {{ stripHtml(log.content) }}
         </p>
 
       </div>
@@ -93,5 +93,10 @@ const handleImageError = (event: Event) => {
 const formatDate = (dateStr: string) => {
     if(!dateStr) return ''
     return dateStr.split('T')[0].replaceAll('-', '.')
+}
+
+const stripHtml = (html: string) => {
+  if (!html) return ''
+  return html.replace(/<[^>]*>?/gm, '')
 }
 </script>

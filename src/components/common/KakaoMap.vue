@@ -106,16 +106,23 @@ const renderMarkers = (markers: MarkerOption[]) => {
       const content = document.createElement('div')
 
       const hasOrder = m.order !== undefined && m.order !== null
-      const bgColor = m.color ? m.color : (isSelected ? '#FF8A00' : '#9BCCC4')
-
+      
+      // 배경색 클래스 결정 (inline style이 없을 때만 적용됨)
+      const defaultBgClass = isSelected ? 'bg-[#FF8A00]' : 'bg-[#9BCCC4]'
+      
       content.className = `
         flex items-center justify-center
         ${hasOrder ? 'w-12 h-12 border-[2px] text-base' : 'w-5 h-5 border-[1px]'}
         rounded-full font-black text-black border-[#2C2C2C]
         transition-all duration-200 ease-in-out
+        ${!m.color ? defaultBgClass : ''} 
         ${isSelected && !m.color ? 'scale-110' : ''}
       `
-      content.style.backgroundColor = bgColor
+      
+      // custom color가 있을 때만 인라인 스타일 적용 (인라인 스타일이 클래스보다 우선순위 높음)
+      if (m.color) {
+        content.style.backgroundColor = m.color
+      }
 
       content.innerHTML = hasOrder ? String(m.order) : ''
 

@@ -63,7 +63,7 @@
           <KakaoMap
             ref="kakaoMapRef"
             class="absolute inset-0"
-            :center="{ lat: 37.5443, lng: 127.0557 }"
+            :center="mapCenter"
             :level="5"
             :show-plan-line="true"
             :markers="mapInteraction.markerPositions.value"
@@ -108,6 +108,7 @@
       :trip-title="trip.tripTitle.value"
       :formatted-date="trip.formattedDate.value"
       :all-selected-places="trip.allSelectedPlaces.value"
+      :search-results="searchResults"
       @search-spot="handleChatSpotSearch"
     />
 
@@ -164,21 +165,38 @@ const fetchCandidates = async (): Promise<any[]> => {
 
     // 검색할 카테고리 코드 목록 (다양하게)
     const categories = ['AT4', 'CT1', 'FD6', 'CE7', 'PK6'] 
-    const combinedResults: any[] = []
+    
+    // Store results per category
+    const categoryResults: Record<string, any[]> = {}
     let completedCount = 0
 
     categories.forEach(category => {
       ps.categorySearch(category, (data: any[], status: any) => {
         if (status === (window as any).kakao.maps.services.Status.OK) {
-          combinedResults.push(...data)
+           categoryResults[category] = data
+        } else {
+           categoryResults[category] = []
         }
         completedCount++
         
         if (completedCount === categories.length) {
-          const uniqueResults = Array.from(new Map(combinedResults.map(item => [item.id, item])).values())
+          // Flatten results: taking top 15 from each category to ensure diversity
+          const combinedResults: any[] = []
+          categories.forEach(cat => {
+             const items = categoryResults[cat] || []
+             combinedResults.push(...items.slice(0, 15))
+          })
+
+          const uniqueMap = new Map()
+          combinedResults.forEach(item => {
+             if (!uniqueMap.has(item.id)) {
+                uniqueMap.set(item.id, item)
+             }
+          })
           
-          // 상위 30개 반환 (다양성 확보)
-          resolve(uniqueResults.slice(0, 30).map((item: any) => ({
+          const uniqueResults = Array.from(uniqueMap.values())
+          
+          resolve(uniqueResults.map((item: any) => ({
              id: item.id, // For map linking
              name: item.place_name,
              category: item.category_group_name || '기타',
@@ -247,6 +265,8 @@ const showPlaceDetailModal = ref(false)
 const detailedPlace = ref<Place | null>(null)
 
 // Helper to find a place from any list by its ID (trip item ID or kakaoPlaceId)
+const mapCenter = ref({ lat: 37.5443, lng: 127.0557 })
+
 const findPlaceById = (id: number | string): Place | undefined => {
   // Combine search results and all planned places into one array
   const allPlaces = [...searchResults.value, ...trip.allSelectedPlaces.value]
