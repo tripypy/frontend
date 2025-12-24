@@ -63,7 +63,7 @@
           <KakaoMap
             ref="kakaoMapRef"
             class="absolute inset-0"
-            :center="{ lat: 37.5443, lng: 127.0557 }"
+            :center="mapCenter"
             :level="5"
             :show-plan-line="true"
             :markers="mapInteraction.markerPositions.value"
@@ -247,6 +247,8 @@ const showPlaceDetailModal = ref(false)
 const detailedPlace = ref<Place | null>(null)
 
 // Helper to find a place from any list by its ID (trip item ID or kakaoPlaceId)
+const mapCenter = ref({ lat: 37.5443, lng: 127.0557 })
+
 const findPlaceById = (id: number | string): Place | undefined => {
   // Combine search results and all planned places into one array
   const allPlaces = [...searchResults.value, ...trip.allSelectedPlaces.value]
