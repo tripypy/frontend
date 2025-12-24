@@ -314,6 +314,8 @@
                   @place-click="handleLogPlaceClick"
                   @login-required="isLoginAlertVisible = true"
                   @refresh-comments="fetchTripLog(trip.id)"
+                  @edit="handleEditLogClick"
+                  @delete="handleDeleteLogClick"
               />
           </div>
 
@@ -623,9 +625,6 @@ const handleLogDeleteConfirm = async () => {
       await deleteTripLog(tripLog.value.logId)
       showLogDeleteConfirm.value = false
       
-      toastMessage.value = '기록이 삭제되었습니다.'
-      showToast.value = true
-
       emit('delete-log', tripLog.value!.logId)
       emit('close')
     } catch (error) {

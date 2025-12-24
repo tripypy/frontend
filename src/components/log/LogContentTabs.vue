@@ -10,11 +10,12 @@ import type {
   TripDiaryResponseDto,
 } from '@/apis/trip/types'
 
-import { createTrip, getTripDetail } from '@/apis/trip/index'
+import { createTrip, getTripDetail, requestScrapTrip } from '@/apis/trip/index'
 import type { LogDiaryDto } from '@/apis/trip/types'
 import { Heart, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import TripCard from '@/components/trip/TripCard.vue'
 import TripDetailModal from '@/components/modal/TripDetailModal.vue'
+import AlertDialog from '@/components/common/AlertDialog.vue'
 import { handleImageError } from '@/utils/imageHandler'
 
 interface Props {
@@ -100,7 +101,66 @@ const handleDiaryClick = async (tripId: number) => {
   }
 }
 
-const emit = defineEmits(['page-change'])
+const showCopyAlert = ref(false)
+const targetTripId = ref<number | null>(null)
+
+const handleCopyClick = (id: number) => {
+  targetTripId.value = id
+  showCopyAlert.value = true
+}
+
+const handleCopyConfirm = async () => {
+    if (targetTripId.value) {
+        try {
+            await requestScrapTrip(targetTripId.value)
+            showCopyAlert.value = false
+            emit('refresh-data') // Trigger reload in parent
+        } catch (error) {
+            console.error('여행 복사 실패', error)
+            alert('여행 복사에 실패했습니다.')
+        }
+    }
+}
+
+const handleCardRefresh = async () => {
+  // Add delay for DB consistency like in TripView
+  await new Promise(resolve => setTimeout(resolve, 200))
+  emit('refresh-data')
+}
+
+const handleWriteLogFromModal = (trip: TripDetailResponseDto) => {
+  router.push({
+    name: 'log-write',
+    params: { tripId: trip.id }
+  })
+}
+
+const emit = defineEmits(['page-change', 'refresh-data'])
+
+const handleEditLog = (log: any) => {
+  const logId = log.logId || log.id
+  if (logId) {
+    router.push({
+      name: 'log-edit',
+      params: { logId }
+    })
+  } else {
+    console.error('Log ID not found for edit', log)
+  }
+}
+
+const handleLogDelete = () => {
+  showToast.value = true
+  toastMessage.value = '기록이 삭제되었습니다.'
+  setTimeout(() => {
+    showToast.value = false
+  }, 3000)
+  emit('refresh-data')
+}
+
+// Toast State
+const showToast = ref(false)
+const toastMessage = ref('')
 
 // Helpers
 const stripHtml = (html?: string) => {
@@ -163,10 +223,13 @@ const formatDate = (dateStr?: string) => {
               :trip="plan"
               :is-editable="isMyProfile"
               @open-modal="handlePlanClick"
+              @copy="handleCopyClick"
+              @refresh="handleCardRefresh"
             />
           </div>
         </div>
 
+        <!-- ... (Diary tab unchanged) ... -->
         <!-- 여행 일기 탭 -->
         <div v-if="activeTab === 'diary'">
           <div v-if="normalizedDiaries.length === 0" class="col-span-full text-center text-gray-500 py-10">
@@ -255,11 +318,48 @@ const formatDate = (dateStr?: string) => {
       :initial-tab="detailInitialTab"
       @close="handleCloseModal"
       @edit="handleEdit"
+      @write="handleWriteLogFromModal"
+      @refresh="handleCardRefresh"
+      @edit-log="handleEditLog"
+      @delete-log="handleLogDelete"
     />
+
+    <!-- Toast Notification -->
+    <Transition
+      leave-active-class="transition-all duration-200 ease-in"
+      enter-from-class="opacity-0 translate-y-[-20px]"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-[-20px]"
+    >
+      <div
+        v-if="showToast"
+        class="fixed top-24 right-6 z-[90] bg-white border-[3px] border-[#2C2C2C] rounded-xl shadow-[4px_4px_0px_0px_rgba(44,44,44,0.3)] px-5 py-3 flex items-center gap-3"
+      >
+        <div class="w-6 h-6 bg-[#FFD60A] border-[2px] border-[#2C2C2C] rounded-full flex items-center justify-center flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#2C2C2C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="font-black text-sm text-[#2C2C2C]">
+          {{ toastMessage }}
+        </span>
+      </div>
+    </Transition>
 
     <!-- Loading Overlay for Modal -->
     <div v-if="isLoadingDetail" class="fixed inset-0 bg-white/70 flex items-center justify-center z-50">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2C2C2C]"></div>
     </div>
+
+    <AlertDialog
+      :show="showCopyAlert"
+      title="여행 복사"
+      message="계획을 복사하시겠습니까?"
+      confirm-button-text="복사"
+      close-button-text="취소"
+      @close="showCopyAlert = false"
+      @confirm="handleCopyConfirm"
+    />
   </div>
 </template>
