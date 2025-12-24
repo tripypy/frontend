@@ -310,8 +310,9 @@
     <TripDetailModal
       v-if="selectedTrip"
       :trip="selectedTrip"
-      @close="selectedTrip = null"
+      @close="handleTripClose"
       @edit="handleTripEdit"
+      :initial-tab="'map'"
     />
 
     <!-- Place Detail Modal -->
@@ -393,12 +394,17 @@ const handleLogUpdate = (payload: { logId: number; likeCount: number; liked: boo
 
 const handleLogClose = () => {
     selectedLogId.value = null
-    if (hasLogUpdates.value) {
-        if (placeDetailModalRef.value) {
-            placeDetailModalRef.value.refreshWithEffect()
-        }
-        hasLogUpdates.value = false
-    }
+    hasLogUpdates.value = false
+    const query = { ...route.query }
+    delete query.tab
+    router.replace({ query })
+}
+
+const handleTripClose = () => {
+    selectedTrip.value = null
+    const query = { ...route.query }
+    delete query.tab
+    router.replace({ query })
 }
 
 const handleTripClick = async (trip: TripSearchDoc) => {

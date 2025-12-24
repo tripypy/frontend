@@ -558,7 +558,7 @@ const handleLogPlaceClick = (placeId: number) => {
 // 탭 핸들러
 const handleTabClick = (tab: 'map' | 'log') => {
   activeTab.value = tab
-  router.replace({ query: { ...route.query, tab } })
+  // router.replace({ query: { ...route.query, tab } }) // Remove URL sync to prevent sticky state
 }
 
 // URL 변경 감지 (뒤로가기 등)

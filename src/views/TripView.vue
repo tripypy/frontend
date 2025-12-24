@@ -316,6 +316,7 @@ const fetchTripDetailAndOpen = async (tripId: number) => {
 const handleCloseModal = () => {
     const query = { ...route.query }
     delete query.tripId
+    delete query.tab
     router.replace({ query })
 }
 

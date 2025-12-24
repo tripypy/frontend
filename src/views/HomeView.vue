@@ -316,6 +316,7 @@ const handleLogUpdate = (payload: { type?: string; logId: number; likeCount: num
 const handleLogClose = () => {
     const query = { ...route.query }
     delete query.logId
+    delete query.tab
     router.replace({ query })
     
     if (hasLogUpdates.value) {
