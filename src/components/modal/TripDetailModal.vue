@@ -314,6 +314,8 @@
                   @place-click="handleLogPlaceClick"
                   @login-required="isLoginAlertVisible = true"
                   @refresh-comments="fetchTripLog(trip.id)"
+                  @edit="handleEditLogClick"
+                  @delete="handleDeleteLogClick"
               />
           </div>
 
@@ -623,9 +625,6 @@ const handleLogDeleteConfirm = async () => {
       await deleteTripLog(tripLog.value.logId)
       showLogDeleteConfirm.value = false
       
-      toastMessage.value = '기록이 삭제되었습니다.'
-      showToast.value = true
-
       emit('delete-log', tripLog.value!.logId)
       emit('close')
     } catch (error) {
@@ -686,15 +685,9 @@ const handleCopyConfirm = async () => {
     await requestScrapTrip(props.trip.id)
     showCopyConfirm.value = false
     
-    // Toast 표시
-    toastMessage.value = '여행이 복사되었습니다!'
-    showToast.value = true
-    setTimeout(() => {
-        showToast.value = false
-    }, 2000)
-
-    // 목록 갱신 요청
-    emit('refresh')
+    // 부모 컴포넌트에게 위임 (토스트, 리프레시)
+    emit('copy')
+    emit('close')
   } catch (error) {
     console.error('Copy trip failed:', error)
     alert('여행 복사에 실패했습니다.')
@@ -714,9 +707,6 @@ const handleDeleteTripConfirm = async () => {
     await deleteTrip(props.trip.id)
     showDeleteConfirm.value = false
     
-    toastMessage.value = '여행이 삭제되었습니다.'
-    showToast.value = true
-
     // emit('refresh') // Refactored to emit 'delete' for optimistic update
     emit('delete', props.trip.id)
     emit('close')

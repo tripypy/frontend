@@ -358,11 +358,11 @@ const handleBack = () => {
        closeSearchPanel()
        
        if (wasDraft) {
-           router.push('/trips')
+           router.back()
        }
     })
   } else {
-    router.push('/trips')
+    router.back()
   }
 }
 

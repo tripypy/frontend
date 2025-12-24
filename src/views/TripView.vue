@@ -83,6 +83,8 @@
       @edit-log="handleEditLogFromModal"
       @refresh="fetchTrips"
       @delete="handleTripDelete"
+      @delete-log="handleLogDelete"
+      @copy="handleTripCopy"
     />
 
     <AlertDialog
@@ -382,6 +384,28 @@ const handleTripDelete = (tripId: number) => {
 
     // 3. 토스트 표시
     showToastMessage('여행이 삭제되었습니다.')
+}
+
+const handleLogDelete = () => {
+    // 1. 목록 새로고침 (로그 삭제 후 여행 상태가 변할 수 있으므로)
+    fetchTrips()
+    
+    // 2. 모달 닫기
+    handleCloseModal()
+
+    // 3. 토스트 표시
+    showToastMessage('여행 일기가 삭제되었습니다.')
+}
+
+const handleTripCopy = () => {
+    // 1. 목록 새로고침
+    fetchTrips()
+    
+    // 2. 모달 닫기
+    handleCloseModal()
+
+    // 3. 토스트 표시
+    showToastMessage('여행이 복사되었습니다.')
 }
 </script>
 
