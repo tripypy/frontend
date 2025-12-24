@@ -123,6 +123,13 @@ onMounted(() => {
     }
 })
 
+const handleTabDataRefresh = async () => {
+    if (isMyProfile.value) {
+        await setMyProfileData(false)
+    } else if (route.params.userId) {
+        await fetchAndSetProfileData(Number(route.params.userId), false)
+    }
+}
 </script>
 
 <template>
@@ -159,6 +166,7 @@ onMounted(() => {
             :current-page="currentPage"
             :total-pages="totalPages"
             @page-change="handlePageChange"
+            @refresh-data="handleTabDataRefresh"
           />
         </section>
       </div>

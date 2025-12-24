@@ -77,6 +77,17 @@
 
       </section>
     </div>
+
+    <!-- Alert Dialog -->
+    <AlertDialog
+      :show="dialogState.show"
+      :title="dialogState.title"
+      :message="dialogState.message"
+      :confirm-button-text="dialogState.confirmButtonText"
+      :show-cancel-button="dialogState.showCancelButton"
+      @close="closeDialog"
+      @confirm="handleDialogConfirm"
+    />
   </div>
 </template>
 
@@ -88,7 +99,8 @@ import ContentEditor from '@/components/log-write/ContentEditor.vue'
 import { getTripLogDetail, patchTripLog } from '@/apis/trip-log'
 import type { TripLogDetail, TripVisibility } from '@/types/trip/trip.model'
 import { useNavigate } from '@/composables/common/useNavagation'
-import TravelNavbar from '@/components/common/TravelNavbar.vue' // Navbar 컴포넌트 추가
+import TravelNavbar from '@/components/common/TravelNavbar.vue'
+import AlertDialog from '@/components/common/AlertDialog.vue'
 
 // ----------------------------
 // Props 및 라우터 설정
@@ -110,6 +122,46 @@ const visibility = ref<TripVisibility>('PUBLIC')
 const isSubmitting = ref(false)
 const editorRef = ref<InstanceType<typeof ContentEditor> | null>(null)
 
+const dialogState = ref({
+  show: false,
+  title: '알림',
+  message: '',
+  confirmButtonText: '확인',
+  showCancelButton: false,
+  onConfirm: () => {},
+})
+
+const closeDialog = () => {
+    dialogState.value.show = false
+}
+
+const handleDialogConfirm = () => {
+    dialogState.value.onConfirm()
+    closeDialog()
+}
+
+const showAlert = (message: string, title = '알림', onConfirm?: () => void) => {
+    dialogState.value = {
+        show: true,
+        title,
+        message,
+        confirmButtonText: '확인',
+        showCancelButton: false,
+        onConfirm: onConfirm || (() => {}),
+    }
+}
+
+const showConfirm = (message: string, onConfirm: () => void, title = '확인') => {
+     dialogState.value = {
+        show: true,
+        title,
+        message,
+        confirmButtonText: '확인',
+        showCancelButton: true,
+        onConfirm,
+    }
+}
+
 // ----------------------------
 // 유효성 검사
 // ----------------------------
@@ -128,7 +180,7 @@ const fetchLog = async () => {
     visibility.value = log.visibility
   } catch (e) {
     console.error(e)
-    alert('로그를 불러오는 중 오류가 발생했습니다.')
+    showAlert('로그를 불러오는 중 오류가 발생했습니다.')
   }
 }
 
@@ -153,14 +205,12 @@ const onSubmit = async () => {
       }
     }
     await patchTripLog(params)
-    // 수정 완료 후 이전 페이지로 돌아가거나 해당 로그 상세 페이지로 이동
-    // 여기서는 `router.back()` 대신 상세 페이지로 이동하는 것이 일반적일 수 있으나
-    // 기존 코드의 `router.back()`을 유지하며, 사용자에게 알림을 제공합니다.
-    alert('여행 일지가 성공적으로 수정되었습니다.')
-    router.back()
+    showAlert('여행 일지가 성공적으로 수정되었습니다.', '수정 완료', () => {
+        router.back()
+    })
   } catch (e) {
     console.error(e)
-    alert('로그 수정에 실패했습니다.')
+    showAlert('로그 수정에 실패했습니다.')
   } finally {
     isSubmitting.value = false
   }
@@ -170,9 +220,8 @@ const onSubmit = async () => {
 // 취소 로직
 // ----------------------------
 const onCancel = () => {
-  // 경고창을 통해 사용자에게 취소 의사를 재확인할 수 있습니다.
-  if (confirm('수정 내용을 취소하고 이전 페이지로 돌아가시겠습니까?')) {
+  showConfirm('수정 내용을 취소하고 \n이전 페이지로 돌아가시겠습니까?', () => {
     router.back()
-  }
+  })
 }
 </script>
