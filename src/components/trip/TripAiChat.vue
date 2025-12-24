@@ -157,6 +157,7 @@ import type { ChatMessageDto, RecommendSpotDto } from '@/apis/ai/types'
 const props = defineProps<{
   fetchCandidates?: () => Promise<RecommendSpotDto[]>
   highlightCandidate?: (candidate: any) => void
+  searchResults?: any[]
   tripTitle?: string
   formattedDate?: string
   allSelectedPlaces?: any[]
@@ -277,7 +278,9 @@ const getSystemPrompt = (): ChatMessageDto => ({
    - 당신에게는 항상 **[현재 지도 주변 장소 목록]**이 함께 제공됩니다.
    - 사용자가 장소 추천을 원하면, **반드시 제공된 후보 장소 목록 중에서만** 골라서 추천하세요.
    - 후보 목록에 없는 장소를 지어내거나, 엉뚱한 지역을 추천하면 안 됩니다.
-   - 후보 목록이 비어있다면 "주변에 적당한 장소가 안 보여. 지도를 다른 곳으로 이동해볼래?"라고 솔직하게 말하세요.
+   - **중요**: 목록에 없거나, 혹은 당신이 알고 있는 더 좋은 유명한 장소가 있다면 자연스럽게 **[[검색 키워드]]** 형태로 제안하세요.
+     - 굳이 "목록에 없다"고 사과할 필요 없습니다. 바로 "그렇다면 [[종로바지락칼국수]]는 어때?" 처럼 제안하세요.
+     - 이렇게 [[ ]]로 감싸주면 앱이 자동으로 검색을 수행합니다. 절대 없는 장소를 있는 것처럼 꾸며내지 마세요.
 `
 })
 
@@ -329,14 +332,41 @@ const sendMessage = async () => {
       }))
 
     // 1. Fetch Candidates (Pre-fetch context)
+    // 1. Fetch Candidates (Pre-fetch context)
     let candidateContextMsg: ChatMessageDto = { role: 'system', content: '' }
+    
+    // Combine fetched candidates + current search results
+    let allCandidates: any[] = []
+
     if (props.fetchCandidates) {
         try {
-            const candidates = await props.fetchCandidates()
-            candidateContextMsg = getMapContext(candidates)
+            const fetched = await props.fetchCandidates()
+            allCandidates = [...fetched]
         } catch (e) {
             console.error('Failed to fetch candidates', e)
         }
+    }
+
+    // Add explicit search results if available
+    if (props.searchResults && props.searchResults.length > 0) {
+        // Map search results to match candidate format if needed, or assume they are compatible (Place type)
+        // Usually searchResults already have id, name, category, etc.
+        const searchItems = props.searchResults.map((p: any) => ({
+             id: p.id || p.kakaoPlaceId,
+             name: p.name,
+             category: p.category || '검색 결과',
+             address: p.address,
+             lat: p.lat,
+             lng: p.lng
+        }))
+        allCandidates = [...searchItems, ...allCandidates]
+    }
+
+    // Deduplicate
+    const uniqueCandidates = Array.from(new Map(allCandidates.map(c => [c.id, c])).values())
+
+    if (uniqueCandidates.length > 0) {
+       candidateContextMsg = getMapContext(uniqueCandidates)
     }
 
     // Construct Payload
