@@ -114,6 +114,13 @@ const handleCopyConfirm = async () => {
         try {
             await requestScrapTrip(targetTripId.value)
             showCopyAlert.value = false
+            
+            showToast.value = true
+            toastMessage.value = '여행이 복사되었습니다.'
+            setTimeout(() => {
+                showToast.value = false
+            }, 3000)
+
             emit('refresh-data') // Trigger reload in parent
         } catch (error) {
             console.error('여행 복사 실패', error)
@@ -161,6 +168,16 @@ const handleLogDelete = () => {
 const handleTripDelete = () => {
   showToast.value = true
   toastMessage.value = '여행이 삭제되었습니다.'
+  handleCloseModal()
+  setTimeout(() => {
+    showToast.value = false
+  }, 3000)
+  emit('refresh-data')
+}
+
+const handleTripCopy = () => {
+  showToast.value = true
+  toastMessage.value = '여행이 복사되었습니다.'
   handleCloseModal()
   setTimeout(() => {
     showToast.value = false
@@ -333,6 +350,7 @@ const formatDate = (dateStr?: string) => {
       @edit-log="handleEditLog"
       @delete-log="handleLogDelete"
       @delete="handleTripDelete"
+      @copy="handleTripCopy"
     />
 
     <!-- Toast Notification -->

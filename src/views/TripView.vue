@@ -84,6 +84,7 @@
       @refresh="fetchTrips"
       @delete="handleTripDelete"
       @delete-log="handleLogDelete"
+      @copy="handleTripCopy"
     />
 
     <AlertDialog
@@ -394,6 +395,17 @@ const handleLogDelete = () => {
 
     // 3. 토스트 표시
     showToastMessage('여행 일기가 삭제되었습니다.')
+}
+
+const handleTripCopy = () => {
+    // 1. 목록 새로고침
+    fetchTrips()
+    
+    // 2. 모달 닫기
+    handleCloseModal()
+
+    // 3. 토스트 표시
+    showToastMessage('여행이 복사되었습니다.')
 }
 </script>
 

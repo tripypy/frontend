@@ -685,15 +685,9 @@ const handleCopyConfirm = async () => {
     await requestScrapTrip(props.trip.id)
     showCopyConfirm.value = false
     
-    // Toast 표시
-    toastMessage.value = '여행이 복사되었습니다!'
-    showToast.value = true
-    setTimeout(() => {
-        showToast.value = false
-    }, 2000)
-
-    // 목록 갱신 요청
-    emit('refresh')
+    // 부모 컴포넌트에게 위임 (토스트, 리프레시)
+    emit('copy')
+    emit('close')
   } catch (error) {
     console.error('Copy trip failed:', error)
     alert('여행 복사에 실패했습니다.')
