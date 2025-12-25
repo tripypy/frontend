@@ -7,7 +7,7 @@
         class="text-4xl md:text-6xl cursor-pointer tracking-tighter transition-transform text-white font-bold inline-block"
       >
         <span class="bg-[#1b1d0d] px-4 py-1 rounded-t-2xl"
-          >TRAVEL<span class="text-[#9BCCC4]">.</span></span
+          >TRIT<span class="text-[#9BCCC4]">.</span></span
         >
       </h1>
     </div>
