@@ -10,8 +10,61 @@
 
 자신만의 취향 기반 여행 아카이브를 만들어갈 수 있습니다.
 
+## ✨ 주요 기능
+🔐 로그인 & 사용자 관리
+- JWT 기반 인증
+- 사용자 프로필 관리 (닉네임, 프로필 이미지)
+- 계획페이지와 마이페이지에서 작성한 로그 / 스크랩 관리
+
+🔍 검색 페이지
+- 키워드 기반 검색
+- 장소, 일정, 로그를 한눈에 파악 가능
+
+🤖 AI 여행 플래너
+- 계획 생성을 돕는 AI 여행 플래너
+- 실시간 장소 추천 및 코스 점검 가능
+
+🧭 여행 로그 (Trip Log)
+- 방문한 장소를 하나의 여행 기록으로 저장
+- 사진, 텍스트 기반 기록 지원
+
+👥 소셜 기능
+- 다른 사용자의 여행 기록 탐색
+- 좋아요 / 친구 추가 / 알림 기능
+
+## 기술 스택
+
+### 🖥 Frontend
+
+* Vue
+* TypeScript
+* Pinia
+
+---
+
+### ⚙️ Backend
+
+* Spring Boot
+* Spring Security
+* MyBatis
+* MySQL
+* Redis
+* Elasticsearch
+* AWS S3
+
+---
+
+### ☁️ Infra / DevOps
+
+* Nginx
+* Docker
+* Docker Compose
+* GitHub Actions
+* KT Cloud
+
 ## 📷 스크린 샷
 
+<details> <summary><b>스크린샷 펼쳐보기</b></summary> <br>
 <table>
   <tr>
     <td align="center">
@@ -88,58 +141,7 @@
     </td>
   </tr>
 </table>
-
-## ✨ 주요 기능
-🔐 로그인 & 사용자 관리
-- JWT 기반 인증
-- 사용자 프로필 관리 (닉네임, 프로필 이미지)
-- 계획페이지와 마이페이지에서 작성한 로그 / 스크랩 관리
-
-🔍 검색 페이지
-- 키워드 기반 검색
-- 장소, 일정, 로그를 한눈에 파악 가능
-
-🤖 AI 여행 플래너
-- 계획 생성을 돕는 AI 여행 플래너
-- 실시간 장소 추천 및 코스 점검 가능
-
-🧭 여행 로그 (Trip Log)
-- 방문한 장소를 하나의 여행 기록으로 저장
-- 사진, 텍스트 기반 기록 지원
-
-👥 소셜 기능
-- 다른 사용자의 여행 기록 탐색
-- 좋아요 / 친구 추가 / 알림 기능
-
-## 기술 스택
-
-### 🖥 Frontend
-
-* Vue
-* TypeScript
-* Pinia
-
----
-
-### ⚙️ Backend
-
-* Spring Boot
-* Spring Security
-* MyBatis
-* MySQL
-* Redis
-* Elasticsearch
-* AWS S3
-
----
-
-### ☁️ Infra / DevOps
-
-* Nginx
-* Docker
-* Docker Compose
-* GitHub Actions
-* KT Cloud
+</details>
 
 
 ## 🧑‍🌾 팀원
