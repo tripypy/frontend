@@ -4,11 +4,11 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-12">
           <h1
-            class="text-6xl cursor-pointer tracking-tighter hover:scale-105 transition-transform text-[#2C2C2C]"
+            class="text-6xl cursor-pointer hover:scale-105 transition-transform text-[#2C2C2C]"
             style="font-family: 'Bebas Neue', sans-serif; line-height: 0.8"
             @click="emit('navigate', 'main')"
           >
-            TRAVEL<span class="text-[#9BCCC4]">.</span>
+          TRIT<span class="text-[#9BCCC4]">.</span>
           </h1>
 
           <div class="flex items-center gap-2">
