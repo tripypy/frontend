@@ -2,7 +2,7 @@
 **TRIT(트릿)** 은 일상 속 짧은 외출과 여행을 기록하고,
 다른 사람들의 경험을 탐색하며 새로운 장소를 발견할 수 있는 **라이프로그 기반 여행 서비스**입니다. [시연 영상](https://www.youtube.com/watch?v=Y2AJf9LVbQk)
 
-사용자는 단순한 장소 방문 기록을 넘어서
+사용자는 단순한 여행 일정 계획을 넘어서
 
 - 다른 사용자의 여행 루트를 참고하고
 - 마음에 드는 일정을 스크랩하거나
@@ -11,6 +11,44 @@
 자신만의 취향 기반 여행 아카이브를 만들어갈 수 있습니다.
 
 ## ✨ 주요 기능
+<table>
+  <tr>
+    <td align="center">
+      <b>메인 피드</b>
+    </td>
+    <td align="center">
+      <b>검색 페이지</b>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="https://github.com/user-attachments/assets/83909b19-0012-4fc4-877a-0d2e67dd78b0" width="500px" alt="메인 피드"/>
+    </td>
+    <td>
+      <img src="https://github.com/user-attachments/assets/6a72d2e7-3def-4157-afda-302e9de899e3" width="500px" alt="검색 페이지1"/>
+    </td>
+  </tr>
+  <tr>
+
+  <tr>
+    <td align="center">
+      <b>AI 여행 플래너</b>
+    </td>
+    <td align="center">
+      <b>로그 작성</b>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="https://github.com/user-attachments/assets/a41919c1-8765-4f85-8846-69a767e27cc5" width="500px" alt="여행 플래너"/>
+    </td>
+    <td>
+      <img src="https://github.com/user-attachments/assets/48e72e95-a392-4532-abec-93cfc499dd73" width="500px" alt="로그 작성"/>
+    </td>
+  </tr>
+    
+</table>
+
 🔐 로그인 & 사용자 관리
 - JWT 기반 인증
 - 사용자 프로필 관리 (닉네임, 프로필 이미지)
@@ -32,35 +70,17 @@
 - 다른 사용자의 여행 기록 탐색
 - 좋아요 / 친구 추가 / 알림 기능
 
-## 기술 스택
+## ⚙️ 서비스 아키텍쳐
+<img width="800" height="" alt="image" src="https://github.com/user-attachments/assets/66b5f75c-5fe6-4fdd-8ccf-ace2e8e3e88c" />
 
-### 🖥 Frontend
+## 🧱 ERD
+<details> <summary><b>핵심 도메인</b></summary> <br>
+<img width="777" height="" alt="스크린샷 2025-12-31 오후 3 30 42" src="https://github.com/user-attachments/assets/9f9b2a2e-5121-4e0d-ae39-485f41f7e55c" />
+</details>
 
-* Vue
-* TypeScript
-* Pinia
-
----
-
-### ⚙️ Backend
-
-* Spring Boot
-* Spring Security
-* MyBatis
-* MySQL
-* Redis
-* Elasticsearch
-* AWS S3
-
----
-
-### ☁️ Infra / DevOps
-
-* Nginx
-* Docker
-* Docker Compose
-* GitHub Actions
-* KT Cloud
+<details> <summary><b>전체 도메인</b></summary> <br>
+<img width="800" height="" alt="PJT_NEW" src="https://github.com/user-attachments/assets/c93bc972-d5db-441c-9439-78318d6d556d" />
+</details>
 
 ## 📷 스크린 샷
 
@@ -108,10 +128,10 @@
   </tr>
   <tr>
     <td>
-      <img src="https://github.com/user-attachments/assets/a41919c1-8765-4f85-8846-69a767e27cc5" width="500px" />
+      <img src="https://github.com/user-attachments/assets/a41919c1-8765-4f85-8846-69a767e27cc5" width="500px" alt="여행 계획1"/>
     </td>
     <td>
-      <img src="https://github.com/user-attachments/assets/2baef092-9116-428b-b6b5-4619142c4423" width="500px" />
+      <img src="https://github.com/user-attachments/assets/2baef092-9116-428b-b6b5-4619142c4423" width="500px" alt="여행 계획2"/>
     </td>
   </tr>
   <tr>
@@ -124,10 +144,10 @@
   </tr>
   <tr>
     <td>
-      <img src="https://github.com/user-attachments/assets/48e72e95-a392-4532-abec-93cfc499dd73" width="500px" />
+      <img src="https://github.com/user-attachments/assets/48e72e95-a392-4532-abec-93cfc499dd73" width="500px" alt="로그 작성"/>
     </td>
-        <td>
-      <img src="https://github.com/user-attachments/assets/f07d0206-418d-4d27-8bb6-67708c33265d" width="500px" />
+    <td>
+      <img src="https://github.com/user-attachments/assets/f07d0206-418d-4d27-8bb6-67708c33265d" width="500px" alt="마이 페이지"/>
     </td>
   </tr>
   <tr>
